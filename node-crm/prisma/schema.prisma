@@ -41,6 +41,12 @@ enum PipelineStageStatus {
     INACTIVE
 }
 
+enum DealStatus {
+    IN_PROGRESS
+    WON
+    LOST
+}
+
 model Tenant {
     id        String       @id @default(uuid()) @db.Uuid
     name      String
@@ -51,13 +57,15 @@ model Tenant {
     updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt DateTime?    @map("deleted_at") @db.Timestamptz
 
-    users          User[]
-    leads          Lead[]
-    companies      Company[]
-    contacts       Contact[]
-    pipelines      Pipeline[]
-    pipelineStages PipelineStage[]
-    settings       Settings?
+    users            User[]
+    leads            Lead[]
+    companies        Company[]
+    contacts         Contact[]
+    pipelines        Pipeline[]
+    pipelineStages   PipelineStage[]
+    deals            Deal[]
+    dealStageHistory DealStageHistory[]
+    settings         Settings?
 
     @@map("tenants")
 }
@@ -92,8 +100,10 @@ model User {
     updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt    DateTime?   @map("deleted_at") @db.Timestamptz
 
-    tenant Tenant? @relation(fields: [tenantId], references: [id])
-    leads  Lead[]
+    tenant           Tenant?            @relation(fields: [tenantId], references: [id])
+    leads            Lead[]
+    deals            Deal[]
+    dealStageChanges DealStageHistory[]
 
     @@unique([tenantId, email])
     @@index([tenantId])
@@ -120,6 +130,7 @@ model Lead {
     tenant      Tenant   @relation(fields: [tenantId], references: [id])
     company     Company? @relation(fields: [companyId], references: [id])
     responsible User     @relation(fields: [responsibleUserId], references: [id])
+    deal        Deal?
 
     @@index([tenantId])
     @@index([companyId])
@@ -152,6 +163,7 @@ model Company {
     tenant   Tenant    @relation(fields: [tenantId], references: [id])
     leads    Lead[]
     contacts Contact[]
+    deals    Deal[]
 
     @@index([tenantId])
     @@index([status])
@@ -195,6 +207,7 @@ model Pipeline {
 
     tenant Tenant          @relation(fields: [tenantId], references: [id])
     stages PipelineStage[]
+    deals  Deal[]
 
     @@index([tenantId])
     @@map("pipelines")
@@ -213,11 +226,69 @@ model PipelineStage {
     updatedAt  DateTime            @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt  DateTime?           @map("deleted_at") @db.Timestamptz
 
-    tenant   Tenant   @relation(fields: [tenantId], references: [id])
-    pipeline Pipeline @relation(fields: [pipelineId], references: [id])
+    tenant             Tenant             @relation(fields: [tenantId], references: [id])
+    pipeline           Pipeline           @relation(fields: [pipelineId], references: [id])
+    deals              Deal[]
+    historyEntriesFrom DealStageHistory[] @relation("StageHistoryFrom")
+    historyEntriesTo   DealStageHistory[] @relation("StageHistoryTo")
 
     @@unique([pipelineId, order])
     @@index([tenantId])
     @@index([pipelineId])
     @@map("pipeline_stages")
+}
+
+// Toda negociação exige Lead + Empresa + responsável + Pipeline + Etapa (business-rules.md
+// > Negociações). leadId é @unique: a conversão de um Lead em negociação é única e
+// não-reversível — não pode existir uma segunda negociação para o mesmo Lead.
+model Deal {
+    id                String     @id @default(uuid()) @db.Uuid
+    tenantId          String     @map("tenant_id") @db.Uuid
+    leadId            String     @unique @map("lead_id") @db.Uuid
+    companyId         String     @map("company_id") @db.Uuid
+    responsibleUserId String     @map("responsible_user_id") @db.Uuid
+    pipelineId        String     @map("pipeline_id") @db.Uuid
+    stageId           String     @map("stage_id") @db.Uuid
+    status            DealStatus @default(IN_PROGRESS)
+    createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz
+
+    tenant       Tenant             @relation(fields: [tenantId], references: [id])
+    lead         Lead               @relation(fields: [leadId], references: [id])
+    company      Company            @relation(fields: [companyId], references: [id])
+    responsible  User               @relation(fields: [responsibleUserId], references: [id])
+    pipeline     Pipeline           @relation(fields: [pipelineId], references: [id])
+    stage        PipelineStage      @relation(fields: [stageId], references: [id])
+    stageHistory DealStageHistory[]
+
+    @@index([tenantId])
+    @@index([pipelineId])
+    @@index([stageId])
+    @@index([status])
+    @@index([createdAt])
+    @@map("deals")
+}
+
+// Log imutável — business-rules.md: "o histórico nunca deverá ser removido". Por isso,
+// diferente das demais entidades, não tem updated_at/deleted_at: um registro de histórico
+// nunca é alterado nem apagado, só criado (exceção documentada, ver database-patterns.md).
+model DealStageHistory {
+    id              String   @id @default(uuid()) @db.Uuid
+    tenantId        String   @map("tenant_id") @db.Uuid
+    dealId          String   @map("deal_id") @db.Uuid
+    fromStageId     String?  @map("from_stage_id") @db.Uuid
+    toStageId       String   @map("to_stage_id") @db.Uuid
+    changedByUserId String   @map("changed_by_user_id") @db.Uuid
+    changedAt       DateTime @default(now()) @map("changed_at") @db.Timestamptz
+
+    tenant    Tenant        @relation(fields: [tenantId], references: [id])
+    deal      Deal          @relation(fields: [dealId], references: [id])
+    fromStage PipelineStage? @relation("StageHistoryFrom", fields: [fromStageId], references: [id])
+    toStage   PipelineStage @relation("StageHistoryTo", fields: [toStageId], references: [id])
+    changedBy User          @relation(fields: [changedByUserId], references: [id])
+
+    @@index([tenantId])
+    @@index([dealId])
+    @@map("deal_stage_history")
 }

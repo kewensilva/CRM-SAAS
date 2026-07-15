@@ -245,6 +245,27 @@ Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-t
   senão retorna `BusinessRuleError`. Etapa sem campo de status documentado com valores
   próprios — usei o mesmo enum `ACTIVE`/`INACTIVE` das demais entidades, já que
   business-rules.md só diz que a etapa "deverá possuir Status" sem especificar os valores.
+- **Deals**: `/api/v1/deals` — toda negociação exige leadId + companyId + responsibleUserId +
+  pipelineId + stageId (business-rules.md). Criar uma negociação **converte o Lead** em uma
+  transação Prisma atômica: usa `updateMany` com filtro `status != CONVERTED` e checa
+  `count === 0` para detectar e rejeitar conversão duplicada mesmo sob concorrência (não é só
+  uma checagem de aplicação antes do insert — a garantia é no banco). `leadId` é `@unique` no
+  schema como segunda camada de proteção. `PUT /deals/:id/stage` grava uma entrada em
+  `DealStageHistory` a cada mudança, atomicamente com a atualização do deal; a etapa precisa
+  pertencer ao mesmo pipeline do deal, senão 400. `DealStageHistory` é a única entidade sem
+  `updated_at`/`deleted_at` — é log imutável (business-rules.md: "o histórico nunca deverá ser
+  removido"), documentado como exceção no schema. Negociação `WON`/`LOST` trava novas
+  mudanças de etapa (`BusinessRuleError`). Deletar (soft delete) é só `TENANT_ADMIN`/`MANAGER`;
+  criar/editar/mudar etapa/status é liberado pra `USER` também, conforme permissions.md
+  ("Controle completo" para Admin/Manager, "Criar, editar e visualizar" para User).
+
+Decisão deliberada: **não construí o barramento de eventos genérico** (`shared/events/`) que
+events.md descreve, mesmo o Deal sendo o primeiro caso real de `StageChanged`. O histórico de
+etapas é gravado direto no repository porque é requisito de negócio (não opcional), mas não
+existe hoje nenhum consumidor real (notificação, auditoria, integração) que justifique um
+pub/sub — construir isso agora violaria project-philosophy.md ("cada padrão adotado deve
+resolver um problema real"). Reavaliar quando o módulo Auditoria ou Integração Meta Lead Ads
+precisar reagir a eventos de fato.
 
 Helpers novos em `shared/helpers/nullable-fields.ts` (`undefinedToNull`, `stripUndefined`) —
 Prisma exige que campos opcionais ausentes sejam omitidos (update parcial) ou `null`
@@ -259,7 +280,6 @@ Precisa de uma decisão de rota tipo `/tenants/:id/leads` antes de implementar.
 Seed (`pnpm run db:seed`) cria o Owner bootstrap (`owner@cmb.dev` / senha em `SEED_OWNER_PASSWORD`
 ou `Owner@123` por padrão) — é o único jeito de logar antes de existir qualquer Tenant.
 
-Pendente, na ordem oficial: Negociações, Atividades, Dashboard,
-Integração Meta Lead Ads, Auditoria.
+Pendente, na ordem oficial: Atividades, Dashboard, Integração Meta Lead Ads, Auditoria.
 
 `angular-crm/` está vazio — frontend ainda não iniciado.
