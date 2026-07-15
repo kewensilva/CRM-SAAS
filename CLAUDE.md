@@ -234,6 +234,17 @@ Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-t
   business-rules.md não exige isso na criação, então a FK ficou nullable para não travar
   o fluxo de integração. Se `companyId` for enviado, o backend valida que a empresa existe
   no mesmo tenant (404 caso contrário).
+- **Pipelines**: CRUD em `/api/v1/pipelines` + sub-rotas `/pipelines/:id/stages` para as
+  etapas. Restrito a `TENANT_ADMIN` para escrita (Owner/Manager/User só visualizam, conforme
+  permissions.md). Etapa tem `order` sequencial com constraint única `(pipelineId, order)` —
+  criação com ordem repetida dá 409; `PUT /pipelines/:id/stages/reorder` recebe a lista
+  completa de `{id, order}` e faz um reorder atômico em duas fases (primeiro desloca todas as
+  ordens para um intervalo alto fora de colisão, depois aplica os valores finais) dentro de
+  uma transação Prisma, evitando violar a constraint única no meio do caminho ao trocar
+  posições. O reorder exige a lista **completa** das etapas ativas do pipeline (não parcial),
+  senão retorna `BusinessRuleError`. Etapa sem campo de status documentado com valores
+  próprios — usei o mesmo enum `ACTIVE`/`INACTIVE` das demais entidades, já que
+  business-rules.md só diz que a etapa "deverá possuir Status" sem especificar os valores.
 
 Helpers novos em `shared/helpers/nullable-fields.ts` (`undefinedToNull`, `stripUndefined`) —
 Prisma exige que campos opcionais ausentes sejam omitidos (update parcial) ou `null`
@@ -248,7 +259,7 @@ Precisa de uma decisão de rota tipo `/tenants/:id/leads` antes de implementar.
 Seed (`pnpm run db:seed`) cria o Owner bootstrap (`owner@cmb.dev` / senha em `SEED_OWNER_PASSWORD`
 ou `Owner@123` por padrão) — é o único jeito de logar antes de existir qualquer Tenant.
 
-Pendente, na ordem oficial: Pipeline, Negociações, Atividades, Dashboard,
+Pendente, na ordem oficial: Negociações, Atividades, Dashboard,
 Integração Meta Lead Ads, Auditoria.
 
 `angular-crm/` está vazio — frontend ainda não iniciado.

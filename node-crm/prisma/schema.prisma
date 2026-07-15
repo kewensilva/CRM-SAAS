@@ -36,6 +36,11 @@ enum CompanyStatus {
     INACTIVE
 }
 
+enum PipelineStageStatus {
+    ACTIVE
+    INACTIVE
+}
+
 model Tenant {
     id        String       @id @default(uuid()) @db.Uuid
     name      String
@@ -46,11 +51,13 @@ model Tenant {
     updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt DateTime?    @map("deleted_at") @db.Timestamptz
 
-    users     User[]
-    leads     Lead[]
-    companies Company[]
-    contacts  Contact[]
-    settings  Settings?
+    users          User[]
+    leads          Lead[]
+    companies      Company[]
+    contacts       Contact[]
+    pipelines      Pipeline[]
+    pipelineStages PipelineStage[]
+    settings       Settings?
 
     @@map("tenants")
 }
@@ -176,4 +183,41 @@ model Contact {
     @@index([companyId])
     @@index([createdAt])
     @@map("contacts")
+}
+
+model Pipeline {
+    id        String    @id @default(uuid()) @db.Uuid
+    tenantId  String    @map("tenant_id") @db.Uuid
+    name      String
+    createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+    tenant Tenant          @relation(fields: [tenantId], references: [id])
+    stages PipelineStage[]
+
+    @@index([tenantId])
+    @@map("pipelines")
+}
+
+// Ordem sequencial sem duplicidade dentro do mesmo Pipeline (business-rules.md > Pipeline > Ordem).
+model PipelineStage {
+    id         String              @id @default(uuid()) @db.Uuid
+    tenantId   String              @map("tenant_id") @db.Uuid
+    pipelineId String              @map("pipeline_id") @db.Uuid
+    name       String
+    order      Int
+    color      String?
+    status     PipelineStageStatus @default(ACTIVE)
+    createdAt  DateTime            @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt  DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt  DateTime?           @map("deleted_at") @db.Timestamptz
+
+    tenant   Tenant   @relation(fields: [tenantId], references: [id])
+    pipeline Pipeline @relation(fields: [pipelineId], references: [id])
+
+    @@unique([pipelineId, order])
+    @@index([tenantId])
+    @@index([pipelineId])
+    @@map("pipeline_stages")
 }
