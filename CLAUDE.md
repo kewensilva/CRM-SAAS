@@ -220,6 +220,12 @@ Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-t
 - **Companies**: CRUD completo em `/api/v1/companies` com paginação (`page`/`pageSize`) e
   `search` por nome. `TENANT_ADMIN`/`MANAGER` criam e editam, `USER` só visualiza, exclusão
   (soft delete) só `TENANT_ADMIN`, conforme a matriz de permissions.md.
+- **Contacts**: CRUD completo em `/api/v1/contacts`, `companyId` obrigatório na criação
+  (business-rules.md: "todo contato pertence obrigatoriamente a uma empresa" — diferente do
+  Lead, aqui é mandatório mesmo) e validado contra o tenant atual (404 se a empresa não
+  existir). Sem campo `status` — o harness não define esse campo para Contato, só Nome
+  (obrigatório), Cargo, E-mail, Telefone, Celular, Observações. `TENANT_ADMIN`/`MANAGER`/`USER`
+  criam e editam, só `TENANT_ADMIN` exclui. Suporta filtro `?companyId=` na listagem.
 - **Leads**: `POST/GET /api/v1/leads`, `tenantId` e `responsibleUserId` vêm sempre do
   `req.auth` (nunca do payload) — responsável assume-se como o próprio usuário autenticado
   até o módulo Pipeline permitir reatribuição. `companyId` é opcional na criação: leads
@@ -242,7 +248,7 @@ Precisa de uma decisão de rota tipo `/tenants/:id/leads` antes de implementar.
 Seed (`pnpm run db:seed`) cria o Owner bootstrap (`owner@cmb.dev` / senha em `SEED_OWNER_PASSWORD`
 ou `Owner@123` por padrão) — é o único jeito de logar antes de existir qualquer Tenant.
 
-Pendente, na ordem oficial: Contatos, Pipeline, Negociações, Atividades, Dashboard,
+Pendente, na ordem oficial: Pipeline, Negociações, Atividades, Dashboard,
 Integração Meta Lead Ads, Auditoria.
 
 `angular-crm/` está vazio — frontend ainda não iniciado.

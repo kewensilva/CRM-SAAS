@@ -3,6 +3,7 @@ import type { Router as RouterType } from "express";
 
 import { authRoutes } from "../modules/auth";
 import { companyRoutes } from "../modules/companies";
+import { contactRoutes } from "../modules/contacts";
 import { leadRoutes } from "../modules/leads";
 import { settingsRoutes } from "../modules/settings";
 import { tenantRoutes } from "../modules/tenants";
@@ -15,4 +16,5 @@ apiRouter.use(tenantRoutes);
 apiRouter.use(userRoutes);
 apiRouter.use(settingsRoutes);
 apiRouter.use(companyRoutes);
+apiRouter.use(contactRoutes);
 apiRouter.use(leadRoutes);

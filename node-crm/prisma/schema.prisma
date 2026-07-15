@@ -49,6 +49,7 @@ model Tenant {
     users     User[]
     leads     Lead[]
     companies Company[]
+    contacts  Contact[]
     settings  Settings?
 
     @@map("tenants")
@@ -141,11 +142,38 @@ model Company {
     updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt DateTime?     @map("deleted_at") @db.Timestamptz
 
-    tenant Tenant @relation(fields: [tenantId], references: [id])
-    leads  Lead[]
+    tenant   Tenant    @relation(fields: [tenantId], references: [id])
+    leads    Lead[]
+    contacts Contact[]
 
     @@index([tenantId])
     @@index([status])
     @@index([createdAt])
     @@map("companies")
+}
+
+// Contato pertence obrigatoriamente a uma empresa (business-rules.md > Contatos) —
+// sem status próprio: o documento oficial só define nome (obrigatório), cargo,
+// e-mail, telefone, celular e observações.
+model Contact {
+    id        String    @id @default(uuid()) @db.Uuid
+    tenantId  String    @map("tenant_id") @db.Uuid
+    companyId String    @map("company_id") @db.Uuid
+    name      String
+    position  String?
+    email     String?
+    phone     String?
+    mobile    String?
+    notes     String?   @db.Text
+    createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+    tenant  Tenant  @relation(fields: [tenantId], references: [id])
+    company Company @relation(fields: [companyId], references: [id])
+
+    @@index([tenantId])
+    @@index([companyId])
+    @@index([createdAt])
+    @@map("contacts")
 }
