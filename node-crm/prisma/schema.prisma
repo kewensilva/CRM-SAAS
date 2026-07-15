@@ -54,6 +54,18 @@ enum ActivityStatus {
     CANCELLED
 }
 
+enum DuplicateLeadStrategy {
+    IGNORE
+    UPDATE
+}
+
+enum MetaIntegrationLogStatus {
+    RECEIVED
+    PROCESSED
+    DUPLICATE
+    FAILED
+}
+
 model Tenant {
     id        String       @id @default(uuid()) @db.Uuid
     name      String
@@ -74,6 +86,8 @@ model Tenant {
     dealStageHistory DealStageHistory[]
     activities       Activity[]
     settings         Settings?
+    metaIntegration  MetaIntegration?
+    metaLogs         MetaIntegrationLog[]
 
     @@map("tenants")
 }
@@ -108,11 +122,12 @@ model User {
     updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt    DateTime?   @map("deleted_at") @db.Timestamptz
 
-    tenant           Tenant?            @relation(fields: [tenantId], references: [id])
-    leads            Lead[]
-    deals            Deal[]
-    dealStageChanges DealStageHistory[]
-    activities       Activity[]
+    tenant                Tenant?            @relation(fields: [tenantId], references: [id])
+    leads                 Lead[]
+    deals                 Deal[]
+    dealStageChanges      DealStageHistory[]
+    activities            Activity[]
+    metaIntegrationsAsDefaultResponsible MetaIntegration[]
 
     @@unique([tenantId, email])
     @@index([tenantId])
@@ -141,6 +156,7 @@ model Lead {
     responsible User     @relation(fields: [responsibleUserId], references: [id])
     deal        Deal?
     activities  Activity[]
+    metaLogs    MetaIntegrationLog[]
 
     @@index([tenantId])
     @@index([companyId])
@@ -331,4 +347,55 @@ model Activity {
     @@index([status])
     @@index([dueDate])
     @@map("activities")
+}
+
+// Config por Tenant da integração Meta Lead Ads (business-rules.md > Integração Meta Lead
+// Ads). defaultResponsibleUserId existe porque Lead.responsibleUserId é obrigatório no
+// schema, mas leads chegados pela integração não têm um usuário autenticado criando-os —
+// precisam de um responsável padrão definido pelo próprio Tenant ao habilitar a integração.
+model MetaIntegration {
+    id                       String                @id @default(uuid()) @db.Uuid
+    tenantId                 String                @unique @map("tenant_id") @db.Uuid
+    enabled                  Boolean               @default(false)
+    pageId                   String?               @map("page_id")
+    pageAccessToken          String?               @map("page_access_token")
+    defaultResponsibleUserId String?               @map("default_responsible_user_id") @db.Uuid
+    duplicateStrategy        DuplicateLeadStrategy @default(IGNORE) @map("duplicate_strategy")
+    createdAt                DateTime              @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt                DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt                DateTime?             @map("deleted_at") @db.Timestamptz
+
+    tenant              Tenant @relation(fields: [tenantId], references: [id])
+    defaultResponsible  User?  @relation(fields: [defaultResponsibleUserId], references: [id])
+
+    @@index([pageId])
+    @@map("meta_integrations")
+}
+
+// "Nenhum Lead deverá ser descartado sem registro" (business-rules.md > Integração Meta
+// Lead Ads) — cada evento recebido do webhook vira uma linha aqui, atualizada conforme o
+// processamento avança (RECEIVED -> PROCESSED/DUPLICATE/FAILED). tenantId é nullable porque
+// um evento pode chegar para um page_id que nenhum Tenant configurou — mesmo assim precisa
+// ser registrado, não descartado silenciosamente.
+model MetaIntegrationLog {
+    id           String                    @id @default(uuid()) @db.Uuid
+    tenantId     String?                   @map("tenant_id") @db.Uuid
+    leadId       String?                   @map("lead_id") @db.Uuid
+    leadgenId    String                    @map("leadgen_id")
+    pageId       String?                   @map("page_id")
+    formId       String?                   @map("form_id")
+    adId         String?                   @map("ad_id")
+    status       MetaIntegrationLogStatus  @default(RECEIVED)
+    errorMessage String?                   @map("error_message") @db.Text
+    rawPayload   String                    @map("raw_payload") @db.Text
+    createdAt    DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt    DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
+
+    tenant Tenant? @relation(fields: [tenantId], references: [id])
+    lead   Lead?   @relation(fields: [leadId], references: [id])
+
+    @@index([tenantId])
+    @@index([leadgenId])
+    @@index([status])
+    @@map("meta_integration_logs")
 }

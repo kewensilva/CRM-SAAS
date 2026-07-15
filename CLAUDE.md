@@ -273,6 +273,40 @@ Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-t
   repository/validator/dto próprios — só um service que agrega `leadRepository`,
   `dealRepository` e `activityRepository` já existentes, exatamente como product.md manda
   ("O Dashboard não possui regras de negócio... não armazena dados próprios").
+- **Integração Meta Lead Ads** (`modules/integrations/meta/`): fluxo real de dois passos —
+  o webhook (`POST /api/v1/webhooks/meta`) só avisa que um lead chegou (`leadgen_id`); os
+  dados de fato vêm de uma chamada real à Graph API (`fetch` nativo, sem lib extra, conforme
+  tech-stack.md) usando o `pageAccessToken` configurado por tenant. Rotas do webhook são
+  **públicas** (sem JWT — quem chama é a Meta, não um usuário logado); autenticidade vem da
+  assinatura `X-Hub-Signature-256` (HMAC-SHA256 do corpo bruto com `META_APP_SECRET`,
+  comparação em tempo constante via `timingSafeEqual`). Isso exigiu capturar o raw body no
+  `express.json({ verify })` em `app.ts`, porque depois de parseado os bytes originais somem.
+  GET no mesmo path faz o handshake de assinatura do webhook (`hub.mode`/`hub.verify_token`/
+  `hub.challenge`) que a Meta chama uma vez ao configurar a URL.
+  - **"Nenhum Lead deverá ser descartado sem registro"** (business-rules.md) é a regra mais
+    importante do módulo: `MetaIntegrationLog` é criado com status `RECEIVED` **antes** de
+    qualquer tentativa de processar o evento, e todo o processamento (`meta-webhook.service.ts`)
+    nunca lança — captura toda falha (Graph API fora do ar, token inválido, nenhum tenant
+    configurado pra aquela página) e atualiza o log para `FAILED` com a mensagem real, sempre
+    respondendo 200 pra Meta (retornar erro faria a Meta desativar a inscrição do webhook).
+    Testei isso de propósito: configurei um `pageAccessToken` falso, mandei um evento assinado
+    corretamente, e a chamada real pra `graph.facebook.com` (o ambiente tem saída de rede)
+    voltou 400 "Invalid OAuth access token" — o log ficou `FAILED` com essa mensagem exata, o
+    evento não desapareceu. Também testei `page_id` que nenhum tenant configurou: o log é
+    criado com `tenant_id` nulo (única entidade além de `MetaIntegrationLog`/`User` global que
+    permite isso) em vez de ser descartado por falta de dono.
+  - `defaultResponsibleUserId` na config existe porque `Lead.responsibleUserId` é obrigatório
+    no schema, mas leads da integração não têm um usuário autenticado os criando — precisa de
+    um responsável padrão definido pelo Tenant Admin ao habilitar a integração (bloqueado por
+    `ValidationError` se faltar `pageId`/`pageAccessToken`/`defaultResponsibleUserId` ao tentar
+    habilitar).
+  - Deduplicação por e-mail dentro do tenant, comportamento configurável (`IGNORE` mantém o
+    lead existente e só registra `DUPLICATE`; `UPDATE` atualiza nome/e-mail/telefone do lead
+    existente) — "o comportamento será definido pela configuração da integração"
+    (business-rules.md).
+  - `permissions.md` não tem uma linha própria para "Integrações"; apliquei por analogia a
+    mesma política de Configurações (Tenant Admin gerencia o próprio tenant, Manager/User sem
+    acesso) por ser o módulo administrativo mais parecido.
 
 Decisão deliberada: **não construí o barramento de eventos genérico** (`shared/events/`) que
 events.md descreve, mesmo o Deal sendo o primeiro caso real de `StageChanged`. O histórico de
@@ -295,6 +329,13 @@ tenant. Precisa de uma decisão de rota tipo `/tenants/:id/leads` antes de imple
 Seed (`pnpm run db:seed`) cria o Owner bootstrap (`owner@cmb.dev` / senha em `SEED_OWNER_PASSWORD`
 ou `Owner@123` por padrão) — é o único jeito de logar antes de existir qualquer Tenant.
 
-Pendente, na ordem oficial: Integração Meta Lead Ads, Auditoria.
+Segredos novos em `node-crm/.env` (gitignored): `META_APP_SECRET` (valida a assinatura do
+webhook) e `META_WEBHOOK_VERIFY_TOKEN` (handshake de configuração da URL na Meta) — ambos
+platform-level, não por tenant, porque o webhook é uma única URL de callback compartilhada
+por toda a plataforma; o roteamento pro tenant certo acontece via `page_id` no payload.
+
+Pendente, na ordem oficial: Auditoria — provavelmente onde a decisão de não construir
+`shared/events/` finalmente precisa ser revisitada, já que auditoria é o consumidor óbvio de
+eventos como `LeadCreated`/`DealWon`/`UserCreated` que a esta altura já têm origem real.
 
 `angular-crm/` está vazio — frontend ainda não iniciado.
