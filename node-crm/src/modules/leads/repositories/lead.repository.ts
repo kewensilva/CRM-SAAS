@@ -28,8 +28,13 @@ const listByTenant = (tenantId: string): Promise<Lead[]> => {
     });
 };
 
+const countByTenant = (tenantId: string): Promise<number> => {
+    return prisma.lead.count({ where: { tenantId, deletedAt: null } });
+};
+
 export const leadRepository = {
     create,
     findByIdAndTenant,
     listByTenant,
+    countByTenant,
 };

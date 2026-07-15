@@ -51,6 +51,10 @@ const softDelete = (id: string): Promise<Activity> => {
     return prisma.activity.update({ where: { id }, data: { deletedAt: new Date() } });
 };
 
+const countByTenantAndStatus = (tenantId: string, status: ActivityStatus): Promise<number> => {
+    return prisma.activity.count({ where: { tenantId, status, deletedAt: null } });
+};
+
 export const activityRepository = {
     create,
     findByIdAndTenant,
@@ -58,4 +62,5 @@ export const activityRepository = {
     update,
     updateStatus,
     softDelete,
+    countByTenantAndStatus,
 };

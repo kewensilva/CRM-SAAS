@@ -267,6 +267,12 @@ Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-t
   "User: Criar, editar e concluir atividades" — é a única ação de fechamento que ele tem);
   `/cancel` e `DELETE` ficam restritos a `TENANT_ADMIN`/`MANAGER`. Atividade já
   concluída/cancelada não aceita novo complete/cancel (`BusinessRuleError`).
+- **Dashboard**: `GET /api/v1/dashboard` — só os 5 indicadores que business-rules.md lista
+  (leads cadastrados, negociações em andamento/ganhas/perdidas, atividades pendentes), via
+  `COUNT` no banco (não fetch da lista inteira + `.length`). Sem model, sem migration, sem
+  repository/validator/dto próprios — só um service que agrega `leadRepository`,
+  `dealRepository` e `activityRepository` já existentes, exatamente como product.md manda
+  ("O Dashboard não possui regras de negócio... não armazena dados próprios").
 
 Decisão deliberada: **não construí o barramento de eventos genérico** (`shared/events/`) que
 events.md descreve, mesmo o Deal sendo o primeiro caso real de `StageChanged`. O histórico de
@@ -282,13 +288,13 @@ explícito (create), nunca `undefined`; esse padrão se repete em todo módulo c
 opcionais e agora está centralizado em vez de duplicado por repository.
 
 Gap conhecido e recorrente: o harness dá ao `Owner` acesso de leitura a recursos de qualquer
-tenant (Tenants, Leads, Settings) mas não define o padrão de URL para isso — como o JWT do
-Owner tem `tenantId` nulo, essas rotas hoje só atendem usuários já escopados a um tenant.
-Precisa de uma decisão de rota tipo `/tenants/:id/leads` antes de implementar.
+tenant (Tenants, Leads, Settings, Dashboard) mas não define o padrão de URL para isso — como
+o JWT do Owner tem `tenantId` nulo, essas rotas hoje só atendem usuários já escopados a um
+tenant. Precisa de uma decisão de rota tipo `/tenants/:id/leads` antes de implementar.
 
 Seed (`pnpm run db:seed`) cria o Owner bootstrap (`owner@cmb.dev` / senha em `SEED_OWNER_PASSWORD`
 ou `Owner@123` por padrão) — é o único jeito de logar antes de existir qualquer Tenant.
 
-Pendente, na ordem oficial: Dashboard, Integração Meta Lead Ads, Auditoria.
+Pendente, na ordem oficial: Integração Meta Lead Ads, Auditoria.
 
 `angular-crm/` está vazio — frontend ainda não iniciado.

@@ -1,4 +1,5 @@
 import type { Prisma } from "../../../../generated/prisma/client";
+import type { DealStatus } from "../../../../generated/prisma/enums";
 import { prisma } from "../../../shared/database/prisma-client";
 import { stripUndefined } from "../../../shared/helpers/nullable-fields";
 import { BusinessRuleError } from "../../../shared/errors";
@@ -94,6 +95,10 @@ const listHistoryByDeal = (dealId: string, tenantId: string): Promise<DealStageH
     });
 };
 
+const countByTenantAndStatus = (tenantId: string, status: DealStatus): Promise<number> => {
+    return prisma.deal.count({ where: { tenantId, status, deletedAt: null } });
+};
+
 export const dealRepository = {
     create,
     findByIdAndTenant,
@@ -103,4 +108,5 @@ export const dealRepository = {
     updateStatus,
     changeStage,
     listHistoryByDeal,
+    countByTenantAndStatus,
 };
