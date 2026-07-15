@@ -199,10 +199,30 @@ registrado. Checklist completo: [definition-of-done.md](.claude/harness/definiti
 
 ## Estado atual do código
 
-`node-crm/` (backend Express, dependências `express` + `zod`) ainda **não segue o Harness**:
-sem camadas Service/Repository, sem `modules/`, `export default` usado, interfaces com
-prefixo `I`, sem validação Zod, `console.log` em vez de Pino. Antes de adicionar
-funcionalidade nova em `node-crm`, alinhar com o usuário se o objetivo é reescrever a
-base seguindo a estrutura de módulos, ou continuar incrementalmente sobre o que existe.
+`node-crm/` já segue a arquitetura em camadas (`modules/<modulo>/{controllers,services,repositories,validators,dto,routes,types}`
++ `shared/{errors,logger,middleware,auth,database,types}`). Prisma conectado a um PostgreSQL
+real via `@prisma/adapter-pg` (Prisma 7 exige driver adapter explícito — client gerado em
+`generated/prisma`, fora de `src/`, e regenerado com `npx prisma generate` a cada mudança de
+schema). Segredos em `node-crm/.env` (gitignored; `.env.example` documenta as chaves).
+
+Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-tenant):
+- **Auth**: `POST /api/v1/auth/login` (recebe `tenantSlug` opcional + email/senha — necessário
+  porque e-mail só é único *dentro* do tenant, não globalmente; Owner loga sem `tenantSlug`),
+  `POST /api/v1/auth/refresh-token`. JWT access+refresh via `shared/auth/jwt.ts`.
+- **Tenants**: `POST/GET /api/v1/tenants`, restrito a `OWNER`. Criação de tenant já gera o
+  Tenant Admin automaticamente numa transação Prisma — falta a "configuração inicial" citada
+  em business-rules.md (módulo Settings ainda não existe).
+- **Users**: `POST/GET /api/v1/users`, restrito a `TENANT_ADMIN`/`MANAGER`, escopado ao
+  `tenantId` do token.
+- **Leads**: `POST/GET /api/v1/leads`, `tenantId` e `responsibleUserId` vêm sempre do
+  `req.auth` (nunca do payload) — responsável assume-se como o próprio usuário autenticado
+  até o módulo Pipeline permitir reatribuição. Falta a rota de visualização cross-tenant do
+  Owner (permissions.md diz "Owner: Visualizar" mas não especifica o padrão de URL).
+
+Seed (`pnpm run db:seed`) cria o Owner bootstrap (`owner@cmb.dev` / senha em `SEED_OWNER_PASSWORD`
+ou `Owner@123` por padrão) — é o único jeito de logar antes de existir qualquer Tenant.
+
+Pendente, na ordem oficial: Configurações (Settings), Empresas, Contatos, Pipeline,
+Negociações, Atividades, Dashboard, Integração Meta Lead Ads, Auditoria.
 
 `angular-crm/` está vazio — frontend ainda não iniciado.

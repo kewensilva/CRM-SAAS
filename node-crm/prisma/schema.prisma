@@ -1,0 +1,91 @@
+generator client {
+    provider = "prisma-client"
+    output   = "../generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+enum TenantStatus {
+    ACTIVE
+    INACTIVE
+}
+
+enum UserStatus {
+    ACTIVE
+    INACTIVE
+}
+
+enum UserProfile {
+    OWNER
+    TENANT_ADMIN
+    MANAGER
+    USER
+}
+
+enum LeadStatus {
+    NEW
+    IN_PROGRESS
+    CONVERTED
+    LOST
+}
+
+model Tenant {
+    id        String       @id @default(uuid()) @db.Uuid
+    name      String
+    tradeName String?      @map("trade_name")
+    domain    String       @unique
+    status    TenantStatus @default(ACTIVE)
+    createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt DateTime?    @map("deleted_at") @db.Timestamptz
+
+    users User[]
+    leads Lead[]
+
+    @@map("tenants")
+}
+
+// Usuários com profile OWNER pertencem à plataforma (tenantId nulo) — ver multi-tenant.md.
+model User {
+    id           String      @id @default(uuid()) @db.Uuid
+    tenantId     String?     @map("tenant_id") @db.Uuid
+    name         String
+    email        String
+    passwordHash String      @map("password_hash")
+    profile      UserProfile
+    status       UserStatus  @default(ACTIVE)
+    createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt    DateTime?   @map("deleted_at") @db.Timestamptz
+
+    tenant Tenant? @relation(fields: [tenantId], references: [id])
+    leads  Lead[]
+
+    @@unique([tenantId, email])
+    @@index([tenantId])
+    @@index([email])
+    @@map("users")
+}
+
+model Lead {
+    id                String     @id @default(uuid()) @db.Uuid
+    tenantId          String     @map("tenant_id") @db.Uuid
+    responsibleUserId String     @map("responsible_user_id") @db.Uuid
+    name              String
+    email             String?
+    phone             String?
+    status            LeadStatus @default(NEW)
+    createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz
+
+    tenant      Tenant @relation(fields: [tenantId], references: [id])
+    responsible User   @relation(fields: [responsibleUserId], references: [id])
+
+    @@index([tenantId])
+    @@index([status])
+    @@index([createdAt])
+    @@map("leads")
+}
