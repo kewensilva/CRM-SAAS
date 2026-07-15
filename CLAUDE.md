@@ -258,6 +258,15 @@ Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-t
   mudanças de etapa (`BusinessRuleError`). Deletar (soft delete) é só `TENANT_ADMIN`/`MANAGER`;
   criar/editar/mudar etapa/status é liberado pra `USER` também, conforme permissions.md
   ("Controle completo" para Admin/Manager, "Criar, editar e visualizar" para User).
+- **Activities**: `/api/v1/activities`, campos título + responsável + data prevista + status
+  (business-rules.md). Vínculo exclusivo — a mesma "Regras Gerais" de business-rules.md diz
+  "toda atividade pertence a uma negociação **ou** a um Lead": schema permite `dealId` e
+  `leadId` ambos nulos porque Prisma não expressa XOR sem SQL bruto, mas o validator Zod
+  (`.refine`) exige exatamente um dos dois — testei os três casos (nenhum, os dois, só um) e
+  só o último passa. `PUT /activities/:id/complete` liberado pra `USER` também (permissions.md:
+  "User: Criar, editar e concluir atividades" — é a única ação de fechamento que ele tem);
+  `/cancel` e `DELETE` ficam restritos a `TENANT_ADMIN`/`MANAGER`. Atividade já
+  concluída/cancelada não aceita novo complete/cancel (`BusinessRuleError`).
 
 Decisão deliberada: **não construí o barramento de eventos genérico** (`shared/events/`) que
 events.md descreve, mesmo o Deal sendo o primeiro caso real de `StageChanged`. O histórico de
@@ -280,6 +289,6 @@ Precisa de uma decisão de rota tipo `/tenants/:id/leads` antes de implementar.
 Seed (`pnpm run db:seed`) cria o Owner bootstrap (`owner@cmb.dev` / senha em `SEED_OWNER_PASSWORD`
 ou `Owner@123` por padrão) — é o único jeito de logar antes de existir qualquer Tenant.
 
-Pendente, na ordem oficial: Atividades, Dashboard, Integração Meta Lead Ads, Auditoria.
+Pendente, na ordem oficial: Dashboard, Integração Meta Lead Ads, Auditoria.
 
 `angular-crm/` está vazio — frontend ainda não iniciado.

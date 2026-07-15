@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Router as RouterType } from "express";
 
+import { activityRoutes } from "../modules/activities";
 import { authRoutes } from "../modules/auth";
 import { companyRoutes } from "../modules/companies";
 import { contactRoutes } from "../modules/contacts";
@@ -22,3 +23,4 @@ apiRouter.use(contactRoutes);
 apiRouter.use(pipelineRoutes);
 apiRouter.use(leadRoutes);
 apiRouter.use(dealRoutes);
+apiRouter.use(activityRoutes);
