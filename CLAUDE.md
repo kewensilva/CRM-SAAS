@@ -209,20 +209,40 @@ Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-t
 - **Auth**: `POST /api/v1/auth/login` (recebe `tenantSlug` opcional + email/senha — necessário
   porque e-mail só é único *dentro* do tenant, não globalmente; Owner loga sem `tenantSlug`),
   `POST /api/v1/auth/refresh-token`. JWT access+refresh via `shared/auth/jwt.ts`.
-- **Tenants**: `POST/GET /api/v1/tenants`, restrito a `OWNER`. Criação de tenant já gera o
-  Tenant Admin automaticamente numa transação Prisma — falta a "configuração inicial" citada
-  em business-rules.md (módulo Settings ainda não existe).
+- **Tenants**: `POST/GET /api/v1/tenants`, restrito a `OWNER`. Criação de tenant gera numa
+  única transação Prisma: o Tenant, o Tenant Admin e o registro inicial de Settings.
 - **Users**: `POST/GET /api/v1/users`, restrito a `TENANT_ADMIN`/`MANAGER`, escopado ao
   `tenantId` do token.
+- **Settings**: `GET/PUT /api/v1/settings`, restrito a `TENANT_ADMIN` (Manager/User sem
+  acesso, conforme permissions.md). Model separado do Tenant — guarda só o que é editável
+  pelo próprio cliente (logoUrl, primaryColor, secondaryColor); nome legal e domínio de login
+  continuam em Tenant para não duplicar informação (database-patterns.md > Relacionamentos).
+- **Companies**: CRUD completo em `/api/v1/companies` com paginação (`page`/`pageSize`) e
+  `search` por nome. `TENANT_ADMIN`/`MANAGER` criam e editam, `USER` só visualiza, exclusão
+  (soft delete) só `TENANT_ADMIN`, conforme a matriz de permissions.md.
 - **Leads**: `POST/GET /api/v1/leads`, `tenantId` e `responsibleUserId` vêm sempre do
   `req.auth` (nunca do payload) — responsável assume-se como o próprio usuário autenticado
-  até o módulo Pipeline permitir reatribuição. Falta a rota de visualização cross-tenant do
-  Owner (permissions.md diz "Owner: Visualizar" mas não especifica o padrão de URL).
+  até o módulo Pipeline permitir reatribuição. `companyId` é opcional na criação: leads
+  chegam sem empresa conhecida (ex.: integração Meta Lead Ads) e são vinculados depois —
+  database-patterns.md lista Lead→Company como relacionamento obrigatório, mas
+  business-rules.md não exige isso na criação, então a FK ficou nullable para não travar
+  o fluxo de integração. Se `companyId` for enviado, o backend valida que a empresa existe
+  no mesmo tenant (404 caso contrário).
+
+Helpers novos em `shared/helpers/nullable-fields.ts` (`undefinedToNull`, `stripUndefined`) —
+Prisma exige que campos opcionais ausentes sejam omitidos (update parcial) ou `null`
+explícito (create), nunca `undefined`; esse padrão se repete em todo módulo com campos
+opcionais e agora está centralizado em vez de duplicado por repository.
+
+Gap conhecido e recorrente: o harness dá ao `Owner` acesso de leitura a recursos de qualquer
+tenant (Tenants, Leads, Settings) mas não define o padrão de URL para isso — como o JWT do
+Owner tem `tenantId` nulo, essas rotas hoje só atendem usuários já escopados a um tenant.
+Precisa de uma decisão de rota tipo `/tenants/:id/leads` antes de implementar.
 
 Seed (`pnpm run db:seed`) cria o Owner bootstrap (`owner@cmb.dev` / senha em `SEED_OWNER_PASSWORD`
 ou `Owner@123` por padrão) — é o único jeito de logar antes de existir qualquer Tenant.
 
-Pendente, na ordem oficial: Configurações (Settings), Empresas, Contatos, Pipeline,
-Negociações, Atividades, Dashboard, Integração Meta Lead Ads, Auditoria.
+Pendente, na ordem oficial: Contatos, Pipeline, Negociações, Atividades, Dashboard,
+Integração Meta Lead Ads, Auditoria.
 
 `angular-crm/` está vazio — frontend ainda não iniciado.

@@ -31,6 +31,11 @@ enum LeadStatus {
     LOST
 }
 
+enum CompanyStatus {
+    ACTIVE
+    INACTIVE
+}
+
 model Tenant {
     id        String       @id @default(uuid()) @db.Uuid
     name      String
@@ -41,10 +46,29 @@ model Tenant {
     updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt DateTime?    @map("deleted_at") @db.Timestamptz
 
-    users User[]
-    leads Lead[]
+    users     User[]
+    leads     Lead[]
+    companies Company[]
+    settings  Settings?
 
     @@map("tenants")
+}
+
+// Personalização white label — nome legal e domínio de login ficam em Tenant;
+// aqui só o que é editável pelo próprio cliente (ver business-rules.md > Configurações).
+model Settings {
+    id             String    @id @default(uuid()) @db.Uuid
+    tenantId       String    @unique @map("tenant_id") @db.Uuid
+    logoUrl        String?   @map("logo_url")
+    primaryColor   String?   @map("primary_color")
+    secondaryColor String?   @map("secondary_color")
+    createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt      DateTime? @map("deleted_at") @db.Timestamptz
+
+    tenant Tenant @relation(fields: [tenantId], references: [id])
+
+    @@map("settings")
 }
 
 // Usuários com profile OWNER pertencem à plataforma (tenantId nulo) — ver multi-tenant.md.
@@ -69,9 +93,13 @@ model User {
     @@map("users")
 }
 
+// companyId é opcional: leads recebidos via integração (Meta Lead Ads) chegam sem
+// empresa conhecida e são vinculados depois — database-patterns.md lista Lead -> Company
+// como relacionamento obrigatório, mas business-rules.md não exige isso na criação.
 model Lead {
     id                String     @id @default(uuid()) @db.Uuid
     tenantId          String     @map("tenant_id") @db.Uuid
+    companyId         String?    @map("company_id") @db.Uuid
     responsibleUserId String     @map("responsible_user_id") @db.Uuid
     name              String
     email             String?
@@ -81,11 +109,43 @@ model Lead {
     updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz
 
-    tenant      Tenant @relation(fields: [tenantId], references: [id])
-    responsible User   @relation(fields: [responsibleUserId], references: [id])
+    tenant      Tenant   @relation(fields: [tenantId], references: [id])
+    company     Company? @relation(fields: [companyId], references: [id])
+    responsible User     @relation(fields: [responsibleUserId], references: [id])
+
+    @@index([tenantId])
+    @@index([companyId])
+    @@index([status])
+    @@index([createdAt])
+    @@map("leads")
+}
+
+model Company {
+    id        String        @id @default(uuid()) @db.Uuid
+    tenantId  String        @map("tenant_id") @db.Uuid
+    name      String
+    document  String?
+    phone     String?
+    email     String?
+    website   String?
+    street    String?
+    number    String?
+    district  String?
+    city      String?
+    state     String?
+    zipCode   String?       @map("zip_code")
+    country   String?
+    notes     String?       @db.Text
+    status    CompanyStatus @default(ACTIVE)
+    createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt DateTime?     @map("deleted_at") @db.Timestamptz
+
+    tenant Tenant @relation(fields: [tenantId], references: [id])
+    leads  Lead[]
 
     @@index([tenantId])
     @@index([status])
     @@index([createdAt])
-    @@map("leads")
+    @@map("companies")
 }

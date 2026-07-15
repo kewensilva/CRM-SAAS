@@ -6,6 +6,7 @@ const create = (data: CreateLeadDTO): Promise<Lead> => {
     return prisma.lead.create({
         data: {
             tenantId: data.tenantId,
+            companyId: data.companyId ?? null,
             responsibleUserId: data.responsibleUserId,
             name: data.name,
             email: data.email ?? null,

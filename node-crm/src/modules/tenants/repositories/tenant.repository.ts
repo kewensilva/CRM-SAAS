@@ -33,6 +33,10 @@ const create = (tenantData: CreateTenantData, adminData: CreateAdminData): Promi
             },
         });
 
+        await tx.settings.create({
+            data: { tenantId: tenant.id },
+        });
+
         return tenant;
     });
 };
