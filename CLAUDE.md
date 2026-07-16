@@ -326,8 +326,27 @@ tenant (Tenants, Leads, Settings, Dashboard) mas não define o padrão de URL pa
 o JWT do Owner tem `tenantId` nulo, essas rotas hoje só atendem usuários já escopados a um
 tenant. Precisa de uma decisão de rota tipo `/tenants/:id/leads` antes de implementar.
 
+Gap descoberto ao popular dados de demonstração: **Lead e Activity não têm endpoint de
+transição de status genérico**. Lead só alcança `NEW` (criação) e `CONVERTED` (via criação de
+Deal) pela API — não existe rota pra marcar `IN_PROGRESS`/`LOST`. Activity só alcança
+`PENDING` (criação), `COMPLETED` e `CANCELLED` (endpoints dedicados) — `IN_PROGRESS` nunca é
+alcançável, já que `UpdateActivityDTO` não aceita `status`. Nenhum dos dois é exigido
+explicitamente pelo Definition of Done ainda, mas o frontend vai precisar decidir se isso
+é uma lacuna real de produto (falta endpoint) antes de desenhar a tela de detalhe do Lead.
+
 Seed (`pnpm run db:seed`) cria o Owner bootstrap (`owner@cmb.dev` / senha em `SEED_OWNER_PASSWORD`
 ou `Owner@123` por padrão) — é o único jeito de logar antes de existir qualquer Tenant.
+
+Seed de demonstração (`pnpm run db:seed:demo`) popula dois tenants completos — "Agência
+Delta Marketing" (`agencia-delta`) e "Consultoria Prisma" (`consultoria-prisma`) — com
+usuários de todos os perfis, empresas, contatos, pipeline com etapas, leads em todos os
+status, negociações (ganhas/perdidas/em andamento) com histórico real de etapa, atividades
+(pendente/concluída/cancelada) e configuração + logs de exemplo da integração Meta. Senha de
+todos os usuários criados por ele: `Demo@1234`. Roda por cima dos services reais (não Prisma
+cru), então respeita toda regra de negócio — hashing, conversão de Lead, histórico atômico
+etc. — e é idempotente: tenant já existente é pulado, seguro rodar de novo. `IN_PROGRESS` em
+2 leads e `LOST` em 1 são setados direto via Prisma no script (comentado no código) por causa
+do gap de transição de status descrito acima.
 
 Segredos novos em `node-crm/.env` (gitignored): `META_APP_SECRET` (valida a assinatura do
 webhook) e `META_WEBHOOK_VERIFY_TOKEN` (handshake de configuração da URL na Meta) — ambos
