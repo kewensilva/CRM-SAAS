@@ -1,0 +1,348 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-07-15T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v8.0",
+  "resources": [
+    {
+      "_id": "wrk_crm",
+      "_type": "workspace",
+      "name": "CRM SaaS",
+      "description": "Backend node-crm — fluxo completo de teste manual"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_crm",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3333/api/v1",
+        "owner_email": "owner@cmb.dev",
+        "owner_password": "Owner@123",
+        "owner_token": "",
+        "tenant_slug": "empresa-teste",
+        "admin_email": "admin@empresa-teste.com",
+        "admin_password": "Admin@123",
+        "admin_token": "",
+        "refresh_token": "",
+        "tenant_id": "",
+        "user_id": "",
+        "company_id": "",
+        "contact_id": "",
+        "pipeline_id": "",
+        "stage1_id": "",
+        "stage2_id": "",
+        "lead_id": "",
+        "deal_id": "",
+        "activity_id": ""
+      }
+    },
+
+    { "_id": "fld_01_auth", "_type": "request_group", "parentId": "wrk_crm", "name": "1. Auth", "metaSortKey": 100 },
+    {
+      "_id": "req_login_owner", "_type": "request", "parentId": "fld_01_auth", "name": "Login Owner",
+      "method": "POST", "url": "{{ _.base_url }}/auth/login",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"email\": \"{{ _.owner_email }}\",\n  \"password\": \"{{ _.owner_password }}\"\n}" },
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_login_admin", "_type": "request", "parentId": "fld_01_auth", "name": "Login Tenant Admin",
+      "method": "POST", "url": "{{ _.base_url }}/auth/login",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"tenantSlug\": \"{{ _.tenant_slug }}\",\n  \"email\": \"{{ _.admin_email }}\",\n  \"password\": \"{{ _.admin_password }}\"\n}" },
+      "metaSortKey": 200
+    },
+    {
+      "_id": "req_refresh", "_type": "request", "parentId": "fld_01_auth", "name": "Refresh Token",
+      "method": "POST", "url": "{{ _.base_url }}/auth/refresh-token",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"refreshToken\": \"{{ _.refresh_token }}\"\n}" },
+      "metaSortKey": 300
+    },
+
+    { "_id": "fld_02_tenants", "_type": "request_group", "parentId": "wrk_crm", "name": "2. Tenants (Owner)", "metaSortKey": 200 },
+    {
+      "_id": "req_create_tenant", "_type": "request", "parentId": "fld_02_tenants", "name": "Create Tenant",
+      "method": "POST", "url": "{{ _.base_url }}/tenants",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.owner_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"name\": \"Empresa Teste\",\n  \"domain\": \"{{ _.tenant_slug }}\",\n  \"adminName\": \"Admin Teste\",\n  \"adminEmail\": \"{{ _.admin_email }}\",\n  \"adminPassword\": \"{{ _.admin_password }}\"\n}" },
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_list_tenants", "_type": "request", "parentId": "fld_02_tenants", "name": "List Tenants",
+      "method": "GET", "url": "{{ _.base_url }}/tenants",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.owner_token }}" }],
+      "metaSortKey": 200
+    },
+
+    { "_id": "fld_03_users", "_type": "request_group", "parentId": "wrk_crm", "name": "3. Users (Tenant Admin)", "metaSortKey": 300 },
+    {
+      "_id": "req_create_user", "_type": "request", "parentId": "fld_03_users", "name": "Create User",
+      "method": "POST", "url": "{{ _.base_url }}/users",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"name\": \"Vendedor 1\",\n  \"email\": \"vendedor1@{{ _.tenant_slug }}.com\",\n  \"password\": \"Vendedor@123\",\n  \"profile\": \"USER\"\n}" },
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_list_users", "_type": "request", "parentId": "fld_03_users", "name": "List Users",
+      "method": "GET", "url": "{{ _.base_url }}/users",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 200
+    },
+
+    { "_id": "fld_04_settings", "_type": "request_group", "parentId": "wrk_crm", "name": "4. Settings", "metaSortKey": 400 },
+    {
+      "_id": "req_get_settings", "_type": "request", "parentId": "fld_04_settings", "name": "Get Settings",
+      "method": "GET", "url": "{{ _.base_url }}/settings",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_update_settings", "_type": "request", "parentId": "fld_04_settings", "name": "Update Settings",
+      "method": "PUT", "url": "{{ _.base_url }}/settings",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"primaryColor\": \"#1A2B3C\",\n  \"secondaryColor\": \"#FFAA00\"\n}" },
+      "metaSortKey": 200
+    },
+
+    { "_id": "fld_05_companies", "_type": "request_group", "parentId": "wrk_crm", "name": "5. Companies", "metaSortKey": 500 },
+    {
+      "_id": "req_create_company", "_type": "request", "parentId": "fld_05_companies", "name": "Create Company",
+      "method": "POST", "url": "{{ _.base_url }}/companies",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"name\": \"Cliente ABC\",\n  \"email\": \"contato@clienteabc.com\",\n  \"city\": \"São Paulo\",\n  \"state\": \"SP\"\n}" },
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_list_companies", "_type": "request", "parentId": "fld_05_companies", "name": "List Companies",
+      "method": "GET", "url": "{{ _.base_url }}/companies?page=1&pageSize=20",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 200
+    },
+    {
+      "_id": "req_get_company", "_type": "request", "parentId": "fld_05_companies", "name": "Get Company",
+      "method": "GET", "url": "{{ _.base_url }}/companies/{{ _.company_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 300
+    },
+    {
+      "_id": "req_update_company", "_type": "request", "parentId": "fld_05_companies", "name": "Update Company",
+      "method": "PUT", "url": "{{ _.base_url }}/companies/{{ _.company_id }}",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"phone\": \"11999998888\"\n}" },
+      "metaSortKey": 400
+    },
+    {
+      "_id": "req_delete_company", "_type": "request", "parentId": "fld_05_companies", "name": "Delete Company",
+      "method": "DELETE", "url": "{{ _.base_url }}/companies/{{ _.company_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 500
+    },
+
+    { "_id": "fld_06_contacts", "_type": "request_group", "parentId": "wrk_crm", "name": "6. Contacts", "metaSortKey": 600 },
+    {
+      "_id": "req_create_contact", "_type": "request", "parentId": "fld_06_contacts", "name": "Create Contact",
+      "method": "POST", "url": "{{ _.base_url }}/contacts",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"companyId\": \"{{ _.company_id }}\",\n  \"name\": \"Maria Souza\",\n  \"position\": \"Compradora\",\n  \"email\": \"maria@clienteabc.com\"\n}" },
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_list_contacts", "_type": "request", "parentId": "fld_06_contacts", "name": "List Contacts",
+      "method": "GET", "url": "{{ _.base_url }}/contacts?companyId={{ _.company_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 200
+    },
+
+    { "_id": "fld_07_pipelines", "_type": "request_group", "parentId": "wrk_crm", "name": "7. Pipelines", "metaSortKey": 700 },
+    {
+      "_id": "req_create_pipeline", "_type": "request", "parentId": "fld_07_pipelines", "name": "Create Pipeline",
+      "method": "POST", "url": "{{ _.base_url }}/pipelines",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"name\": \"Funil Comercial\"\n}" },
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_create_stage1", "_type": "request", "parentId": "fld_07_pipelines", "name": "Create Stage 1 (Novo Lead)",
+      "method": "POST", "url": "{{ _.base_url }}/pipelines/{{ _.pipeline_id }}/stages",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"name\": \"Novo Lead\",\n  \"order\": 1,\n  \"color\": \"#3366FF\"\n}" },
+      "metaSortKey": 200
+    },
+    {
+      "_id": "req_create_stage2", "_type": "request", "parentId": "fld_07_pipelines", "name": "Create Stage 2 (Negociando)",
+      "method": "POST", "url": "{{ _.base_url }}/pipelines/{{ _.pipeline_id }}/stages",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"name\": \"Negociando\",\n  \"order\": 2\n}" },
+      "metaSortKey": 300
+    },
+    {
+      "_id": "req_list_stages", "_type": "request", "parentId": "fld_07_pipelines", "name": "List Stages",
+      "method": "GET", "url": "{{ _.base_url }}/pipelines/{{ _.pipeline_id }}/stages",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 400
+    },
+    {
+      "_id": "req_reorder_stages", "_type": "request", "parentId": "fld_07_pipelines", "name": "Reorder Stages (inverter)",
+      "method": "PUT", "url": "{{ _.base_url }}/pipelines/{{ _.pipeline_id }}/stages/reorder",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "[\n  { \"id\": \"{{ _.stage1_id }}\", \"order\": 2 },\n  { \"id\": \"{{ _.stage2_id }}\", \"order\": 1 }\n]" },
+      "metaSortKey": 500
+    },
+
+    { "_id": "fld_08_leads", "_type": "request_group", "parentId": "wrk_crm", "name": "8. Leads", "metaSortKey": 800 },
+    {
+      "_id": "req_create_lead", "_type": "request", "parentId": "fld_08_leads", "name": "Create Lead",
+      "method": "POST", "url": "{{ _.base_url }}/leads",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"name\": \"Lead Teste\",\n  \"email\": \"lead@teste.com\",\n  \"companyId\": \"{{ _.company_id }}\"\n}" },
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_list_leads", "_type": "request", "parentId": "fld_08_leads", "name": "List Leads",
+      "method": "GET", "url": "{{ _.base_url }}/leads",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 200
+    },
+
+    { "_id": "fld_09_deals", "_type": "request_group", "parentId": "wrk_crm", "name": "9. Deals", "metaSortKey": 900 },
+    {
+      "_id": "req_create_deal", "_type": "request", "parentId": "fld_09_deals", "name": "Create Deal (converte o Lead)",
+      "method": "POST", "url": "{{ _.base_url }}/deals",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"leadId\": \"{{ _.lead_id }}\",\n  \"companyId\": \"{{ _.company_id }}\",\n  \"responsibleUserId\": \"{{ _.user_id }}\",\n  \"pipelineId\": \"{{ _.pipeline_id }}\",\n  \"stageId\": \"{{ _.stage1_id }}\"\n}" },
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_list_deals", "_type": "request", "parentId": "fld_09_deals", "name": "List Deals",
+      "method": "GET", "url": "{{ _.base_url }}/deals",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 200
+    },
+    {
+      "_id": "req_change_stage", "_type": "request", "parentId": "fld_09_deals", "name": "Change Stage",
+      "method": "PUT", "url": "{{ _.base_url }}/deals/{{ _.deal_id }}/stage",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"stageId\": \"{{ _.stage2_id }}\"\n}" },
+      "metaSortKey": 300
+    },
+    {
+      "_id": "req_change_status", "_type": "request", "parentId": "fld_09_deals", "name": "Change Status (WON)",
+      "method": "PUT", "url": "{{ _.base_url }}/deals/{{ _.deal_id }}/status",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"status\": \"WON\"\n}" },
+      "metaSortKey": 400
+    },
+    {
+      "_id": "req_deal_history", "_type": "request", "parentId": "fld_09_deals", "name": "Get Stage History",
+      "method": "GET", "url": "{{ _.base_url }}/deals/{{ _.deal_id }}/history",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 500
+    },
+
+    { "_id": "fld_10_activities", "_type": "request_group", "parentId": "wrk_crm", "name": "10. Activities", "metaSortKey": 1000 },
+    {
+      "_id": "req_create_activity", "_type": "request", "parentId": "fld_10_activities", "name": "Create Activity (no Deal)",
+      "method": "POST", "url": "{{ _.base_url }}/activities",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"title\": \"Follow-up negociação\",\n  \"dueDate\": \"2026-08-01T10:00:00Z\",\n  \"responsibleUserId\": \"{{ _.user_id }}\",\n  \"dealId\": \"{{ _.deal_id }}\"\n}" },
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_list_activities", "_type": "request", "parentId": "fld_10_activities", "name": "List Activities",
+      "method": "GET", "url": "{{ _.base_url }}/activities",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 200
+    },
+    {
+      "_id": "req_complete_activity", "_type": "request", "parentId": "fld_10_activities", "name": "Complete Activity",
+      "method": "PUT", "url": "{{ _.base_url }}/activities/{{ _.activity_id }}/complete",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 300
+    },
+
+    { "_id": "fld_11_dashboard", "_type": "request_group", "parentId": "wrk_crm", "name": "11. Dashboard", "metaSortKey": 1100 },
+    {
+      "_id": "req_get_dashboard", "_type": "request", "parentId": "fld_11_dashboard", "name": "Get Dashboard",
+      "method": "GET", "url": "{{ _.base_url }}/dashboard",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 100
+    },
+
+    { "_id": "fld_12_meta", "_type": "request_group", "parentId": "wrk_crm", "name": "12. Integração Meta Lead Ads", "metaSortKey": 1200 },
+    {
+      "_id": "req_get_meta_config", "_type": "request", "parentId": "fld_12_meta", "name": "Get Config",
+      "method": "GET", "url": "{{ _.base_url }}/integrations/meta",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_update_meta_config", "_type": "request", "parentId": "fld_12_meta", "name": "Update Config",
+      "method": "PUT", "url": "{{ _.base_url }}/integrations/meta",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }
+      ],
+      "body": { "mimeType": "application/json", "text": "{\n  \"enabled\": true,\n  \"pageId\": \"123456789\",\n  \"pageAccessToken\": \"fake-token-for-testing\",\n  \"defaultResponsibleUserId\": \"{{ _.user_id }}\",\n  \"duplicateStrategy\": \"IGNORE\"\n}" },
+      "metaSortKey": 200
+    },
+    {
+      "_id": "req_meta_logs", "_type": "request", "parentId": "fld_12_meta", "name": "List Integration Logs",
+      "method": "GET", "url": "{{ _.base_url }}/integrations/meta/logs",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.admin_token }}" }],
+      "metaSortKey": 300
+    },
+    {
+      "_id": "req_meta_webhook_verify", "_type": "request", "parentId": "fld_12_meta", "name": "Webhook Verify Handshake (GET)",
+      "method": "GET", "url": "{{ _.base_url }}/webhooks/meta?hub.mode=subscribe&hub.verify_token=COLE_O_META_WEBHOOK_VERIFY_TOKEN_DO_ENV&hub.challenge=teste123",
+      "metaSortKey": 400,
+      "description": "hub.verify_token precisa ser igual ao META_WEBHOOK_VERIFY_TOKEN do .env. A resposta deve ser 'teste123'."
+    }
+  ]
+}
