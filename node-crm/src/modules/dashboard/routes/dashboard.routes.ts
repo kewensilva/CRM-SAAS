@@ -13,3 +13,10 @@ dashboardRoutes.get(
     authorize("TENANT_ADMIN", "MANAGER", "USER"),
     dashboardController.get,
 );
+
+dashboardRoutes.get(
+    "/dashboard/owner",
+    authenticate,
+    authorize("OWNER"),
+    dashboardController.getPlatform,
+);

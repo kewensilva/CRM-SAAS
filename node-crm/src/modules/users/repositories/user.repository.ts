@@ -35,9 +35,15 @@ const listByTenant = (tenantId: string): Promise<User[]> => {
     });
 };
 
+// Exclui contas do Owner (tenantId nulo) — métrica de plataforma conta só usuários clientes.
+const countAll = (): Promise<number> => {
+    return prisma.user.count({ where: { deletedAt: null, tenantId: { not: null } } });
+};
+
 export const userRepository = {
     create,
     findByTenantAndEmail,
     findById,
     listByTenant,
+    countAll,
 };

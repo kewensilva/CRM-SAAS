@@ -1,0 +1,41 @@
+<h2 mat-dialog-title>Editar empresa</h2>
+
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div mat-dialog-content class="edit-tenant-form">
+    <mat-form-field appearance="fill" floatLabel="always" class="edit-tenant-form__field">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" />
+      @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+        <mat-error>O nome é obrigatório.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="edit-tenant-form__field">
+      <mat-label>Nome fantasia</mat-label>
+      <input matInput formControlName="tradeName" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="edit-tenant-form__field">
+      <mat-label>Domínio</mat-label>
+      <input matInput formControlName="domain" />
+      @if (form.controls.domain.touched && form.controls.domain.hasError('required')) {
+        <mat-error>O domínio é obrigatório.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (errorMessage()) {
+      <p class="edit-tenant-form__error" role="alert">{{ errorMessage() }}</p>
+    }
+  </div>
+
+  <div mat-dialog-actions align="end">
+    <button type="button" mat-button (click)="cancel()" [disabled]="saving()">Cancelar</button>
+    <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
+      @if (saving()) {
+        <mat-spinner diameter="20" />
+      } @else {
+        Salvar
+      }
+    </button>
+  </div>
+</form>

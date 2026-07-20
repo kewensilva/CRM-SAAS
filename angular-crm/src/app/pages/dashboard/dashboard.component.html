@@ -1,0 +1,4 @@
+<app-owner-dashboard *ngIf="session.isOwner(); else tenantDashboard" />
+<ng-template #tenantDashboard>
+  <app-tenant-dashboard />
+</ng-template>

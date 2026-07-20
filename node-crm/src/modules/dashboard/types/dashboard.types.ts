@@ -8,3 +8,11 @@ export type DashboardSummary = {
     dealsLost: number;
     pendingActivities: number;
 };
+
+// Agregado de toda a plataforma (todos os tenants) — só para o Dashboard do Owner.
+export type PlatformDashboardSummary = {
+    tenantsCount: number;
+    usersCount: number;
+    leadsCount: number;
+    qualifiedLeadsCount: number;
+};

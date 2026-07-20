@@ -1,6 +1,6 @@
 import { prisma } from "../../../shared/database/prisma-client";
 import type { CreateLeadDTO } from "../dto/create-lead.dto";
-import type { Lead } from "../types/lead.types";
+import type { Lead, LeadStatus } from "../types/lead.types";
 
 const create = (data: CreateLeadDTO): Promise<Lead> => {
     return prisma.lead.create({
@@ -11,6 +11,10 @@ const create = (data: CreateLeadDTO): Promise<Lead> => {
             name: data.name,
             email: data.email ?? null,
             phone: data.phone ?? null,
+            cpf: data.cpf ?? null,
+            location: data.location ?? null,
+            referralSource: data.referralSource ?? null,
+            notes: data.notes ?? null,
         },
     });
 };
@@ -32,6 +36,15 @@ const countByTenant = (tenantId: string): Promise<number> => {
     return prisma.lead.count({ where: { tenantId, deletedAt: null } });
 };
 
+// Contagens sem filtro de tenantId — só para o Dashboard do Owner (agregado de plataforma).
+const countAll = (): Promise<number> => {
+    return prisma.lead.count({ where: { deletedAt: null } });
+};
+
+const countAllByStatus = (status: LeadStatus): Promise<number> => {
+    return prisma.lead.count({ where: { status, deletedAt: null } });
+};
+
 const findByTenantAndEmail = (tenantId: string, email: string): Promise<Lead | null> => {
     return prisma.lead.findFirst({
         where: { tenantId, email, deletedAt: null },
@@ -50,6 +63,8 @@ export const leadRepository = {
     findByIdAndTenant,
     listByTenant,
     countByTenant,
+    countAll,
+    countAllByStatus,
     findByTenantAndEmail,
     updateContactInfo,
 };

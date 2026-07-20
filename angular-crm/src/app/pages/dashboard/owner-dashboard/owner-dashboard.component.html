@@ -1,0 +1,50 @@
+<div class="dashboard">
+  <p *ngIf="loading()">Carregando...</p>
+  <p class="dashboard__error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+
+  <div class="dashboard__cards" *ngIf="!loading() && !errorMessage()">
+    <div class="metric-card" *ngFor="let card of metricCards()">
+      <div class="metric-card__header">
+        <span class="metric-card__title">{{ card.title }}</span>
+      </div>
+
+      <div class="metric-card__value-row">
+        <span class="metric-card__value">({{ card.value }})</span>
+      </div>
+
+      <img
+        [src]="card.chartImage"
+        alt=""
+        class="metric-card__chart"
+        [class]="'metric-card__chart--' + card.chartTint"
+      />
+    </div>
+  </div>
+
+  <div class="dashboard__section" *ngIf="!loading() && !errorMessage()">
+    <div class="dashboard__section-header">
+      <h2>Lista de Empresas</h2>
+    </div>
+
+    <div class="dashboard__section-content" *ngIf="tenants().length === 0">
+      <p>Nenhuma empresa cadastrada ainda.</p>
+    </div>
+
+    <table class="tenants-table" *ngIf="tenants().length > 0">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Domínio</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let tenant of tenants()">
+          <td>{{ tenant.name }}</td>
+          <td>{{ tenant.domain }}</td>
+          <td>{{ tenant.status === 'ACTIVE' ? 'Ativo' : 'Inativo' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

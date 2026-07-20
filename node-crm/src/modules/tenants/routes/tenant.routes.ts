@@ -7,5 +7,10 @@ import { tenantController } from "../controllers/tenant.controller";
 
 export const tenantRoutes: RouterType = Router();
 
-tenantRoutes.post("/tenants", authenticate, authorize("OWNER"), tenantController.create);
-tenantRoutes.get("/tenants", authenticate, authorize("OWNER"), tenantController.list);
+const ownerAccess = authorize("OWNER");
+
+tenantRoutes.post("/tenants", authenticate, ownerAccess, tenantController.create);
+tenantRoutes.get("/tenants", authenticate, ownerAccess, tenantController.list);
+tenantRoutes.put("/tenants/:id", authenticate, ownerAccess, tenantController.update);
+tenantRoutes.delete("/tenants/:id", authenticate, ownerAccess, tenantController.remove);
+tenantRoutes.get("/tenants/:id/users", authenticate, ownerAccess, tenantController.listUsers);

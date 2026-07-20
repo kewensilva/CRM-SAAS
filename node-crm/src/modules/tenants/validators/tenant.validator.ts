@@ -15,3 +15,10 @@ export const createTenantSchema = z.object({
     adminEmail: z.string({ error: "Campo obrigatório." }).trim().email("E-mail inválido."),
     adminPassword: passwordSchema,
 });
+
+export const updateTenantSchema = z.object({
+    name: z.string().trim().min(1, "Campo obrigatório.").optional(),
+    tradeName: z.string().trim().optional(),
+    domain: z.string().trim().min(1, "Campo obrigatório.").optional(),
+    status: z.enum(["ACTIVE", "INACTIVE"], { error: "Status inválido." }).optional(),
+});

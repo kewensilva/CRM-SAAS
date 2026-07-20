@@ -1,0 +1,43 @@
+<div class="main-layout">
+  <aside class="sidebar" [class.sidebar--collapsed]="isCollapsed()">
+    <div class="sidebar__logo">
+      <img src="assets/images/sidebar-logo.png" alt="Logo" />
+    </div>
+
+    <button
+      type="button"
+      class="sidebar__toggle"
+      (click)="toggleSidebar()"
+      [attr.aria-label]="isCollapsed() ? 'Expandir menu' : 'Recolher menu'"
+    >
+      <mat-icon>{{ isCollapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    </button>
+
+    <nav class="sidebar__nav">
+      <a
+        *ngFor="let item of menuItems()"
+        [routerLink]="item.route"
+        routerLinkActive="sidebar__item--active"
+        class="sidebar__item"
+      >
+        <img [src]="item.icon" alt="" class="sidebar__item-icon" />
+        <span class="sidebar__item-label" *ngIf="!isCollapsed()">{{ item.label }}</span>
+      </a>
+    </nav>
+
+    <div class="sidebar__footer">
+      <a
+        [routerLink]="settingsItem.route"
+        routerLinkActive="sidebar__item--active"
+        class="sidebar__item"
+      >
+        <img [src]="settingsItem.icon" alt="" class="sidebar__item-icon" />
+        <span class="sidebar__item-label" *ngIf="!isCollapsed()">{{ settingsItem.label }}</span>
+      </a>
+    </div>
+  </aside>
+
+  <main class="main-layout__content" [class.main-layout__content--expanded]="isCollapsed()">
+    <router-outlet />
+  </main>
+</div>

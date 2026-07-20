@@ -1,4 +1,7 @@
+import type { Prisma } from "../../../../generated/prisma/client";
 import { prisma } from "../../../shared/database/prisma-client";
+import { stripUndefined } from "../../../shared/helpers/nullable-fields";
+import type { UpdateTenantDTO } from "../dto/update-tenant.dto";
 import type { Tenant } from "../types/tenant.types";
 
 type CreateTenantData = {
@@ -60,9 +63,26 @@ const list = (): Promise<Tenant[]> => {
     });
 };
 
+const count = (): Promise<number> => {
+    return prisma.tenant.count({ where: { deletedAt: null } });
+};
+
+const update = (id: string, data: UpdateTenantDTO): Promise<Tenant> => {
+    const updateData = stripUndefined(data) as unknown as Prisma.TenantUpdateInput;
+
+    return prisma.tenant.update({ where: { id }, data: updateData });
+};
+
+const softDelete = (id: string): Promise<Tenant> => {
+    return prisma.tenant.update({ where: { id }, data: { deletedAt: new Date() } });
+};
+
 export const tenantRepository = {
     create,
     findByDomain,
     findById,
     list,
+    count,
+    update,
+    softDelete,
 };

@@ -1,0 +1,80 @@
+<div class="widget-config-page">
+  <div class="widget-config-page__header">
+    <button type="button" mat-icon-button matTooltip="Voltar" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="font-display widget-config-page__title">Widget de Captação de Lead</h1>
+  </div>
+
+  @if (loading()) {
+    <p>Carregando...</p>
+  }
+
+  @if (errorMessage()) {
+    <p class="widget-config-page__error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (!loading()) {
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate class="widget-form">
+      <mat-slide-toggle formControlName="enabled">Widget ativo</mat-slide-toggle>
+
+      <div class="widget-form__row">
+        <label class="widget-form__color-label" for="buttonColor">Cor do botão</label>
+        <input
+          id="buttonColor"
+          type="color"
+          formControlName="buttonColor"
+          class="widget-form__color-input"
+        />
+      </div>
+
+      <div class="widget-form__row widget-form__icon-row">
+        <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+          <mat-label>Ícone do botão</mat-label>
+          <mat-select formControlName="icon">
+            @for (option of iconOptions; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-icon class="widget-form__icon-preview">{{ form.controls.icon.value }}</mat-icon>
+      </div>
+
+      <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+        <mat-label>Responsável padrão</mat-label>
+        <mat-select formControlName="defaultResponsibleUserId">
+          <mat-option [value]="null">Nenhum</mat-option>
+          @for (user of users(); track user.id) {
+            <mat-option [value]="user.id">{{ user.name }} ({{ user.email }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="widget-form__fields-section">
+        <h2 class="widget-form__fields-title">Campos solicitados</h2>
+        <p class="widget-form__fields-hint">Nome é sempre coletado.</p>
+
+        <div formGroupName="requestedFields" class="widget-form__fields-grid">
+          @for (option of fieldOptions; track option.key) {
+            <mat-checkbox [formControlName]="option.key">{{ option.label }}</mat-checkbox>
+          }
+        </div>
+      </div>
+
+      @if (successMessage()) {
+        <p class="widget-form__success" role="status">{{ successMessage() }}</p>
+      }
+
+      <div class="widget-form__actions">
+        <button type="button" mat-button (click)="goBack()" [disabled]="saving()">Voltar</button>
+        <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
+          @if (saving()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            Salvar
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

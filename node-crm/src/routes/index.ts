@@ -13,6 +13,7 @@ import { pipelineRoutes } from "../modules/pipelines";
 import { settingsRoutes } from "../modules/settings";
 import { tenantRoutes } from "../modules/tenants";
 import { userRoutes } from "../modules/users";
+import { widgetRoutes } from "../modules/widgets";
 
 export const apiRouter: RouterType = Router();
 
@@ -28,3 +29,4 @@ apiRouter.use(dealRoutes);
 apiRouter.use(activityRoutes);
 apiRouter.use(dashboardRoutes);
 apiRouter.use(metaRoutes);
+apiRouter.use(widgetRoutes);

@@ -88,6 +88,7 @@ model Tenant {
     settings         Settings?
     metaIntegration  MetaIntegration?
     metaLogs         MetaIntegrationLog[]
+    widget           TenantWidget?
 
     @@map("tenants")
 }
@@ -128,6 +129,7 @@ model User {
     dealStageChanges      DealStageHistory[]
     activities            Activity[]
     metaIntegrationsAsDefaultResponsible MetaIntegration[]
+    widgetsAsDefaultResponsible TenantWidget[]
 
     @@unique([tenantId, email])
     @@index([tenantId])
@@ -146,6 +148,13 @@ model Lead {
     name              String
     email             String?
     phone             String?
+    // cpf/location/referralSource/notes: opcionais, preenchidos quando o Lead vem do
+    // widget de captação embutido no site do tenant (ver TenantWidget) — nenhum outro
+    // fluxo de criação de Lead os exige.
+    cpf               String?
+    location          String?
+    referralSource    String?    @map("referral_source")
+    notes             String?    @db.Text
     status            LeadStatus @default(NEW)
     createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
     updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz
@@ -398,4 +407,27 @@ model MetaIntegrationLog {
     @@index([leadgenId])
     @@index([status])
     @@map("meta_integration_logs")
+}
+
+// Configuração (por Owner) do formulário de captação de Lead que o Tenant embute no
+// próprio site. Mesmo padrão de MetaIntegration: nasce só quando o Owner configura algo
+// pela 1ª vez (upsert), não em toda criação de Tenant. requestedFields guarda um
+// subconjunto fixo de campos opcionais do Lead ("phone","email","location","cpf",
+// "referralSource","notes") — "name" fica de fora porque é sempre coletado.
+model TenantWidget {
+    id                       String    @id @default(uuid()) @db.Uuid
+    tenantId                 String    @unique @map("tenant_id") @db.Uuid
+    enabled                  Boolean   @default(false)
+    buttonColor              String?   @map("button_color")
+    icon                     String?
+    defaultResponsibleUserId String?   @map("default_responsible_user_id") @db.Uuid
+    requestedFields          String[]  @map("requested_fields")
+    createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt                DateTime? @map("deleted_at") @db.Timestamptz
+
+    tenant             Tenant @relation(fields: [tenantId], references: [id])
+    defaultResponsible User?  @relation(fields: [defaultResponsibleUserId], references: [id])
+
+    @@map("tenant_widgets")
 }

@@ -1,0 +1,17 @@
+.edit-tenant-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 360px;
+  font-family: Roboto, sans-serif;
+
+  &__field {
+    width: 100%;
+  }
+
+  &__error {
+    margin: 0 0 8px;
+    color: #c62828;
+    font-size: 14px;
+  }
+}
