@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "dev": "ts-node-dev ./src/server.ts",
     "db:seed": "ts-node --transpile-only prisma/seed.ts",
     "db:seed:demo": "ts-node --transpile-only prisma/seed-demo.ts"
@@ -19,6 +19,7 @@
     "bcrypt": "^6.0.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.6.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.22.0",
     "pino": "^10.3.1",
@@ -27,10 +28,13 @@
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
+    "jest": "^30.4.2",
     "prisma": "^7.8.0",
+    "ts-jest": "^29.4.11",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3"

@@ -15,7 +15,7 @@ escalabilidade extrema. Detalhes: [vision.md](.claude/harness/vision.md), [produ
 
 Módulos (nesta ordem de implementação): Autenticação → Tenants → Usuários →
 Configurações → Empresas → Contatos → Leads → Pipeline → Negociações → Atividades →
-Dashboard → Integração Meta Lead Ads → Auditoria.
+Dashboard → Integração Meta Lead Ads → Web Lead Capture Widget → Auditoria.
 ([development-workflow.md](.claude/harness/development-workflow.md))
 
 ## Stack oficial (não substituir sem aprovação explícita)
@@ -307,6 +307,47 @@ Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-t
   - `permissions.md` não tem uma linha própria para "Integrações"; apliquei por analogia a
     mesma política de Configurações (Tenant Admin gerencia o próprio tenant, Manager/User sem
     acesso) por ser o módulo administrativo mais parecido.
+- **Web Lead Capture Widget** (`modules/integrations/web-widget/`): módulo **independente**,
+  irmão de `integrations/meta/`, não uma generalização do módulo Meta — architecture.md diz
+  explicitamente "Novas integrações deverão ser implementadas como módulos independentes",
+  então mantive o código do Meta intocado. Botão flutuante embutível via
+  `<script src=".../api/v1/webhooks/web-widget/widget.js" data-key="TENANT_PUBLIC_KEY">`
+  em sites de clientes em qualquer plataforma (Wix, Shopify, WordPress, etc.), captura
+  Nome/E-mail/Telefone/Mensagem + UTM (`utm_source/medium/campaign/term/content`) +
+  `pageUrl`/`referrer`, envia para `POST /api/v1/webhooks/web-widget/leads`.
+  - **`publicKey` é deliberadamente não-secreta** (`WebWidgetIntegration.publicKey`, análoga
+    ao `pageId` do Meta): fica visível no código-fonte do site do cliente, então não pode
+    proteger nada por sigilo, diferente do `X-Hub-Signature-256` HMAC do Meta. Segurança vem
+    de rate limiting (20 req/min/IP, `shared/middleware/rate-limit.ts`, nova dependência
+    `express-rate-limit`) + honeypot (campo oculto `website` no form; preenchido = descarta
+    silenciosamente, loga `FAILED`, responde 200 igual). `POST .../regenerate-key` permite
+    ao Tenant Admin rotacionar a chave se o embed vazar de forma indesejada.
+  - **Exceção de CORS aberto, escopada**: o projeto não tem CORS configurado em lugar
+    nenhum (nem o pacote `cors` instalado) — security.md pede lista explícita de domínios,
+    mas o widget precisa ser chamável de qualquer domínio de cliente. `Access-Control-Allow-Origin: *`
+    é setado manualmente só nas duas rotas públicas do widget
+    (`web-widget-public.controller.ts`), nunca globalmente — mesmo tipo de exceção pontual
+    que o webhook do Meta já é para JWT.
+  - **Mesmo princípio "nenhum Lead descartado sem registro"** do Meta: `WebWidgetLog` é
+    criado com status `RECEIVED` antes de qualquer validação de `publicKey`, com `tenantId`
+    nulo se a chave não bater com nenhum tenant (chave inválida/rotacionada) — nunca
+    descartado silenciosamente, só a resposta ao chamador continua sempre 200 (só falha de
+    schema Zod, ex. nome ausente, retorna 400 — não é sinal sobre validade de `publicKey`,
+    ajuda o dev do site a depurar a integração).
+  - **Limitação conhecida**: Mensagem e dados de UTM só existem em `WebWidgetLog`, não no
+    Lead — `Lead` não tem campos `message`/`source`/UTM no schema e business-rules.md não
+    os define, então não alterei o model (fora do escopo). Mensagem só é visível na tela de
+    logs da integração, não no próprio Lead — mesma limitação estrutural que já existe pro
+    rastreamento de origem Meta via `MetaIntegrationLog.leadId`.
+  - **Sem bundler**: `widget.js` é JS vanilla escrito à mão em
+    `modules/integrations/web-widget/public/widget.js`, servido via `res.sendFile` (não
+    `express.static`, é um único arquivo) — não há pipeline de build de frontend no
+    `node-crm` e criar um só para isso seria desproporcional (tech-stack.md: "existe solução
+    nativa?").
+  - **Gap pré-existente, não corrigido aqui**: rate limiting só foi adicionado nessa rota
+    específica — login, recuperação de senha e demais endpoints de autenticação continuam
+    sem rate limiting, apesar de security.md pedir, porque não fazia parte do escopo desta
+    tarefa (registrado aqui, não corrigido automaticamente).
 
 Decisão deliberada: **não construí o barramento de eventos genérico** (`shared/events/`) que
 events.md descreve, mesmo o Deal sendo o primeiro caso real de `StageChanged`. O histórico de
