@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "node-crm",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "node-crm", "run", "dev"],
+      "port": 3333
+    },
+    {
       "name": "angular-crm",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["ng", "serve", "--port", "4200"],

@@ -66,6 +66,13 @@ enum MetaIntegrationLogStatus {
     FAILED
 }
 
+enum WebWidgetLogStatus {
+    RECEIVED
+    PROCESSED
+    DUPLICATE
+    FAILED
+}
+
 model Tenant {
     id        String       @id @default(uuid()) @db.Uuid
     name      String
@@ -88,7 +95,8 @@ model Tenant {
     settings         Settings?
     metaIntegration  MetaIntegration?
     metaLogs         MetaIntegrationLog[]
-    widget           TenantWidget?
+    webWidgetIntegration WebWidgetIntegration?
+    webWidgetLogs        WebWidgetLog[]
 
     @@map("tenants")
 }
@@ -129,7 +137,7 @@ model User {
     dealStageChanges      DealStageHistory[]
     activities            Activity[]
     metaIntegrationsAsDefaultResponsible MetaIntegration[]
-    widgetsAsDefaultResponsible TenantWidget[]
+    webWidgetIntegrationsAsDefaultResponsible WebWidgetIntegration[]
 
     @@unique([tenantId, email])
     @@index([tenantId])
@@ -148,13 +156,6 @@ model Lead {
     name              String
     email             String?
     phone             String?
-    // cpf/location/referralSource/notes: opcionais, preenchidos quando o Lead vem do
-    // widget de captação embutido no site do tenant (ver TenantWidget) — nenhum outro
-    // fluxo de criação de Lead os exige.
-    cpf               String?
-    location          String?
-    referralSource    String?    @map("referral_source")
-    notes             String?    @db.Text
     status            LeadStatus @default(NEW)
     createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
     updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz
@@ -166,6 +167,7 @@ model Lead {
     deal        Deal?
     activities  Activity[]
     metaLogs    MetaIntegrationLog[]
+    webWidgetLogs WebWidgetLog[]
 
     @@index([tenantId])
     @@index([companyId])
@@ -409,25 +411,61 @@ model MetaIntegrationLog {
     @@map("meta_integration_logs")
 }
 
-// Configuração (por Owner) do formulário de captação de Lead que o Tenant embute no
-// próprio site. Mesmo padrão de MetaIntegration: nasce só quando o Owner configura algo
-// pela 1ª vez (upsert), não em toda criação de Tenant. requestedFields guarda um
-// subconjunto fixo de campos opcionais do Lead ("phone","email","location","cpf",
-// "referralSource","notes") — "name" fica de fora porque é sempre coletado.
-model TenantWidget {
-    id                       String    @id @default(uuid()) @db.Uuid
-    tenantId                 String    @unique @map("tenant_id") @db.Uuid
-    enabled                  Boolean   @default(false)
-    buttonColor              String?   @map("button_color")
-    icon                     String?
-    defaultResponsibleUserId String?   @map("default_responsible_user_id") @db.Uuid
-    requestedFields          String[]  @map("requested_fields")
-    createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz
-    updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-    deletedAt                DateTime? @map("deleted_at") @db.Timestamptz
+// Config por Tenant do widget de captura de Leads embutido em sites de clientes (Wix,
+// Shopify, WordPress, etc). publicKey é análogo ao pageId do Meta, mas deliberadamente
+// não-secreto: fica visível no código-fonte do site do cliente. Segurança vem de rate
+// limiting na rota pública, não de sigilo da chave. defaultResponsibleUserId segue o mesmo
+// motivo do MetaIntegration: Lead.responsibleUserId é obrigatório, mas não há usuário
+// autenticado criando o Lead nesse fluxo.
+model WebWidgetIntegration {
+    id                       String                @id @default(uuid()) @db.Uuid
+    tenantId                 String                @unique @map("tenant_id") @db.Uuid
+    enabled                  Boolean               @default(false)
+    publicKey                String                @unique @map("public_key")
+    defaultResponsibleUserId String?               @map("default_responsible_user_id") @db.Uuid
+    duplicateStrategy        DuplicateLeadStrategy @default(IGNORE) @map("duplicate_strategy")
+    showEmailField           Boolean               @default(true) @map("show_email_field")
+    showPhoneField           Boolean               @default(true) @map("show_phone_field")
+    showMessageField         Boolean               @default(true) @map("show_message_field")
+    buttonLabel              String                @default("Fale conosco") @map("button_label")
+    createdAt                DateTime              @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt                DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt                DateTime?             @map("deleted_at") @db.Timestamptz
 
     tenant             Tenant @relation(fields: [tenantId], references: [id])
     defaultResponsible User?  @relation(fields: [defaultResponsibleUserId], references: [id])
 
-    @@map("tenant_widgets")
+    @@index([publicKey])
+    @@map("web_widget_integrations")
+}
+
+// "Nenhum Lead deverá ser descartado sem registro" (mesmo princípio do MetaIntegrationLog,
+// business-rules.md > Integração Meta Lead Ads) aplicado ao widget: todo POST recebido vira
+// uma linha aqui antes de qualquer processamento. tenantId nullable porque uma publicKey
+// inválida/rotacionada não bate com nenhum Tenant — mesmo assim é registrado, não descartado.
+// Mensagem e dados de UTM só existem aqui, não no Lead (Lead não tem esses campos no schema).
+model WebWidgetLog {
+    id           String             @id @default(uuid()) @db.Uuid
+    tenantId     String?            @map("tenant_id") @db.Uuid
+    leadId       String?            @map("lead_id") @db.Uuid
+    status       WebWidgetLogStatus @default(RECEIVED)
+    errorMessage String?            @map("error_message") @db.Text
+    pageUrl      String?            @map("page_url")
+    referrer     String?
+    utmSource    String?            @map("utm_source")
+    utmMedium    String?            @map("utm_medium")
+    utmCampaign  String?            @map("utm_campaign")
+    utmTerm      String?            @map("utm_term")
+    utmContent   String?            @map("utm_content")
+    message      String?            @db.Text
+    rawPayload   String             @map("raw_payload") @db.Text
+    createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt    DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+    tenant Tenant? @relation(fields: [tenantId], references: [id])
+    lead   Lead?   @relation(fields: [leadId], references: [id])
+
+    @@index([tenantId])
+    @@index([status])
+    @@map("web_widget_logs")
 }

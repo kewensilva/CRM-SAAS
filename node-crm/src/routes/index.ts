@@ -8,12 +8,12 @@ import { contactRoutes } from "../modules/contacts";
 import { dashboardRoutes } from "../modules/dashboard";
 import { dealRoutes } from "../modules/deals";
 import { metaRoutes } from "../modules/integrations/meta";
+import { webWidgetRoutes } from "../modules/integrations/web-widget";
 import { leadRoutes } from "../modules/leads";
 import { pipelineRoutes } from "../modules/pipelines";
 import { settingsRoutes } from "../modules/settings";
 import { tenantRoutes } from "../modules/tenants";
 import { userRoutes } from "../modules/users";
-import { widgetRoutes } from "../modules/widgets";
 
 export const apiRouter: RouterType = Router();
 
@@ -29,4 +29,4 @@ apiRouter.use(dealRoutes);
 apiRouter.use(activityRoutes);
 apiRouter.use(dashboardRoutes);
 apiRouter.use(metaRoutes);
-apiRouter.use(widgetRoutes);
+apiRouter.use(webWidgetRoutes);
