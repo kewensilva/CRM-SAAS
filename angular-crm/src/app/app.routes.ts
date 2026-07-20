@@ -37,13 +37,6 @@ export const routes: Routes = [
           import('./pages/empresas/empresas.component').then((m) => m.EmpresasComponent),
       },
       {
-        path: 'empresas/:id/widget',
-        loadComponent: () =>
-          import('./pages/empresas/widget-config/widget-config.component').then(
-            (m) => m.WidgetConfigComponent,
-          ),
-      },
-      {
         path: 'configuracoes',
         loadComponent: () =>
           import('./pages/configuracoes/configuracoes.component').then(

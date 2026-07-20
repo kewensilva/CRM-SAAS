@@ -1,0 +1,135 @@
+$color-primary: #ff9521;
+
+.configuracoes-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: Roboto, sans-serif;
+}
+
+.configuracoes-page__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.configuracoes-page__title {
+  margin: 0;
+  font-size: 28px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.configuracoes-page__error {
+  color: #c62828;
+}
+
+.widget-form,
+.widget-embed,
+.widget-logs {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.widget-form__field {
+  width: 100%;
+  max-width: 420px;
+}
+
+.widget-form__fields-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.widget-form__fields-title {
+  margin: 0;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.widget-form__fields-hint {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.widget-form__fields-grid {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.widget-form__success {
+  color: #2e7d32;
+  margin: 0;
+}
+
+.widget-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.widget-embed__title,
+.widget-logs__title {
+  margin: 0;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.widget-embed__hint {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.widget-embed__snippet-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.widget-embed__snippet {
+  flex: 1;
+  margin: 0;
+  padding: 12px;
+  background-color: rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.widget-logs__empty {
+  color: rgba(0, 0, 0, 0.6);
+  font-weight: 300;
+  margin: 0;
+}
+
+.widget-logs__table-wrapper {
+  overflow-x: auto;
+}
+
+.widget-logs-table {
+  width: 100%;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background-color: rgba(46, 125, 50, 0.12);
+  color: #2e7d32;
+  font-size: 13px;
+  font-weight: 500;
+
+  &--inactive {
+    background-color: rgba(198, 40, 40, 0.12);
+    color: #c62828;
+  }
+}

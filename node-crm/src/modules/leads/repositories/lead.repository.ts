@@ -11,10 +11,6 @@ const create = (data: CreateLeadDTO): Promise<Lead> => {
             name: data.name,
             email: data.email ?? null,
             phone: data.phone ?? null,
-            cpf: data.cpf ?? null,
-            location: data.location ?? null,
-            referralSource: data.referralSource ?? null,
-            notes: data.notes ?? null,
         },
     });
 };

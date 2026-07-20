@@ -8,10 +8,6 @@ export type Lead = {
     name: string;
     email: string | null;
     phone: string | null;
-    cpf: string | null;
-    location: string | null;
-    referralSource: string | null;
-    notes: string | null;
     status: LeadStatus;
     createdAt: Date;
     updatedAt: Date;

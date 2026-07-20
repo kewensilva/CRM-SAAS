@@ -9,25 +9,12 @@ import { webWidgetSubmissionSchema } from "../validators/web-widget-submission.v
 
 const WIDGET_SCRIPT_PATH = path.join(__dirname, "..", "public", "widget.js");
 
-// O widget é embutido em domínios arbitrários de clientes (Wix, Shopify, WordPress, etc.),
-// então essas duas rotas precisam de CORS aberto — exceção pontual e documentada, o resto
-// da API não tem CORS habilitado (ver CLAUDE.md > Estado atual do código).
-const setPublicCorsHeaders = (res: Response) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-};
-
-const corsPreflight = (req: Request, res: Response) => {
-    setPublicCorsHeaders(res);
-
-    return res.status(204).end();
-};
+// CORS aberto pra essas rotas vem do middleware global em app.ts (prefixo
+// /api/v1/webhooks/web-widget), não precisa ser tratado aqui.
 
 // Arquivo estático servido à mão (sem express.static, é um único arquivo) — não há
 // bundler no projeto, widget.js é JS vanilla escrito diretamente (ver CLAUDE.md).
 const serveScript = (req: Request, res: Response) => {
-    setPublicCorsHeaders(res);
     res.setHeader("Content-Type", "application/javascript; charset=utf-8");
     res.setHeader("Cache-Control", "public, max-age=300");
 
@@ -39,8 +26,6 @@ const serveScript = (req: Request, res: Response) => {
 // payload (ex.: nome ausente) retorna 400, para ajudar o desenvolvedor do site a depurar a
 // integração sem vazar informação sobre quais chaves existem.
 const submitLead = async (req: Request, res: Response) => {
-    setPublicCorsHeaders(res);
-
     const parsed = webWidgetSubmissionSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -66,7 +51,6 @@ const submitLead = async (req: Request, res: Response) => {
 };
 
 export const webWidgetPublicController = {
-    corsPreflight,
     serveScript,
     submitLead,
 };

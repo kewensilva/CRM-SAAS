@@ -38,9 +38,9 @@ webWidgetRoutes.get(
 );
 
 // Rotas públicas — chamadas pelo widget.js embutido em sites de terceiros, sem JWT.
-// CORS aberto só aqui (ver web-widget-public.controller.ts), resto da API sem CORS.
+// CORS aberto só nesse prefixo (middleware global em app.ts), resto da API usa a
+// allowlist restrita da SPA.
 webWidgetRoutes.get("/webhooks/web-widget/widget.js", webWidgetPublicController.serveScript);
-webWidgetRoutes.options("/webhooks/web-widget/leads", webWidgetPublicController.corsPreflight);
 webWidgetRoutes.post(
     "/webhooks/web-widget/leads",
     widgetSubmissionRateLimiter,

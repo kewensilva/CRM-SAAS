@@ -1,0 +1,142 @@
+<div class="configuracoes-page">
+  <div class="configuracoes-page__header">
+    <h1 class="font-display configuracoes-page__title">Widget de Captação de Lead</h1>
+  </div>
+
+  @if (loading()) {
+    <p>Carregando...</p>
+  }
+
+  @if (errorMessage()) {
+    <p class="configuracoes-page__error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (!loading()) {
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate class="widget-form">
+      <mat-slide-toggle formControlName="enabled">Widget ativo</mat-slide-toggle>
+
+      <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+        <mat-label>Responsável padrão</mat-label>
+        <mat-select formControlName="defaultResponsibleUserId">
+          <mat-option [value]="null">Nenhum</mat-option>
+          @for (user of users(); track user.id) {
+            <mat-option [value]="user.id">{{ user.name }} ({{ user.email }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+        <mat-label>Ao encontrar um Lead com o mesmo e-mail</mat-label>
+        <mat-select formControlName="duplicateStrategy">
+          <mat-option value="IGNORE">Manter o Lead existente</mat-option>
+          <mat-option value="UPDATE">Atualizar os dados do Lead existente</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+        <mat-label>Texto do botão</mat-label>
+        <input matInput formControlName="buttonLabel" maxlength="60" />
+      </mat-form-field>
+
+      <div class="widget-form__fields-section">
+        <h2 class="widget-form__fields-title">Campos do formulário</h2>
+        <p class="widget-form__fields-hint">Nome é sempre coletado.</p>
+
+        <div class="widget-form__fields-grid">
+          <mat-checkbox formControlName="showEmailField">E-mail</mat-checkbox>
+          <mat-checkbox formControlName="showPhoneField">Telefone</mat-checkbox>
+          <mat-checkbox formControlName="showMessageField">Mensagem</mat-checkbox>
+        </div>
+      </div>
+
+      @if (successMessage()) {
+        <p class="widget-form__success" role="status">{{ successMessage() }}</p>
+      }
+
+      <div class="widget-form__actions">
+        <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
+          @if (saving()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            Salvar
+          }
+        </button>
+      </div>
+    </form>
+
+    @if (embedSnippet(); as snippet) {
+      <div class="widget-embed">
+        <h2 class="widget-embed__title">Código de instalação</h2>
+        <p class="widget-embed__hint">
+          Cole esse trecho em qualquer página do site do cliente, antes do
+          <code>&lt;/body&gt;</code>.
+        </p>
+        <div class="widget-embed__snippet-row">
+          <pre class="widget-embed__snippet"><code>{{ snippet }}</code></pre>
+          <button
+            type="button"
+            mat-icon-button
+            matTooltip="Copiar código"
+            (click)="copyEmbedSnippet()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
+        </div>
+        <button
+          type="button"
+          mat-button
+          [disabled]="regenerating()"
+          (click)="regenerateKey()"
+        >
+          @if (regenerating()) {
+            <mat-spinner diameter="16" />
+          } @else {
+            Gerar nova chave
+          }
+        </button>
+      </div>
+    }
+
+    <div class="widget-logs">
+      <h2 class="widget-logs__title">Últimas submissões</h2>
+
+      @if (logs().length === 0) {
+        <p class="widget-logs__empty">Nenhuma submissão recebida ainda.</p>
+      } @else {
+        <div class="widget-logs__table-wrapper">
+          <table mat-table [dataSource]="logs()" class="widget-logs-table">
+            <ng-container matColumnDef="createdAt">
+              <th mat-header-cell *matHeaderCellDef>Data</th>
+              <td mat-cell *matCellDef="let log">{{ log.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let log">
+                <span
+                  class="status-badge"
+                  [class.status-badge--inactive]="log.status === 'FAILED'"
+                >
+                  {{ log.status }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="utmSource">
+              <th mat-header-cell *matHeaderCellDef>Origem (UTM)</th>
+              <td mat-cell *matCellDef="let log">{{ log.utmSource || '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="message">
+              <th mat-header-cell *matHeaderCellDef>Mensagem / Erro</th>
+              <td mat-cell *matCellDef="let log">{{ log.errorMessage || log.message || '—' }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="logDisplayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: logDisplayedColumns"></tr>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>

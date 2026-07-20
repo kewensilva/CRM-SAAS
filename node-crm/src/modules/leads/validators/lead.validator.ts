@@ -5,8 +5,4 @@ export const createLeadSchema = z.object({
     email: z.string().trim().email("E-mail inválido.").optional(),
     phone: z.string().trim().optional(),
     companyId: z.string().trim().uuid("Empresa inválida.").optional(),
-    cpf: z.string().trim().optional(),
-    location: z.string().trim().optional(),
-    referralSource: z.string().trim().optional(),
-    notes: z.string().trim().optional(),
 });
