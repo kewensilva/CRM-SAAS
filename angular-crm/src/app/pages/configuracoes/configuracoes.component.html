@@ -95,6 +95,75 @@
           }
         </button>
       </div>
+
+      <div class="widget-install">
+        <h2 class="widget-install__title">Como instalar no site do cliente</h2>
+        <p class="widget-install__hint">
+          O código é o mesmo em qualquer plataforma — só muda onde ele é colado.
+        </p>
+
+        <mat-tab-group animationDuration="0ms">
+          <mat-tab label="WordPress">
+            <ol class="widget-install__steps">
+              <li>
+                Mais simples: instale um plugin como <strong>"WPCode"</strong> ou
+                <strong>"Insert Headers and Footers"</strong>, cole o código no campo
+                de <em>Footer</em> e salve.
+              </li>
+              <li>
+                Alternativa manual: em <strong>Aparência → Editor de tema</strong>,
+                abra <code>footer.php</code> e cole o código logo antes de
+                <code>&lt;/body&gt;</code>.
+              </li>
+            </ol>
+          </mat-tab>
+
+          <mat-tab label="Wix">
+            <ol class="widget-install__steps">
+              <li>
+                No painel do site, vá em
+                <strong>Configurações → Ferramentas de Marketing e SEO → Código personalizado</strong>.
+              </li>
+              <li>Clique em "Adicionar código personalizado" e cole o script.</li>
+              <li>
+                Em "Adicionar código para", escolha <strong>Todas as páginas</strong> e em
+                "Posição no código", escolha <strong>Body - end</strong>.
+              </li>
+            </ol>
+          </mat-tab>
+
+          <mat-tab label="Shopify">
+            <ol class="widget-install__steps">
+              <li>No admin da loja, vá em <strong>Loja Online → Temas</strong>.</li>
+              <li>No tema publicado, clique em <strong>Editar código</strong>.</li>
+              <li>
+                Abra <code>layout/theme.liquid</code> e cole o script logo antes de
+                <code>&lt;/body&gt;</code>.
+              </li>
+            </ol>
+          </mat-tab>
+
+          <mat-tab label="Google Tag Manager">
+            <ol class="widget-install__steps">
+              <li>No GTM, crie uma nova <strong>Tag</strong> do tipo "HTML personalizado".</li>
+              <li>Cole o script no campo de HTML.</li>
+              <li>
+                Em "Acionador", escolha <strong>All Pages</strong> e publique o
+                contêiner.
+              </li>
+            </ol>
+          </mat-tab>
+
+          <mat-tab label="Site HTML / outras">
+            <ol class="widget-install__steps">
+              <li>
+                Abra o arquivo HTML de cada página (ou o template comum, se o site usar
+                um) e cole o script logo antes de <code>&lt;/body&gt;</code>.
+              </li>
+            </ol>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
     }
 
     <div class="widget-logs">

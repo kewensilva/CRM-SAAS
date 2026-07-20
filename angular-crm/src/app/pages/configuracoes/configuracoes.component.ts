@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { forkJoin } from 'rxjs';
 
@@ -38,6 +39,7 @@ const LOG_DISPLAYED_COLUMNS = ['createdAt', 'status', 'utmSource', 'message'];
     MatSelectModule,
     MatSlideToggleModule,
     MatTableModule,
+    MatTabsModule,
     MatTooltipModule,
   ],
   templateUrl: './configuracoes.component.html',

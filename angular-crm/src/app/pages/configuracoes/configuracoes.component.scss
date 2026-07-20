@@ -104,6 +104,41 @@ $color-primary: #ff9521;
   word-break: break-all;
 }
 
+.widget-install {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.widget-install__title {
+  margin: 0;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.widget-install__hint {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.widget-install__steps {
+  margin: 16px 4px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.87);
+
+  code {
+    background-color: rgba(0, 0, 0, 0.06);
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-size: 13px;
+  }
+}
+
 .widget-logs__empty {
   color: rgba(0, 0, 0, 0.6);
   font-weight: 300;
