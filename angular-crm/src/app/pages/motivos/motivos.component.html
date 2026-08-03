@@ -1,0 +1,44 @@
+<div class="motivos-page">
+  <h1 class="motivos-page__title">Motivos de perda</h1>
+  <p class="motivos-page__subtitle">
+    @if (session.isOwner()) {
+      Motivos cadastrados aqui aparecem para todos os tenants da plataforma.
+    } @else {
+      Além dos motivos padrão da plataforma, você pode cadastrar motivos extras só para o seu tenant.
+    }
+  </p>
+
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else {
+    @if (errorMessage()) {
+      <p class="motivos-page__error">{{ errorMessage() }}</p>
+    }
+
+    @if (canManage) {
+      <form [formGroup]="form" (ngSubmit)="add()" class="motivos-page__form">
+        <mat-form-field appearance="fill" floatLabel="always" class="motivos-page__field">
+          <mat-label>Novo motivo</mat-label>
+          <input matInput formControlName="label" />
+        </mat-form-field>
+        <button type="submit" mat-flat-button color="primary" [disabled]="saving()">Adicionar</button>
+      </form>
+    }
+
+    <div class="motivos-page__list">
+      @for (reason of reasons(); track reason.id) {
+        <div class="motivos-page__row">
+          <span>{{ reason.label }}</span>
+          <span class="motivos-page__badge">{{ reason.tenantId === null ? 'Plataforma' : 'Meu tenant' }}</span>
+          @if (canManage && isOwnReason(reason)) {
+            <button mat-icon-button type="button" (click)="remove(reason)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+        </div>
+      } @empty {
+        <p>Nenhum motivo cadastrado ainda.</p>
+      }
+    </div>
+  }
+</div>

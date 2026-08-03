@@ -1,0 +1,40 @@
+<h2 mat-dialog-title>Importar leads</h2>
+
+<div mat-dialog-content class="import-leads">
+  <p class="import-leads__hint">
+    Selecione um arquivo .xlsx com as colunas Nome (obrigatório), E-mail e Telefone.
+  </p>
+
+  <input type="file" accept=".xlsx" (change)="onFileSelected($event)" />
+
+  @if (errorMessage()) {
+    <p class="import-leads__error">{{ errorMessage() }}</p>
+  }
+
+  @if (result(); as summary) {
+    <div class="import-leads__summary">
+      <p>{{ summary.createdCount }} lead(s) importado(s) com sucesso.</p>
+      @if (summary.errors.length > 0) {
+        <p class="import-leads__error">{{ summary.errors.length }} linha(s) com erro:</p>
+        <ul>
+          @for (error of summary.errors; track error.row) {
+            <li>Linha {{ error.row }}: {{ error.message }}</li>
+          }
+        </ul>
+      }
+    </div>
+  }
+</div>
+
+<div mat-dialog-actions align="end">
+  <button type="button" mat-button (click)="close()">Fechar</button>
+  <button
+    type="button"
+    mat-flat-button
+    color="primary"
+    [disabled]="!selectedFile() || uploading()"
+    (click)="upload()"
+  >
+    Importar
+  </button>
+</div>

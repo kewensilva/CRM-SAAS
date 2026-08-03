@@ -1,0 +1,11 @@
+.add-lead-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 360px;
+  font-family: Roboto, sans-serif;
+
+  &__field {
+    width: 100%;
+  }
+}

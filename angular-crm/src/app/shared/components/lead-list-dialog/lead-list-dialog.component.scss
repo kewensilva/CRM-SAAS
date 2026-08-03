@@ -1,0 +1,40 @@
+.lead-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 360px;
+  max-height: 400px;
+  overflow-y: auto;
+
+  &__empty {
+    color: rgba(0, 0, 0, 0.6);
+    padding: 12px 0;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 8px;
+    border: none;
+    background: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    text-align: left;
+    font-family: Roboto, sans-serif;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  &__name {
+    font-weight: 500;
+  }
+
+  &__status {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}

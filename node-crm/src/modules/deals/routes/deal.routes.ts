@@ -21,3 +21,8 @@ dealRoutes.delete("/deals/:id", authenticate, deleteAccess, dealController.remov
 dealRoutes.put("/deals/:id/stage", authenticate, fullAccess, dealController.changeStage);
 dealRoutes.put("/deals/:id/status", authenticate, fullAccess, dealController.changeStatus);
 dealRoutes.get("/deals/:id/history", authenticate, fullAccess, dealController.history);
+
+// Kanban de Leads (tela Leads) — vive no módulo deals porque a lógica de mover pra
+// Vendido/Perdido já era responsabilidade dele (conversão Lead→Deal). Mesmo acesso de
+// quem já cria/lista Leads e Deals hoje.
+dealRoutes.put("/leads/:id/status", authenticate, fullAccess, dealController.moveLeadStatus);

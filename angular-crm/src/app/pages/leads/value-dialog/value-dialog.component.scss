@@ -1,0 +1,17 @@
+.value-dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 360px;
+  font-family: Roboto, sans-serif;
+
+  &__field {
+    width: 100%;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}

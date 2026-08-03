@@ -1,11 +1,100 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 
-import { UnderConstructionComponent } from '../../shared/components/under-construction/under-construction.component';
+import { LeadsService } from '../../core/leads/leads.service';
+import { Lead, LeadStatus } from '../../models/lead.model';
+
+const STATUS_LABELS: Record<LeadStatus, string> = {
+  SEM_CONTATO: 'Sem contato',
+  NAO_ATENDE: 'Não atende',
+  EM_ANDAMENTO: 'Em andamento',
+  VENDIDO: 'Vendido',
+  PERDIDO: 'Perdido',
+};
 
 @Component({
   selector: 'app-oportunidades',
   standalone: true,
-  imports: [UnderConstructionComponent],
-  template: `<app-under-construction title="Oportunidades" />`,
+  imports: [MatIconModule],
+  templateUrl: './oportunidades.component.html',
+  styleUrl: './oportunidades.component.scss',
 })
-export class OportunidadesComponent {}
+export class OportunidadesComponent implements OnInit {
+  readonly loading = signal(true);
+  readonly errorMessage = signal<string | null>(null);
+  readonly searchTerm = signal('');
+
+  private readonly currentMonthLeads = signal<Lead[]>([]);
+
+  readonly filteredLeads = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    const leads = this.currentMonthLeads();
+
+    if (!term) {
+      return leads;
+    }
+
+    return leads.filter((lead) => {
+      const name = lead.name?.toLowerCase() ?? '';
+      const email = lead.email?.toLowerCase() ?? '';
+      const phone = lead.phone?.toLowerCase() ?? '';
+      return name.includes(term) || email.includes(term) || phone.includes(term);
+    });
+  });
+
+  constructor(private readonly leadsService: LeadsService) {}
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    this.leadsService.list().subscribe({
+      next: (leads) => {
+        this.currentMonthLeads.set(this.filterByCurrentMonth(leads));
+        this.loading.set(false);
+      },
+      error: () => {
+        this.errorMessage.set('Não foi possível carregar as oportunidades.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  onSearchInput(value: string): void {
+    this.searchTerm.set(value);
+  }
+
+  statusLabel(status: LeadStatus): string {
+    return STATUS_LABELS[status];
+  }
+
+  formatDate(value: string): string {
+    return new Date(value).toLocaleDateString('pt-BR');
+  }
+
+  formatValue(value: string | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) {
+      return '';
+    }
+    return numeric.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  private filterByCurrentMonth(leads: Lead[]): Lead[] {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    return leads.filter((lead) => {
+      const createdAt = new Date(lead.createdAt);
+      return createdAt.getMonth() === currentMonth && createdAt.getFullYear() === currentYear;
+    });
+  }
+}

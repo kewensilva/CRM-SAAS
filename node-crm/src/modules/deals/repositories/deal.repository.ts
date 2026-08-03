@@ -6,20 +6,20 @@ import { BusinessRuleError } from "../../../shared/errors";
 import type { CreateDealDTO, UpdateDealDTO } from "../dto/create-deal.dto";
 import type { Deal, DealStageHistoryEntry } from "../types/deal.types";
 
-// Cria a negociação, converte o Lead (única e não-reversível — business-rules.md > Leads >
-// Conversão) e registra a primeira entrada do histórico de etapas, tudo em uma transação.
-// O `updateMany` com filtro de status é o que garante atomicidade real contra conversão
-// duplicada em requisições concorrentes: se o Lead já foi convertido por outra requisição
-// entre a validação do service e este ponto, `count` vem 0 e a transação inteira é desfeita.
+// Cria a negociação (aberta, IN_PROGRESS) e marca o Lead como EM_ANDAMENTO, registrando a
+// primeira entrada do histórico de etapas — tudo em uma transação. O guard real contra
+// duplicidade é `deal: null` no updateMany (Deal.leadId também é @unique no schema, uma
+// segunda camada de proteção a nível de banco): se o Lead já tem uma negociação (criada por
+// este fluxo OU pelo Kanban via createFinal), `count` vem 0 e a transação é desfeita.
 const create = (data: CreateDealDTO, changedByUserId: string): Promise<Deal> => {
     return prisma.$transaction(async (tx) => {
         const conversion = await tx.lead.updateMany({
-            where: { id: data.leadId, status: { not: "CONVERTED" } },
-            data: { status: "CONVERTED" },
+            where: { id: data.leadId, deal: null },
+            data: { status: "EM_ANDAMENTO" },
         });
 
         if (conversion.count === 0) {
-            throw new BusinessRuleError("Lead já convertido.");
+            throw new BusinessRuleError("Lead já possui uma negociação.");
         }
 
         const deal = await tx.deal.create({ data });
@@ -35,6 +35,28 @@ const create = (data: CreateDealDTO, changedByUserId: string): Promise<Deal> => 
         });
 
         return deal;
+    });
+};
+
+// Kanban de Leads: mover um card pra Vendido/Perdido cria a negociação já finalizada
+// (WON/LOST, com value/lostReason) em vez de nascer IN_PROGRESS — sem etapa/pipeline
+// escolhida manualmente (auto-resolvidos pelo service), sem histórico de etapa inicial
+// (a negociação nunca esteve "em andamento" numa etapa visível do Kanban de Pipeline).
+// Mesmo guard atômico `deal: null` do `create` acima.
+const createFinal = (
+    data: CreateDealDTO & { status: "WON" | "LOST"; value: number | null; lostReason: string | null },
+): Promise<Deal> => {
+    return prisma.$transaction(async (tx) => {
+        const conversion = await tx.lead.updateMany({
+            where: { id: data.leadId, deal: null },
+            data: { status: data.status === "WON" ? "VENDIDO" : "PERDIDO" },
+        });
+
+        if (conversion.count === 0) {
+            throw new BusinessRuleError("Lead já finalizado.");
+        }
+
+        return tx.deal.create({ data });
     });
 };
 
@@ -101,6 +123,7 @@ const countByTenantAndStatus = (tenantId: string, status: DealStatus): Promise<n
 
 export const dealRepository = {
     create,
+    createFinal,
     findByIdAndTenant,
     listByTenant,
     update,

@@ -2,10 +2,10 @@
   <div class="dashboard__toolbar">
     <div class="dashboard__period">
       <img src="assets/icons/icon-calendar-add-fill.svg" alt="" class="dashboard__period-icon" />
-      <span>{{ periodLabel }}</span>
+      <span>{{ periodLabel() }}</span>
     </div>
 
-    <button type="button" class="dashboard__filter-button">
+    <button type="button" class="dashboard__filter-button" (click)="openFilter()">
       <img src="assets/icons/icon-filter-alt-fill.svg" alt="" class="dashboard__filter-icon" />
       <span>Filtro</span>
     </button>
@@ -14,35 +14,58 @@
   <p *ngIf="loading()">Carregando...</p>
   <p class="dashboard__error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
 
-  <div class="dashboard__cards" *ngIf="!loading() && !errorMessage()">
-    <div class="metric-card" *ngFor="let card of metricCards()">
-      <div class="metric-card__header">
-        <span class="metric-card__title">{{ card.title }}</span>
-        <img *ngIf="card.trendIcon" [src]="card.trendIcon" alt="" class="metric-card__trend-icon" />
-      </div>
+  <div class="dashboard__top" *ngIf="!loading() && !errorMessage()">
+    <div class="dashboard__cards">
+      <div
+        class="metric-card metric-card--clickable"
+        *ngFor="let card of metricCards()"
+        (click)="openCardLeads(card)"
+      >
+        <div class="metric-card__header">
+          <span class="metric-card__title">{{ card.title }}</span>
+        </div>
 
-      <div class="metric-card__value-row">
-        <span class="metric-card__value">({{ card.value }})</span>
-      </div>
+        <div class="metric-card__value-row">
+          <span class="metric-card__value">({{ card.value }})</span>
+        </div>
 
-      <img
-        *ngIf="card.chartImage"
-        [src]="card.chartImage"
-        alt=""
-        class="metric-card__chart"
-        [class]="'metric-card__chart--' + card.chartTint"
-      />
+        @if (card.sumValue !== undefined) {
+          <span class="metric-card__sum">{{ formatCurrency(card.sumValue) }}</span>
+        }
+
+        <app-trend-sparkline
+          *ngIf="card.trend"
+          [points]="card.trend"
+          [color]="card.color ?? '#616161'"
+        />
+      </div>
     </div>
-  </div>
 
-  <div class="dashboard__section">
+  </div>
+  
+  <div class="dashboard__section" *ngIf="!loading() && !errorMessage()">
     <div class="dashboard__section-header">
       <img src="assets/icons/icon-trophy.svg" alt="" class="dashboard__section-icon" />
       <h2>Interessados mais recentes</h2>
     </div>
-
-    <div class="dashboard__section-content">
-      <p>Nenhum dado disponível ainda.</p>
+    <div class="chart-card">
+      <span class="chart-card__title">Leads por origem</span>
+      <app-origin-donut-chart [segments]="originSegments()" />
     </div>
+    
+    <div class="dashboard__section-content" [class.dashboard__section-content--list]="recentLeadNames().length > 0">
+      @if (recentLeadNames().length === 0) {
+        <p>Nenhum dado disponível ainda.</p>
+      } @else {
+        <button
+          type="button"
+          class="dashboard__recent-item"
+          *ngFor="let name of recentLeadNames()"
+          (click)="openLeadByName(name)"
+        >
+          {{ name }}
+        </button>
+      }
+    </div> 
   </div>
 </div>

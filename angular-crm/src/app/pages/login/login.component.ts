@@ -60,6 +60,8 @@ export class LoginComponent {
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
 
+    // Sem campo de empresa/domínio: o tenant é resolvido pelo subdomínio atual dentro de
+    // AuthService.login (ver core/auth/tenant-slug.util.ts).
     this.authService.login({ email: email ?? '', password: password ?? '' }).subscribe({
       next: () => {
         this.isSubmitting.set(false);

@@ -1,0 +1,28 @@
+<h2 mat-dialog-title>Adicionar lead</h2>
+
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div mat-dialog-content class="add-lead-form">
+    <mat-form-field appearance="fill" floatLabel="always" class="add-lead-form__field">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" />
+      @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+        <mat-error>O nome é obrigatório.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="add-lead-form__field">
+      <mat-label>E-mail</mat-label>
+      <input matInput type="email" formControlName="email" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="add-lead-form__field">
+      <mat-label>Telefone</mat-label>
+      <input matInput formControlName="phone" />
+    </mat-form-field>
+  </div>
+
+  <div mat-dialog-actions align="end">
+    <button type="button" mat-button (click)="cancel()">Cancelar</button>
+    <button type="submit" mat-flat-button color="primary">Adicionar</button>
+  </div>
+</form>

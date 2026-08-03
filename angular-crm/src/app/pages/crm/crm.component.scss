@@ -1,0 +1,127 @@
+.crm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: Roboto, sans-serif;
+}
+
+.crm__error {
+  color: #c62828;
+}
+
+.crm__toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.crm__filter-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 20px;
+  background-color: #ffffff;
+  font-family: Roboto, sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.crm__filter-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.crm__cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.crm-metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.crm-metric-card__title {
+  font-weight: 600;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.crm-metric-card__value {
+  font-weight: 300;
+  font-size: 32px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.crm__section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.crm__section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+
+  h2 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 18px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+}
+
+.crm__section-subtitle {
+  font-weight: 400;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.6);
+  text-transform: capitalize;
+}
+
+.crm-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.crm-calendar__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.04);
+  cursor: default;
+}
+
+.crm-calendar__day {
+  font-weight: 500;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.crm-calendar__count {
+  font-weight: 300;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+}

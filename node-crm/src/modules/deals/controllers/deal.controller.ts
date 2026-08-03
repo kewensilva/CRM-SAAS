@@ -6,6 +6,7 @@ import {
     changeStageSchema,
     changeStatusSchema,
     createDealSchema,
+    moveLeadStatusSchema,
     updateDealSchema,
 } from "../validators/deal.validator";
 
@@ -120,6 +121,27 @@ const history = async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, data: entries });
 };
 
+const moveLeadStatus = async (req: Request, res: Response) => {
+    const parsed = moveLeadStatusSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+        const details = parsed.error.issues.map((issue) => ({
+            field: String(issue.path[0] ?? "body"),
+            message: issue.message,
+        }));
+
+        throw new ValidationError("Dados inválidos.", details);
+    }
+
+    const result = await dealService.moveLeadStatus(
+        req.params.id as string,
+        req.auth.tenantId as string,
+        parsed.data,
+    );
+
+    return res.status(200).json({ success: true, data: result });
+};
+
 export const dealController = {
     create,
     get,
@@ -129,4 +151,5 @@ export const dealController = {
     changeStage,
     changeStatus,
     history,
+    moveLeadStatus,
 };

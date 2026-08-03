@@ -1,6 +1,9 @@
 import { BusinessRuleError, NotFoundError } from "../../../shared/errors";
 import { companyRepository } from "../../companies/repositories/company.repository";
 import { leadRepository } from "../../leads/repositories/lead.repository";
+import type { LeadStatus } from "../../leads/types/lead.types";
+import { pipelineRepository } from "../../pipelines/repositories/pipeline.repository";
+import { stageRepository } from "../../pipelines/repositories/stage.repository";
 import { pipelineService } from "../../pipelines/services/pipeline.service";
 import { stageService } from "../../pipelines/services/stage.service";
 import { userRepository } from "../../users/repositories/user.repository";
@@ -8,10 +11,14 @@ import type {
     ChangeStageDTO,
     ChangeStatusDTO,
     CreateDealDTO,
+    MoveLeadStatusDTO,
     UpdateDealDTO,
 } from "../dto/create-deal.dto";
 import { dealRepository } from "../repositories/deal.repository";
 import type { Deal, DealStageHistoryEntry } from "../types/deal.types";
+
+const TERMINAL_LEAD_STATUSES: LeadStatus[] = ["VENDIDO", "PERDIDO"];
+const SIMPLE_LEAD_STATUSES: LeadStatus[] = ["SEM_CONTATO", "NAO_ATENDE", "EM_ANDAMENTO"];
 
 const assertStageBelongsToPipeline = async (stageId: string, pipelineId: string, tenantId: string) => {
     const stage = await stageService.getStage(stageId, tenantId);
@@ -30,10 +37,9 @@ const createDeal = async (data: CreateDealDTO, changedByUserId: string): Promise
         throw new NotFoundError("Lead não encontrado.");
     }
 
-    if (lead.status === "CONVERTED") {
-        throw new BusinessRuleError("Lead já convertido.");
-    }
-
+    // Guard definitivo (Lead já tem negociação) é o `deal: null` atômico dentro da
+    // transação em dealRepository.create — aqui é só a validação amigável de empresa/
+    // responsável/pipeline/etapa antes de chegar lá.
     const company = await companyRepository.findByIdAndTenant(data.companyId, data.tenantId);
 
     if (!company) {
@@ -126,6 +132,74 @@ const listHistory = async (id: string, tenantId: string): Promise<DealStageHisto
     return dealRepository.listHistoryByDeal(id, tenantId);
 };
 
+// Kanban de Leads: move o card entre as 5 colunas. SEM_CONTATO/NAO_ATENDE/EM_ANDAMENTO são
+// só uma troca de status; VENDIDO/PERDIDO fecham uma negociação (ver plano da tela de
+// Leads) — Pipeline/Etapa são resolvidos automaticamente (primeiro Pipeline do tenant,
+// primeira Etapa dele), já que o Kanban não pede pro usuário escolher isso a cada card.
+const moveLeadStatus = async (
+    leadId: string,
+    tenantId: string,
+    data: MoveLeadStatusDTO,
+): Promise<{ leadStatus: LeadStatus; budgetValue: unknown; deal: Deal | null }> => {
+    const lead = await leadRepository.findByIdAndTenant(leadId, tenantId);
+
+    if (!lead) {
+        throw new NotFoundError("Lead não encontrado.");
+    }
+
+    if (TERMINAL_LEAD_STATUSES.includes(lead.status)) {
+        throw new BusinessRuleError("Lead já finalizado.");
+    }
+
+    if (SIMPLE_LEAD_STATUSES.includes(data.status)) {
+        const updated = await leadRepository.updateStatus(
+            leadId,
+            data.status,
+            data.status === "EM_ANDAMENTO" ? (data.value ?? null) : undefined,
+        );
+
+        return { leadStatus: updated.status, budgetValue: updated.budgetValue, deal: null };
+    }
+
+    // Vendido/Perdido exigem passar por Em andamento primeiro — não é permitido pular
+    // direto de Sem contato/Não atende pra uma negociação fechada.
+    if (lead.status !== "EM_ANDAMENTO") {
+        throw new BusinessRuleError(
+            "Mova o Lead para \"Em andamento\" antes de marcar como Vendido ou Perdido.",
+        );
+    }
+
+    if (!lead.companyId) {
+        throw new BusinessRuleError("Vincule uma empresa a este Lead antes de finalizar.");
+    }
+
+    const [pipeline] = await pipelineRepository.listByTenant(tenantId);
+
+    if (!pipeline) {
+        throw new BusinessRuleError("Configure um Pipeline antes de mover Leads para Vendido ou Perdido.");
+    }
+
+    const [stage] = await stageRepository.listByPipeline(pipeline.id, tenantId);
+
+    if (!stage) {
+        throw new BusinessRuleError("Configure ao menos uma Etapa no Pipeline antes de finalizar Leads.");
+    }
+
+    const deal = await dealRepository.createFinal({
+        tenantId,
+        leadId,
+        companyId: lead.companyId,
+        responsibleUserId: lead.responsibleUserId,
+        pipelineId: pipeline.id,
+        stageId: stage.id,
+        status: data.status === "VENDIDO" ? "WON" : "LOST",
+        value: data.value ?? null,
+        lostReason: data.lostReason ?? null,
+    });
+
+    return { leadStatus: data.status, budgetValue: lead.budgetValue, deal };
+};
+
 export const dealService = {
     createDeal,
     getDeal,
@@ -135,4 +209,5 @@ export const dealService = {
     changeStage,
     changeStatus,
     listHistory,
+    moveLeadStatus,
 };

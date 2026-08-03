@@ -17,18 +17,30 @@ enum UserStatus {
     INACTIVE
 }
 
+// ANALYST: cadastrado só pelo Owner, tenantId nulo (como o Owner) — não pertence a um
+// único tenant fixo, mas sim a uma lista de tenants vinculados (ver AnalystTenantAccess).
+// Ao escolher uma base de cliente (POST /auth/switch-tenant), opera com o mesmo poder de
+// um Tenant Admin — o token emitido nessa troca de contexto carrega profile "TENANT_ADMIN"
+// (nenhuma checagem de authorize() no resto do sistema precisa saber que é um Analista),
+// só com uma claim extra "analystId" apontando pro usuário Analista original.
 enum UserProfile {
     OWNER
     TENANT_ADMIN
     MANAGER
     USER
+    ANALYST
 }
 
+// Renomeado de NEW/IN_PROGRESS/CONVERTED/LOST para bater 1:1 com as colunas do Kanban de
+// Leads (ver plano da tela de Leads) — NAO_ATENDE é o único valor novo, sem equivalente
+// anterior. VENDIDO/PERDIDO continuam sendo o mesmo "convertido em negociação", só que
+// agora ambos podem gerar Deal (WON ou LOST), não só o antigo CONVERTED.
 enum LeadStatus {
-    NEW
-    IN_PROGRESS
-    CONVERTED
-    LOST
+    SEM_CONTATO
+    NAO_ATENDE
+    EM_ANDAMENTO
+    VENDIDO
+    PERDIDO
 }
 
 enum CompanyStatus {
@@ -97,6 +109,8 @@ model Tenant {
     metaLogs         MetaIntegrationLog[]
     webWidgetIntegration WebWidgetIntegration?
     webWidgetLogs        WebWidgetLog[]
+    lostReasons          LostReason[]
+    analystAccess        AnalystTenantAccess[]
 
     @@map("tenants")
 }
@@ -138,11 +152,30 @@ model User {
     activities            Activity[]
     metaIntegrationsAsDefaultResponsible MetaIntegration[]
     webWidgetIntegrationsAsDefaultResponsible WebWidgetIntegration[]
+    tenantAccess          AnalystTenantAccess[]
 
     @@unique([tenantId, email])
     @@index([tenantId])
     @@index([email])
     @@map("users")
+}
+
+// Vínculo de acesso de um usuário ANALYST a um tenant específico — um Analista pode ter
+// vários vínculos (acessar a base de vários clientes), cada um trocável via
+// POST /auth/switch-tenant. Cadastrado só pelo Owner (ver analysts module).
+model AnalystTenantAccess {
+    id         String   @id @default(uuid()) @db.Uuid
+    analystId  String   @map("analyst_id") @db.Uuid
+    tenantId   String   @map("tenant_id") @db.Uuid
+    createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+    analyst User   @relation(fields: [analystId], references: [id])
+    tenant  Tenant @relation(fields: [tenantId], references: [id])
+
+    @@unique([analystId, tenantId])
+    @@index([analystId])
+    @@index([tenantId])
+    @@map("analyst_tenant_access")
 }
 
 // companyId é opcional: leads recebidos via integração (Meta Lead Ads) chegam sem
@@ -156,7 +189,12 @@ model Lead {
     name              String
     email             String?
     phone             String?
-    status            LeadStatus @default(NEW)
+    status            LeadStatus @default(SEM_CONTATO)
+    // Preenchido opcionalmente ao mover o Lead pro Kanban "Em andamento" — valor
+    // estimado antes de existir uma negociação (Deal) de fato, que só nasce em
+    // Vendido/Perdido. Ver moveLeadStatus em deal.service.ts.
+    budgetValue       Decimal?   @map("budget_value") @db.Decimal(14, 2)
+    notes             String?    @db.Text
     createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
     updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz
@@ -287,6 +325,10 @@ model Deal {
     pipelineId        String     @map("pipeline_id") @db.Uuid
     stageId           String     @map("stage_id") @db.Uuid
     status            DealStatus @default(IN_PROGRESS)
+    // Preenchidos ao mover um Lead pra Vendido (value opcional) ou Perdido (ambos
+    // obrigatórios) no Kanban — ver moveLeadStatus em deal.service.ts.
+    value             Decimal?   @db.Decimal(14, 2)
+    lostReason        String?    @map("lost_reason")
     createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
     updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz
@@ -437,6 +479,24 @@ model WebWidgetIntegration {
 
     @@index([publicKey])
     @@map("web_widget_integrations")
+}
+
+// Catálogo de motivos de perda, usado pelo campo "motivo" ao mover um Lead pra Perdido no
+// Kanban. tenantId nulo = motivo global cadastrado pelo Owner (baseline comum a todos os
+// tenants); tenantId preenchido = motivo extra cadastrado pelo próprio Tenant Admin, visível
+// só no seu tenant. A lista exibida no front-end é sempre a união dos dois.
+model LostReason {
+    id        String    @id @default(uuid()) @db.Uuid
+    tenantId  String?   @map("tenant_id") @db.Uuid
+    label     String
+    createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+    tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+    @@index([tenantId])
+    @@map("lost_reasons")
 }
 
 // "Nenhum Lead deverá ser descartado sem registro" (mesmo princípio do MetaIntegrationLog,

@@ -1,0 +1,181 @@
+<div class="cadastros-page">
+  <h1 class="cadastros-page__title">Cadastros</h1>
+
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else {
+    @if (errorMessage()) {
+      <p class="cadastros-page__error">{{ errorMessage() }}</p>
+    }
+
+    @if (session.isOwner()) {
+      <section class="cadastros-page__section">
+        <h2>Novo Analista</h2>
+        <p class="cadastros-page__hint">
+          O Analista opera com o mesmo poder de um Administrador dentro de cada empresa vinculada
+          — ele escolhe qual acessar no menu "Acessos".
+        </p>
+
+        <form [formGroup]="analystForm" (ngSubmit)="createAnalyst()" class="cadastros-page__form">
+          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+            <mat-label>Nome</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+            <mat-label>E-mail</mat-label>
+            <input matInput type="email" formControlName="email" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+            <mat-label>Senha</mat-label>
+            <input matInput type="password" formControlName="password" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+            <mat-label>Empresas que pode acessar</mat-label>
+            <mat-select formControlName="tenantIds" multiple>
+              @for (tenant of tenants(); track tenant.id) {
+                <mat-option [value]="tenant.id">{{ tenant.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
+            Cadastrar Analista
+          </button>
+        </form>
+      </section>
+
+      <section class="cadastros-page__section">
+        <h2>Analistas cadastrados</h2>
+
+        <div class="cadastros-page__list">
+          @for (analyst of analysts(); track analyst.id) {
+            <div class="cadastros-page__row">
+              <div class="cadastros-page__row-info">
+                <span class="cadastros-page__row-name">{{ analyst.name }}</span>
+                <span class="cadastros-page__row-email">{{ analyst.email }}</span>
+                <span class="cadastros-page__row-tags">
+                  @for (access of analyst.tenantAccess; track access.tenantId) {
+                    <span class="cadastros-page__tag">{{ access.tenantName }}</span>
+                  }
+                </span>
+              </div>
+              <button mat-icon-button type="button" (click)="removeAnalyst(analyst)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          } @empty {
+            <p>Nenhum analista cadastrado ainda.</p>
+          }
+        </div>
+      </section>
+
+      <section class="cadastros-page__section">
+        <h2>Novo Acesso Dono</h2>
+        <p class="cadastros-page__hint">
+          Dono (Owner) administra toda a plataforma. Só um Owner pode cadastrar outro Owner — nenhum
+          outro perfil tem essa opção.
+        </p>
+
+        <form [formGroup]="ownerForm" (ngSubmit)="createOwner()" class="cadastros-page__form">
+          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+            <mat-label>Nome</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+            <mat-label>E-mail</mat-label>
+            <input matInput type="email" formControlName="email" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+            <mat-label>Senha</mat-label>
+            <input matInput type="password" formControlName="password" />
+          </mat-form-field>
+
+          <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
+            Cadastrar Dono
+          </button>
+        </form>
+      </section>
+
+      <section class="cadastros-page__section">
+        <h2>Donos cadastrados</h2>
+
+        <div class="cadastros-page__list">
+          @for (owner of owners(); track owner.id) {
+            <div class="cadastros-page__row">
+              <div class="cadastros-page__row-info">
+                <span class="cadastros-page__row-name">{{ owner.name }}</span>
+                <span class="cadastros-page__row-email">{{ owner.email }}</span>
+              </div>
+              @if (isSelf(owner)) {
+                <span class="cadastros-page__tag">Você</span>
+              } @else {
+                <button mat-icon-button type="button" (click)="removeOwner(owner)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          } @empty {
+            <p>Nenhum Owner cadastrado ainda.</p>
+          }
+        </div>
+      </section>
+    } @else {
+      <section class="cadastros-page__section">
+        <h2>Novo usuário</h2>
+
+        <form [formGroup]="userForm" (ngSubmit)="createUser()" class="cadastros-page__form">
+          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+            <mat-label>Nome</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+            <mat-label>E-mail</mat-label>
+            <input matInput type="email" formControlName="email" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+            <mat-label>Senha</mat-label>
+            <input matInput type="password" formControlName="password" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+            <mat-label>Perfil</mat-label>
+            <mat-select formControlName="profile">
+              @for (option of profileOptions; track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
+            Cadastrar usuário
+          </button>
+        </form>
+      </section>
+
+      <section class="cadastros-page__section">
+        <h2>Usuários da empresa</h2>
+
+        <div class="cadastros-page__list">
+          @for (user of users(); track user.id) {
+            <div class="cadastros-page__row">
+              <div class="cadastros-page__row-info">
+                <span class="cadastros-page__row-name">{{ user.name }}</span>
+                <span class="cadastros-page__row-email">{{ user.email }}</span>
+              </div>
+              <span class="cadastros-page__tag">{{ user.profile }}</span>
+            </div>
+          } @empty {
+            <p>Nenhum usuário cadastrado ainda.</p>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>

@@ -5,14 +5,16 @@
       "name": "node-crm",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--dir", "node-crm", "run", "dev"],
-      "port": 3333
+      "port": 3333,
+      "autoPort": false
     },
     {
       "name": "angular-crm",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["ng", "serve", "--port", "4200"],
       "cwd": "angular-crm",
-      "port": 4200
+      "port": 4200,
+      "autoPort": false
     }
   ]
 }

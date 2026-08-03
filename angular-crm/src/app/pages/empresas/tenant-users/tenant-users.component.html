@@ -1,0 +1,118 @@
+<div class="tenant-users-page">
+  <div class="tenant-users-page__header">
+    <button type="button" mat-icon-button (click)="back()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="tenant-users-page__title">
+      Usuários @if (tenant()) { — {{ tenant()!.name }} }
+    </h1>
+  </div>
+
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else {
+    @if (errorMessage()) {
+      <p class="tenant-users-page__error">{{ errorMessage() }}</p>
+    }
+
+    <section class="tenant-users-page__section">
+      <h2>Novo usuário</h2>
+
+      <form [formGroup]="createForm" (ngSubmit)="createUser()" class="tenant-users-page__form">
+        <mat-form-field appearance="fill" floatLabel="always" class="tenant-users-page__field">
+          <mat-label>Nome</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" floatLabel="always" class="tenant-users-page__field">
+          <mat-label>E-mail</mat-label>
+          <input matInput type="email" formControlName="email" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" floatLabel="always" class="tenant-users-page__field">
+          <mat-label>Senha</mat-label>
+          <input matInput type="password" formControlName="password" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" floatLabel="always" class="tenant-users-page__field">
+          <mat-label>Perfil</mat-label>
+          <mat-select formControlName="profile">
+            @for (option of profileOptions; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
+          Cadastrar usuário
+        </button>
+      </form>
+    </section>
+
+    <section class="tenant-users-page__section">
+      <h2>Usuários cadastrados</h2>
+
+      <div class="tenant-users-page__list">
+        @for (user of users(); track user.id) {
+          @if (editingUserId() === user.id) {
+            <form [formGroup]="editForm" (ngSubmit)="saveEdit(user)" class="tenant-users-page__edit-row">
+              <mat-form-field appearance="fill" floatLabel="always" class="tenant-users-page__field">
+                <mat-label>Nome</mat-label>
+                <input matInput formControlName="name" />
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" floatLabel="always" class="tenant-users-page__field">
+                <mat-label>E-mail</mat-label>
+                <input matInput type="email" formControlName="email" />
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" floatLabel="always" class="tenant-users-page__field">
+                <mat-label>Perfil</mat-label>
+                <mat-select formControlName="profile">
+                  @for (option of profileOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="fill" floatLabel="always" class="tenant-users-page__field">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option value="ACTIVE">Ativo</mat-option>
+                  <mat-option value="INACTIVE">Inativo</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="tenant-users-page__edit-actions">
+                <button type="button" mat-button (click)="cancelEdit()">Cancelar</button>
+                <button type="submit" mat-flat-button color="primary" [disabled]="saving()">Salvar</button>
+              </div>
+            </form>
+          } @else {
+            <div class="tenant-users-page__row">
+              <div class="tenant-users-page__row-info">
+                <span class="tenant-users-page__row-name">{{ user.name }}</span>
+                <span class="tenant-users-page__row-email">{{ user.email }}</span>
+              </div>
+             
+              <span
+                class="tenant-users-page__tag"
+                [class.tenant-users-page__tag--inactive]="user.status === 'INACTIVE'"
+              >
+                {{ user.status === 'ACTIVE' ? 'Ativo' : 'Inativo' }}
+              </span>
+              <button mat-icon-button type="button" (click)="startEdit(user)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button type="button" (click)="removeUser(user)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          }
+        } @empty {
+          <p>Nenhum usuário cadastrado ainda.</p>
+        }
+      </div>
+    </section>
+  }
+</div>

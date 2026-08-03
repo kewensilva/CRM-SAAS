@@ -1,4 +1,4 @@
-export type UserProfile = "OWNER" | "TENANT_ADMIN" | "MANAGER" | "USER";
+export type UserProfile = "OWNER" | "TENANT_ADMIN" | "MANAGER" | "USER" | "ANALYST";
 export type UserStatus = "ACTIVE" | "INACTIVE";
 
 export type User = {

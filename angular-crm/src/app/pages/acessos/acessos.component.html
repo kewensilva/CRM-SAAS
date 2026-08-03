@@ -1,0 +1,31 @@
+<div class="acessos-page">
+  <h1 class="acessos-page__title">Acessos</h1>
+  <p class="acessos-page__subtitle">Escolha a base de cliente que você quer acessar.</p>
+
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else {
+    @if (errorMessage()) {
+      <p class="acessos-page__error">{{ errorMessage() }}</p>
+    }
+
+    @if (tenants().length === 0) {
+      <p>Você ainda não tem acesso a nenhuma empresa. Peça ao Owner para vincular seu usuário.</p>
+    } @else {
+      <div class="acessos-page__list">
+        @for (tenant of tenants(); track tenant.tenantId) {
+          <button
+            type="button"
+            mat-flat-button
+            color="primary"
+            class="acessos-page__item"
+            [disabled]="switching() !== null"
+            (click)="selectTenant(tenant.tenantId)"
+          >
+            {{ tenant.tenantName }}
+          </button>
+        }
+      </div>
+    }
+  }
+</div>

@@ -1,8 +1,12 @@
 import type { Request, Response } from "express";
 
 import { ValidationError } from "../../../shared/errors";
+import { tenantRepository } from "../../tenants/repositories/tenant.repository";
+import { userRepository } from "../../users/repositories/user.repository";
+import { leadExportService } from "../services/lead-export.service";
+import { leadImportService } from "../services/lead-import.service";
 import { leadService } from "../services/lead.service";
-import { createLeadSchema } from "../validators/lead.validator";
+import { createLeadSchema, exportLeadsSchema, updateLeadSchema } from "../validators/lead.validator";
 
 const create = async (req: Request, res: Response) => {
     const parsed = createLeadSchema.safeParse(req.body);
@@ -28,12 +32,85 @@ const create = async (req: Request, res: Response) => {
 };
 
 const list = async (req: Request, res: Response) => {
-    const leads = await leadService.listLeadsByTenant(req.auth.tenantId as string);
+    const leads = await leadService.listWithDetails(req.auth.tenantId as string);
 
     return res.status(200).json({ success: true, data: leads });
+};
+
+const update = async (req: Request, res: Response) => {
+    const parsed = updateLeadSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+        const details = parsed.error.issues.map((issue) => ({
+            field: String(issue.path[0] ?? "body"),
+            message: issue.message,
+        }));
+
+        throw new ValidationError("Dados inválidos.", details);
+    }
+
+    const lead = await leadService.updateLead(
+        req.params.id as string,
+        req.auth.tenantId as string,
+        parsed.data,
+    );
+
+    return res.status(200).json({ success: true, data: lead });
+};
+
+const importFile = async (req: Request, res: Response) => {
+    if (!req.file) {
+        throw new ValidationError("Arquivo obrigatório.", [
+            { field: "file", message: "Envie um arquivo .xlsx." },
+        ]);
+    }
+
+    const result = await leadImportService.importLeads(
+        req.auth.tenantId as string,
+        req.auth.userId,
+        req.file.buffer,
+    );
+
+    return res.status(200).json({ success: true, data: result });
+};
+
+const exportFile = async (req: Request, res: Response) => {
+    const parsed = exportLeadsSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+        const details = parsed.error.issues.map((issue) => ({
+            field: String(issue.path[0] ?? "body"),
+            message: issue.message,
+        }));
+
+        throw new ValidationError("Dados inválidos.", details);
+    }
+
+    const tenantId = req.auth.tenantId as string;
+    const [tenant, exportedBy] = await Promise.all([
+        tenantRepository.findById(tenantId),
+        userRepository.findById(req.auth.userId),
+    ]);
+
+    const buffer = await leadExportService.exportLeads(tenantId, parsed.data.leadIds, {
+        tenantName: tenant?.name ?? "",
+        exportedByName: exportedBy?.name ?? "",
+        filterSummary: parsed.data.filterSummary ?? "Nenhum filtro aplicado",
+    });
+
+    res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader("Content-Disposition", 'attachment; filename="leads.xlsx"');
+
+    return res.status(200).send(Buffer.from(buffer));
 };
 
 export const leadController = {
     create,
     list,
+    update,
+    importFile,
+    exportFile,
 };

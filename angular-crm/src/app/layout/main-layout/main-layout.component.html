@@ -34,6 +34,11 @@
         <img [src]="settingsItem.icon" alt="" class="sidebar__item-icon" />
         <span class="sidebar__item-label" *ngIf="!isCollapsed()">{{ settingsItem.label }}</span>
       </a>
+
+      <button type="button" class="sidebar__item sidebar__item--button" (click)="logout()">
+        <mat-icon class="sidebar__item-icon">logout</mat-icon>
+        <span class="sidebar__item-label" *ngIf="!isCollapsed()">Sair</span>
+      </button>
     </div>
   </aside>
 

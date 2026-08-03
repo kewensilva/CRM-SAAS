@@ -23,9 +23,8 @@ $color-primary: #ff9521;
   color: #c62828;
 }
 
-.widget-form,
-.widget-embed,
-.widget-logs {
+.widget-view,
+.meta-form-section {
   background-color: #ffffff;
   border-radius: 12px;
   padding: 32px;
@@ -34,45 +33,81 @@ $color-primary: #ff9521;
   gap: 16px;
 }
 
-.widget-form__field {
-  width: 100%;
-  max-width: 420px;
-}
-
-.widget-form__fields-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.widget-form__fields-title {
+.section-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 20px;
   color: rgba(0, 0, 0, 0.87);
 }
 
-.widget-form__fields-hint {
+.section-hint {
   margin: 0;
   font-size: 13px;
   color: rgba(0, 0, 0, 0.6);
 }
 
-.widget-form__fields-grid {
+.widget-view__summary {
+  margin: 0;
   display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.widget-form__success {
+.widget-view__row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+
+  dt {
+    min-width: 220px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 13px;
+  }
+
+  dd {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.87);
+    font-size: 14px;
+  }
+}
+
+.widget-embed,
+.widget-install,
+.widget-logs,
+.meta-logs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meta-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meta-form__field {
+  width: 100%;
+  max-width: 420px;
+}
+
+.meta-form__error {
+  color: #c62828;
+  margin: 0;
+}
+
+.meta-form__success {
   color: #2e7d32;
   margin: 0;
 }
 
-.widget-form__actions {
+.meta-form__actions {
   display: flex;
   justify-content: flex-end;
 }
 
+.meta-logs__title,
 .widget-embed__title,
 .widget-logs__title {
   margin: 0;
@@ -139,17 +174,20 @@ $color-primary: #ff9521;
   }
 }
 
-.widget-logs__empty {
+.widget-logs__empty,
+.meta-logs__empty {
   color: rgba(0, 0, 0, 0.6);
   font-weight: 300;
   margin: 0;
 }
 
-.widget-logs__table-wrapper {
+.widget-logs__table-wrapper,
+.meta-logs__table-wrapper {
   overflow-x: auto;
 }
 
-.widget-logs-table {
+.widget-logs-table,
+.meta-logs-table {
   width: 100%;
 }
 

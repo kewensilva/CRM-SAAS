@@ -4,9 +4,11 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Router } from '@angular/router';
 
 import { TenantsService } from '../../core/tenants/tenants.service';
 import { Tenant } from '../../models/tenant.model';
+import { CreateTenantDialogComponent } from './create-tenant-dialog/create-tenant-dialog.component';
 import {
   DeleteTenantDialogComponent,
   DeleteTenantDialogData,
@@ -35,6 +37,7 @@ export class EmpresasComponent implements OnInit {
   constructor(
     private readonly tenantsService: TenantsService,
     private readonly dialog: MatDialog,
+    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -73,6 +76,19 @@ export class EmpresasComponent implements OnInit {
     });
   }
 
+  openCreateDialog(): void {
+    const dialogRef = this.dialog.open<CreateTenantDialogComponent, undefined, Tenant>(
+      CreateTenantDialogComponent,
+      { width: '480px' },
+    );
+
+    dialogRef.afterClosed().subscribe((created) => {
+      if (created) {
+        this.tenants.update((list) => [created, ...list]);
+      }
+    });
+  }
+
   openEditDialog(tenant: Tenant): void {
     const dialogRef = this.dialog.open<EditTenantDialogComponent, EditTenantDialogData, Tenant>(
       EditTenantDialogComponent,
@@ -107,6 +123,14 @@ export class EmpresasComponent implements OnInit {
         },
       });
     });
+  }
+
+  openWidgetConfig(tenant: Tenant): void {
+    this.router.navigate(['/empresas', tenant.id, 'web-widget']);
+  }
+
+  openUsers(tenant: Tenant): void {
+    this.router.navigate(['/empresas', tenant.id, 'usuarios']);
   }
 
   private replaceTenant(updated: Tenant): void {

@@ -1,0 +1,37 @@
+<div class="origin-donut">
+  @if (total() === 0) {
+    <p class="origin-donut__empty">Nenhum lead no período selecionado.</p>
+  } @else {
+    <svg [attr.viewBox]="'0 0 ' + size + ' ' + size" class="origin-donut__svg">
+      <g [attr.transform]="'rotate(-90 ' + size / 2 + ' ' + size / 2 + ')'">
+        @for (arc of arcs(); track arc.label) {
+          <circle
+            [attr.cx]="size / 2"
+            [attr.cy]="size / 2"
+            [attr.r]="radius"
+            fill="none"
+            [attr.stroke]="arc.color"
+            [attr.stroke-width]="strokeWidth"
+            [attr.stroke-dasharray]="arc.dashArray"
+            [attr.stroke-dashoffset]="arc.dashOffset"
+          >
+            <title>{{ arc.label }}: {{ arc.value }} ({{ arc.percentage }}%)</title>
+          </circle>
+        }
+      </g>
+      <text [attr.x]="size / 2" [attr.y]="size / 2" class="origin-donut__total" text-anchor="middle" dominant-baseline="middle">
+        {{ total() }}
+      </text>
+    </svg>
+
+    <ul class="origin-donut__legend">
+      @for (arc of arcs(); track arc.label) {
+        <li class="origin-donut__legend-item">
+          <span class="origin-donut__legend-dot" [style.background-color]="arc.color"></span>
+          <span class="origin-donut__legend-label">{{ arc.label }}</span>
+          <span class="origin-donut__legend-value">{{ arc.value }} ({{ arc.percentage }}%)</span>
+        </li>
+      }
+    </ul>
+  }
+</div>

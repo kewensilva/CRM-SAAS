@@ -1,0 +1,24 @@
+# Gerado manualmente para o deploy do backend (node-crm). Troque "app" pelo nome real
+# escolhido no passo "fly launch" do guia (precisa ser único globalmente na Fly).
+app = "crm-cmb-api"
+primary_region = "gru"
+
+[build]
+
+[http_service]
+  internal_port = 3333
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

@@ -9,6 +9,8 @@ export type Deal = {
     pipelineId: string;
     stageId: string;
     status: DealStatus;
+    value: unknown;
+    lostReason: string | null;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;

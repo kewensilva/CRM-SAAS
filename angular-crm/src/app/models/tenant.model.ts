@@ -13,6 +13,6 @@ export interface TenantUser {
   id: string;
   name: string;
   email: string;
-  profile: 'OWNER' | 'TENANT_ADMIN' | 'MANAGER' | 'USER';
+  profile: 'DONO' | 'ADM' | 'GERENTE' | 'VENDEDOR';
   status: 'ACTIVE' | 'INACTIVE';
 }

@@ -1,0 +1,70 @@
+<div class="opportunities-page">
+  <div class="opportunities-page__search">
+    <mat-icon class="opportunities-page__search-icon">search</mat-icon>
+    <input
+      class="opportunities-page__search-input"
+      type="text"
+      placeholder="Buscar por nome, e-mail ou telefone"
+      [value]="searchTerm()"
+      (input)="onSearchInput($any($event.target).value)"
+    />
+  </div>
+
+  @if (loading()) {
+    <div class="opportunities-page__empty">
+      <p>Carregando oportunidades...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="opportunities-page__empty">
+      <p>{{ errorMessage() }}</p>
+    </div>
+  } @else if (filteredLeads().length === 0) {
+    <div class="opportunities-page__empty">
+      <p>Nenhuma oportunidade encontrada.</p>
+    </div>
+  } @else {
+    <div class="opportunities-grid">
+      @for (lead of filteredLeads(); track lead.id) {
+        <div class="opportunity-card" [class]="'opportunity-card--' + lead.status">
+          <div class="opportunity-card__bar" [class]="'opportunity-card__bar--' + lead.status"></div>
+
+          <div class="opportunity-card__content">
+            <p class="opportunity-card__name">{{ lead.name }}</p>
+
+            @if (lead.email) {
+              <p class="opportunity-card__field">
+                <mat-icon>email</mat-icon>
+                {{ lead.email }}
+              </p>
+            }
+
+            @if (lead.phone) {
+              <p class="opportunity-card__field">
+                <mat-icon>phone</mat-icon>
+                {{ lead.phone }}
+              </p>
+            }
+
+            <p class="opportunity-card__field">
+              <mat-icon>event</mat-icon>
+              Criado em {{ formatDate(lead.createdAt) }}
+            </p>
+
+            <p class="opportunity-card__field">
+              <mat-icon>source</mat-icon>
+              {{ lead.source }}
+            </p>
+
+            @if (lead.deal && lead.deal.value) {
+              <p class="opportunity-card__value">{{ formatValue(lead.deal.value) }}</p>
+            }
+
+            <span class="opportunity-card__status" [class]="'opportunity-card__status--' + lead.status">
+              {{ statusLabel(lead.status) }}
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

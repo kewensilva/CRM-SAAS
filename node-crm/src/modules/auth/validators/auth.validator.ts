@@ -9,3 +9,7 @@ export const loginSchema = z.object({
 export const refreshTokenSchema = z.object({
     refreshToken: z.string({ error: "Campo obrigatório." }).min(1, "Campo obrigatório."),
 });
+
+export const switchTenantSchema = z.object({
+    tenantId: z.string({ error: "Campo obrigatório." }).trim().uuid("Empresa inválida."),
+});

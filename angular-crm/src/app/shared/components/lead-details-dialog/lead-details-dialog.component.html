@@ -1,0 +1,86 @@
+<h2 mat-dialog-title>{{ lead.name }}</h2>
+
+<div mat-dialog-content class="lead-details">
+  <form [formGroup]="form" class="lead-details__form">
+    <mat-form-field appearance="fill" floatLabel="always" class="lead-details__field">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="lead-details__field">
+      <mat-label>E-mail</mat-label>
+      <input matInput formControlName="email" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="lead-details__field">
+      <mat-label>Telefone</mat-label>
+      <input matInput formControlName="phone" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="lead-details__field">
+      <mat-label>Observações</mat-label>
+      <textarea matInput rows="3" formControlName="notes"></textarea>
+    </mat-form-field>
+
+    <button type="button" mat-flat-button color="primary" [disabled]="saving()" (click)="save()">
+      Salvar dados do lead
+    </button>
+  </form>
+
+  <div class="lead-details__row">
+    <span class="lead-details__label">Origem</span>
+    <span class="lead-details__value">{{ lead.source }}</span>
+  </div>
+
+  <div class="lead-details__row">
+    <span class="lead-details__label">Status</span>
+    <span class="lead-details__value">{{ statusLabel }}</span>
+  </div>
+
+  <div class="lead-details__row">
+    <span class="lead-details__label">Criado em</span>
+    <span class="lead-details__value">{{ lead.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+  </div>
+
+  @if (lead.status === 'EM_ANDAMENTO' && !lead.deal) {
+    <div class="lead-details__row">
+      <span class="lead-details__label">Valor orçado</span>
+      <span class="lead-details__value">{{ formatValue(lead.budgetValue) }}</span>
+    </div>
+  }
+
+  @if (lead.deal) {
+    <form [formGroup]="valueForm" class="lead-details__form">
+      <mat-form-field appearance="fill" floatLabel="always" class="lead-details__field">
+        <mat-label>Valor</mat-label>
+        <span matPrefix>R$&nbsp;</span>
+        <input matInput type="number" step="0.01" min="0" formControlName="value" />
+      </mat-form-field>
+      <button type="button" mat-stroked-button [disabled]="saving()" (click)="saveDealValue()">
+        Salvar valor
+      </button>
+
+      @if (lead.status === 'PERDIDO') {
+        <mat-form-field appearance="fill" floatLabel="always" class="lead-details__field">
+          <mat-label>Motivo da perda</mat-label>
+          <textarea matInput rows="2" formControlName="lostReason"></textarea>
+        </mat-form-field>
+        <button type="button" mat-stroked-button [disabled]="saving()" (click)="saveDealLostReason()">
+          Salvar motivo
+        </button>
+      }
+    </form>
+  }
+
+  @if (saveError()) {
+    <p class="lead-details__error">{{ saveError() }}</p>
+  }
+
+  @if (saved()) {
+    <p class="lead-details__success">Alterações salvas.</p>
+  }
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Fechar</button>
+</div>

@@ -1,0 +1,41 @@
+<h2 mat-dialog-title>{{ title }}</h2>
+
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div mat-dialog-content class="value-dialog-form">
+    <mat-form-field appearance="fill" floatLabel="always" class="value-dialog-form__field">
+      <mat-label>Valor</mat-label>
+      <span matPrefix>R$&nbsp;</span>
+      <input matInput type="number" step="0.01" min="0" formControlName="value" />
+      @if (form.controls.value.touched && form.controls.value.hasError('required')) {
+        <mat-error>O valor é obrigatório.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (showReasonField) {
+      <mat-form-field appearance="fill" floatLabel="always" class="value-dialog-form__field">
+        <mat-label>Motivo da perda</mat-label>
+        <mat-select formControlName="lostReason">
+          @for (reason of lostReasonOptions(); track reason.id) {
+            <mat-option [value]="reason.label">{{ reason.label }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.lostReason.touched && form.controls.lostReason.hasError('required')) {
+          <mat-error>O motivo é obrigatório.</mat-error>
+        }
+      </mat-form-field>
+
+      @if (lostReasonOptions().length === 0) {
+        <p class="value-dialog-form__hint">
+          Nenhum motivo cadastrado ainda — peça a um Administrador para cadastrá-los em Configurações.
+        </p>
+      }
+    }
+  </div>
+
+  <div mat-dialog-actions align="end">
+    <button type="button" mat-button (click)="cancel()">Cancelar</button>
+    <button type="submit" mat-flat-button color="primary" [disabled]="saveDisabled">
+      {{ saveLabel }}
+    </button>
+  </div>
+</form>

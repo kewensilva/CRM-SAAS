@@ -1,0 +1,16 @@
+.leads-filter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 360px;
+  font-family: Roboto, sans-serif;
+
+  &__dates {
+    display: flex;
+    gap: 12px;
+  }
+
+  &__field {
+    width: 100%;
+  }
+}

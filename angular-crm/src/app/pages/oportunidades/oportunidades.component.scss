@@ -1,0 +1,160 @@
+.opportunities-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: Roboto, sans-serif;
+}
+
+.opportunities-page__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border-radius: 999px;
+  padding: 10px 20px;
+  max-width: 480px;
+}
+
+.opportunities-page__search-icon {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.opportunities-page__search-input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-family: Roboto, sans-serif;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.87);
+  background: transparent;
+
+  &::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+  }
+}
+
+.opportunities-page__empty {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  p {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.6);
+    font-weight: 300;
+  }
+}
+
+.opportunities-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.opportunity-card {
+  display: flex;
+  background-color: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.opportunity-card__bar {
+  width: 6px;
+  flex-shrink: 0;
+
+  &--SEM_CONTATO {
+    background-color: #607d8b;
+  }
+
+  &--NAO_ATENDE {
+    background-color: #f57c00;
+  }
+
+  &--EM_ANDAMENTO {
+    background-color: #1976d2;
+  }
+
+  &--VENDIDO {
+    background-color: #2e7d32;
+  }
+
+  &--PERDIDO {
+    background-color: #c62828;
+  }
+}
+
+.opportunity-card__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 20px;
+}
+
+.opportunity-card__name {
+  margin: 0 0 4px;
+  font-weight: 600;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.opportunity-card__field {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.6);
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: rgba(0, 0, 0, 0.4);
+  }
+}
+
+.opportunity-card__value {
+  margin: 4px 0 0;
+  font-weight: 600;
+  font-size: 15px;
+  color: #2e7d32;
+}
+
+.opportunity-card__status {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ffffff;
+
+  &--SEM_CONTATO {
+    background-color: #607d8b;
+  }
+
+  &--NAO_ATENDE {
+    background-color: #f57c00;
+  }
+
+  &--EM_ANDAMENTO {
+    background-color: #1976d2;
+  }
+
+  &--VENDIDO {
+    background-color: #2e7d32;
+  }
+
+  &--PERDIDO {
+    background-color: #c62828;
+  }
+}

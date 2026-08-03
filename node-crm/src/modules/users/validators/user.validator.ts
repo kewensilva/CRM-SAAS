@@ -15,3 +15,13 @@ export const createUserSchema = z.object({
         error: "Perfil inválido.",
     }),
 });
+
+// Edição por um Tenant Admin ou pelo Owner (gerenciando os usuários de uma empresa) —
+// sem senha aqui (troca de senha é um fluxo à parte, não implementado ainda) e sem
+// permitir virar OWNER/ANALYST por essa via.
+export const updateUserSchema = z.object({
+    name: z.string().trim().min(1, "Campo obrigatório.").optional(),
+    email: z.string().trim().email("E-mail inválido.").optional(),
+    profile: z.enum(["TENANT_ADMIN", "MANAGER", "USER"], { error: "Perfil inválido." }).optional(),
+    status: z.enum(["ACTIVE", "INACTIVE"], { error: "Status inválido." }).optional(),
+});

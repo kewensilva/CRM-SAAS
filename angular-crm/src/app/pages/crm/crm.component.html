@@ -1,0 +1,49 @@
+<div class="crm">
+  <div class="crm__toolbar">
+    <button type="button" class="crm__filter-button" (click)="openFilter()">
+      <img src="assets/icons/icon-filter-alt-fill.svg" alt="" class="crm__filter-icon" />
+      <span>Filtro</span>
+    </button>
+  </div>
+
+  <p *ngIf="loading()">Carregando...</p>
+  <p class="crm__error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+
+  <ng-container *ngIf="!loading() && !errorMessage()">
+    <div class="crm__cards">
+      <div class="crm-metric-card">
+        <span class="crm-metric-card__title">Total de interessados</span>
+        <span class="crm-metric-card__value">{{ totalInteressados() }}</span>
+      </div>
+
+      <div class="crm-metric-card">
+        <span class="crm-metric-card__title">Novas Oportunidades no mês atual</span>
+        <span class="crm-metric-card__value">{{ novasOportunidadesMesAtual() }}</span>
+      </div>
+
+      <div class="crm-metric-card">
+        <span class="crm-metric-card__title">Oportunidades no Mês anterior</span>
+        <span class="crm-metric-card__value">{{ oportunidadesMesAnterior() }}</span>
+      </div>
+    </div>
+
+    <div class="crm__section">
+      <div class="crm__section-header">
+        <h2>Métricas por data</h2>
+        <span class="crm__section-subtitle">{{ currentMonthLabel() }}</span>
+      </div>
+
+      <div class="crm-calendar">
+        <div
+          class="crm-calendar__cell"
+          *ngFor="let cell of calendarGrid()"
+          [style.background-color]="'rgba(255, 149, 33, ' + cell.opacity + ')'"
+          [matTooltip]="cell.count + ' lead(s) em ' + cell.day"
+        >
+          <span class="crm-calendar__day">{{ cell.day }}</span>
+          <span class="crm-calendar__count" *ngIf="cell.count > 0">{{ cell.count }}</span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

@@ -1,0 +1,97 @@
+<h2 mat-dialog-title>Adicionar empresa</h2>
+
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div mat-dialog-content class="create-tenant-form">
+    <h3 class="create-tenant-form__section-title">Dados da empresa</h3>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="create-tenant-form__field">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" />
+      @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+        <mat-error>O nome é obrigatório.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="create-tenant-form__field">
+      <mat-label>Nome fantasia</mat-label>
+      <input matInput formControlName="tradeName" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="create-tenant-form__field">
+      <mat-label>Domínio</mat-label>
+      <input matInput formControlName="domain" />
+      <mat-hint>Usado no login, ex: minha-empresa</mat-hint>
+      @if (form.controls.domain.touched && form.controls.domain.hasError('required')) {
+        <mat-error>O domínio é obrigatório.</mat-error>
+      }
+      @if (form.controls.domain.touched && form.controls.domain.hasError('server')) {
+        <mat-error>{{ form.controls.domain.getError('server') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <h3 class="create-tenant-form__section-title">Administrador inicial</h3>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="create-tenant-form__field">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="adminName" />
+      @if (form.controls.adminName.touched && form.controls.adminName.hasError('required')) {
+        <mat-error>O nome é obrigatório.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="create-tenant-form__field">
+      <mat-label>E-mail</mat-label>
+      <input matInput type="email" formControlName="adminEmail" />
+      @if (form.controls.adminEmail.touched && form.controls.adminEmail.hasError('required')) {
+        <mat-error>O e-mail é obrigatório.</mat-error>
+      }
+      @if (form.controls.adminEmail.touched && form.controls.adminEmail.hasError('email')) {
+        <mat-error>Informe um e-mail válido.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="create-tenant-form__field">
+      <mat-label>Senha</mat-label>
+      <input
+        matInput
+        [type]="hidePassword() ? 'password' : 'text'"
+        formControlName="adminPassword"
+        autocomplete="new-password"
+      />
+      <button
+        type="button"
+        mat-icon-button
+        matSuffix
+        (click)="togglePasswordVisibility()"
+        [attr.aria-label]="hidePassword() ? 'Mostrar senha' : 'Ocultar senha'"
+      >
+        <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+      <mat-hint>Mínimo 8 caracteres, com maiúscula, minúscula e número.</mat-hint>
+      @if (form.controls.adminPassword.touched && form.controls.adminPassword.hasError('required')) {
+        <mat-error>A senha é obrigatória.</mat-error>
+      }
+      @if (form.controls.adminPassword.touched && form.controls.adminPassword.hasError('minlength')) {
+        <mat-error>A senha deve ter no mínimo 8 caracteres.</mat-error>
+      }
+      @if (form.controls.adminPassword.touched && form.controls.adminPassword.hasError('pattern')) {
+        <mat-error>A senha deve ter maiúscula, minúscula e número.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (errorMessage()) {
+      <p class="create-tenant-form__error" role="alert">{{ errorMessage() }}</p>
+    }
+  </div>
+
+  <div mat-dialog-actions align="end">
+    <button type="button" mat-button (click)="cancel()" [disabled]="saving()">Cancelar</button>
+    <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
+      @if (saving()) {
+        <mat-spinner diameter="20" />
+      } @else {
+        Criar empresa
+      }
+    </button>
+  </div>
+</form>

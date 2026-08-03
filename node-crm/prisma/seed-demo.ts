@@ -288,11 +288,12 @@ const seedTenant = async (blueprint: TenantBlueprint) => {
         leads.push(lead);
     }
 
-    // Não existe endpoint para mover um Lead pra "Em Atendimento" ou "Perdido" — hoje só
-    // NEW (criação) e CONVERTED (via Deal) são alcançáveis pela API. Setado direto aqui só
-    // pra dar variedade visual ao frontend; ver gap documentado no CLAUDE.md.
-    if (leads[5]) await prisma.lead.update({ where: { id: leads[5].id }, data: { status: "IN_PROGRESS" } });
-    if (leads[7]) await prisma.lead.update({ where: { id: leads[7].id }, data: { status: "LOST" } });
+    // PUT /leads/:id/status já existe (Kanban), mas mover pra PERDIDO agora cria uma
+    // negociação de verdade (exige empresa/Pipeline/Etapa já montados) — setado direto
+    // aqui só pra dar variedade visual ao frontend sem depender da ordem de criação
+    // dos demais dados de demonstração abaixo.
+    if (leads[5]) await prisma.lead.update({ where: { id: leads[5].id }, data: { status: "EM_ANDAMENTO" } });
+    if (leads[7]) await prisma.lead.update({ where: { id: leads[7].id }, data: { status: "PERDIDO" } });
 
     const deals = [];
     for (const dealBlueprint of blueprint.deals) {

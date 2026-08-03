@@ -37,6 +37,35 @@ webWidgetRoutes.get(
     webWidgetConfigController.listLogs,
 );
 
+// Contrapartes do Owner: configurar o widget de qualquer tenant (ex.: a partir da tela
+// "Empresas"), não só o próprio — mesmo padrão de /tenants/:id/users e /tenants/:id/widget.
+const ownerAccess = authorize("OWNER");
+
+webWidgetRoutes.get(
+    "/tenants/:tenantId/web-widget",
+    authenticate,
+    ownerAccess,
+    webWidgetConfigController.getForTenant,
+);
+webWidgetRoutes.put(
+    "/tenants/:tenantId/web-widget",
+    authenticate,
+    ownerAccess,
+    webWidgetConfigController.updateForTenant,
+);
+webWidgetRoutes.post(
+    "/tenants/:tenantId/web-widget/regenerate-key",
+    authenticate,
+    ownerAccess,
+    webWidgetConfigController.regenerateKeyForTenant,
+);
+webWidgetRoutes.get(
+    "/tenants/:tenantId/web-widget/logs",
+    authenticate,
+    ownerAccess,
+    webWidgetConfigController.listLogsForTenant,
+);
+
 // Rotas públicas — chamadas pelo widget.js embutido em sites de terceiros, sem JWT.
 // CORS aberto só nesse prefixo (middleware global em app.ts), resto da API usa a
 // allowlist restrita da SPA.

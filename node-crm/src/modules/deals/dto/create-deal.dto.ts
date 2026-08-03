@@ -9,6 +9,8 @@ export type CreateDealDTO = {
 
 export type UpdateDealDTO = {
     responsibleUserId?: string | undefined;
+    value?: number | undefined;
+    lostReason?: string | undefined;
 };
 
 export type ChangeStageDTO = {
@@ -17,4 +19,11 @@ export type ChangeStageDTO = {
 
 export type ChangeStatusDTO = {
     status: "WON" | "LOST";
+};
+
+// Kanban de Leads — mover um card pra Vendido/Perdido (ver deal.service.ts > moveLeadStatus).
+export type MoveLeadStatusDTO = {
+    status: "SEM_CONTATO" | "NAO_ATENDE" | "EM_ANDAMENTO" | "VENDIDO" | "PERDIDO";
+    value?: number | undefined;
+    lostReason?: string | undefined;
 };

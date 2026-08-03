@@ -6,6 +6,10 @@ export type JwtPayload = {
     sub: string;
     tenantId: string | null;
     profile: string;
+    // Presente só em tokens emitidos via POST /auth/switch-tenant: o id do usuário
+    // ANALYST original, mesmo com profile "TENANT_ADMIN" no restante do token (opera com
+    // o mesmo poder de um Tenant Admin dentro do tenant escolhido).
+    analystId?: string;
 };
 
 const signAccessToken = (payload: JwtPayload): string => {

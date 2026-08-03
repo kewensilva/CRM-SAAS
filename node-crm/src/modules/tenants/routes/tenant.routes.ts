@@ -14,3 +14,16 @@ tenantRoutes.get("/tenants", authenticate, ownerAccess, tenantController.list);
 tenantRoutes.put("/tenants/:id", authenticate, ownerAccess, tenantController.update);
 tenantRoutes.delete("/tenants/:id", authenticate, ownerAccess, tenantController.remove);
 tenantRoutes.get("/tenants/:id/users", authenticate, ownerAccess, tenantController.listUsers);
+tenantRoutes.post("/tenants/:id/users", authenticate, ownerAccess, tenantController.createUserForTenant);
+tenantRoutes.put(
+    "/tenants/:id/users/:userId",
+    authenticate,
+    ownerAccess,
+    tenantController.updateUserForTenant,
+);
+tenantRoutes.delete(
+    "/tenants/:id/users/:userId",
+    authenticate,
+    ownerAccess,
+    tenantController.removeUserForTenant,
+);

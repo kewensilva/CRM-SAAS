@@ -37,11 +37,40 @@ export const routes: Routes = [
           import('./pages/empresas/empresas.component').then((m) => m.EmpresasComponent),
       },
       {
+        path: 'empresas/:id/web-widget',
+        loadComponent: () =>
+          import('./pages/empresas/tenant-web-widget/tenant-web-widget.component').then(
+            (m) => m.TenantWebWidgetComponent,
+          ),
+      },
+      {
+        path: 'empresas/:id/usuarios',
+        loadComponent: () =>
+          import('./pages/empresas/tenant-users/tenant-users.component').then(
+            (m) => m.TenantUsersComponent,
+          ),
+      },
+      {
         path: 'configuracoes',
         loadComponent: () =>
           import('./pages/configuracoes/configuracoes.component').then(
             (m) => m.ConfiguracoesComponent,
           ),
+      },
+      {
+        path: 'motivos',
+        loadComponent: () =>
+          import('./pages/motivos/motivos.component').then((m) => m.MotivosComponent),
+      },
+      {
+        path: 'cadastros',
+        loadComponent: () =>
+          import('./pages/cadastros/cadastros.component').then((m) => m.CadastrosComponent),
+      },
+      {
+        path: 'acessos',
+        loadComponent: () =>
+          import('./pages/acessos/acessos.component').then((m) => m.AcessosComponent),
       },
     ],
   },

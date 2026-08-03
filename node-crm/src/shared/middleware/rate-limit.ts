@@ -8,8 +8,8 @@ type RateLimitOptions = {
 };
 
 // Fábrica genérica para uso em qualquer rota que precise de limite de requisições
-// (security.md > Rate Limiting). Hoje só aplicada à submissão pública do widget — login
-// segue sem rate limiting (gap pré-existente, não corrigido neste trabalho).
+// (security.md > Rate Limiting) — aplicada à submissão pública do widget e às rotas de
+// autenticação (login/refresh-token).
 export const createRateLimiter = (options: RateLimitOptions): RequestHandler => {
     return rateLimit({
         windowMs: options.windowMs,

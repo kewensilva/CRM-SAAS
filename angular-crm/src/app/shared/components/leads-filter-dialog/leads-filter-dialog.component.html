@@ -1,0 +1,66 @@
+<h2 mat-dialog-title>Filtrar leads</h2>
+
+<form [formGroup]="form" (ngSubmit)="apply()" novalidate>
+  <div mat-dialog-content class="leads-filter-form">
+    <mat-form-field appearance="fill" floatLabel="always" class="leads-filter-form__field">
+      <mat-label>Período</mat-label>
+      <mat-select formControlName="datePreset">
+        @for (option of periodOptions; track option.label) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (showDatePickers) {
+      <div class="leads-filter-form__dates">
+        <mat-form-field appearance="fill" floatLabel="always" class="leads-filter-form__field">
+          <mat-label>Criado a partir de</mat-label>
+          <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
+          <mat-datepicker-toggle matIconSuffix [for]="startPicker" />
+          <mat-datepicker #startPicker />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" floatLabel="always" class="leads-filter-form__field">
+          <mat-label>Criado até</mat-label>
+          <input matInput [matDatepicker]="endPicker" formControlName="endDate" />
+          <mat-datepicker-toggle matIconSuffix [for]="endPicker" />
+          <mat-datepicker #endPicker />
+        </mat-form-field>
+      </div>
+    }
+
+    <mat-form-field appearance="fill" floatLabel="always" class="leads-filter-form__field">
+      <mat-label>Status</mat-label>
+      <mat-select formControlName="statuses" multiple>
+        @for (option of statusOptions; track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="leads-filter-form__field">
+      <mat-label>Origem</mat-label>
+      <mat-select formControlName="sources" multiple>
+        @for (option of sourceOptions; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always" class="leads-filter-form__field">
+      <mat-label>Vendedor</mat-label>
+      <mat-select formControlName="responsibleUserId">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (user of users(); track user.id) {
+          <mat-option [value]="user.id">{{ user.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div mat-dialog-actions align="end">
+    <button type="button" mat-button (click)="clear()">Limpar</button>
+    <button type="button" mat-button (click)="cancel()">Cancelar</button>
+    <button type="submit" mat-flat-button color="primary">Aplicar</button>
+  </div>
+</form>

@@ -1,6 +1,10 @@
 <div class="empresas-page">
   <div class="empresas-page__header">
     <h1 class="font-display empresas-page__title">Empresas</h1>
+    <button type="button" mat-flat-button color="primary" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      Adicionar Empresa
+    </button>
   </div>
 
   @if (loading()) {
@@ -66,6 +70,24 @@
                 (click)="openEditDialog(tenant)"
               >
                 <mat-icon>edit</mat-icon>
+              </button>
+
+              <button
+                type="button"
+                mat-icon-button
+                matTooltip="Configurar widget de captação"
+                (click)="openWidgetConfig(tenant)"
+              >
+                <mat-icon>widgets</mat-icon>
+              </button>
+
+              <button
+                type="button"
+                mat-icon-button
+                matTooltip="Usuários da empresa"
+                (click)="openUsers(tenant)"
+              >
+                <mat-icon>group</mat-icon>
               </button>
 
               <button

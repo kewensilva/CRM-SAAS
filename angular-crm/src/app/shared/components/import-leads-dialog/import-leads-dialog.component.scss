@@ -1,0 +1,31 @@
+.import-leads {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 360px;
+  font-family: Roboto, sans-serif;
+
+  &__hint {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 13px;
+  }
+
+  &__error {
+    color: #c62828;
+    margin: 0;
+  }
+
+  &__summary {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    ul {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 13px;
+      color: rgba(0, 0, 0, 0.7);
+    }
+  }
+}

@@ -2,22 +2,26 @@
   <p *ngIf="loading()">Carregando...</p>
   <p class="dashboard__error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
 
-  <div class="dashboard__cards" *ngIf="!loading() && !errorMessage()">
-    <div class="metric-card" *ngFor="let card of metricCards()">
-      <div class="metric-card__header">
-        <span class="metric-card__title">{{ card.title }}</span>
-      </div>
+  <div class="dashboard__top" *ngIf="!loading() && !errorMessage()">
+    <div class="dashboard__cards">
+      <div class="metric-card" *ngFor="let card of metricCards()">
+        <div class="metric-card__header">
+          <span class="metric-card__title">{{ card.title }}</span>
+        </div>
 
-      <div class="metric-card__value-row">
-        <span class="metric-card__value">({{ card.value }})</span>
-      </div>
+        <div class="metric-card__value-row">
+          <span class="metric-card__value">({{ card.value }})</span>
+        </div>
 
-      <img
-        [src]="card.chartImage"
-        alt=""
-        class="metric-card__chart"
-        [class]="'metric-card__chart--' + card.chartTint"
-      />
+        <span class="metric-card__secondary" *ngIf="card.secondaryLabel">{{ card.secondaryLabel }}</span>
+
+        <app-trend-sparkline [points]="card.trend" [color]="card.color" />
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <span class="chart-card__title">Empresas por status</span>
+      <app-origin-donut-chart [segments]="statusSegments()" />
     </div>
   </div>
 

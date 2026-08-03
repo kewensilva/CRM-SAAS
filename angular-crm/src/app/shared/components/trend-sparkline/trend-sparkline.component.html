@@ -1,0 +1,43 @@
+<div class="trend-sparkline">
+  <svg
+    class="trend-sparkline__svg"
+    [attr.viewBox]="viewBox"
+    preserveAspectRatio="none"
+    (mousemove)="onMouseMove($event)"
+    (mouseleave)="onMouseLeave()"
+  >
+    <defs>
+      <linearGradient [attr.id]="gradientId" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" [attr.stop-color]="color" stop-opacity="0.28" />
+        <stop offset="100%" [attr.stop-color]="color" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+
+    <path class="trend-sparkline__area" [attr.d]="areaPath()" [attr.fill]="'url(#' + gradientId + ')'" />
+    <path class="trend-sparkline__line" [attr.d]="linePath()" [attr.stroke]="color" />
+
+    @if (hoverPoint(); as point) {
+      <line
+        class="trend-sparkline__crosshair"
+        [attr.x1]="point.x"
+        [attr.x2]="point.x"
+        y1="0"
+        y2="80"
+      />
+      <circle
+        class="trend-sparkline__dot"
+        [attr.cx]="point.x"
+        [attr.cy]="point.y"
+        r="4"
+        [attr.fill]="color"
+      />
+    }
+  </svg>
+
+  @if (hoverPoint(); as point) {
+    <div class="trend-sparkline__tooltip" [style.left.%]="(point.x / 300) * 100">
+      <strong>{{ point.value }}</strong>
+      <span>{{ formatDate(point.date) }}</span>
+    </div>
+  }
+</div>

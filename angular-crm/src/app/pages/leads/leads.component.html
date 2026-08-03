@@ -1,0 +1,101 @@
+<div class="leads-page">
+  <div class="leads-page__header">
+    <h1 class="leads-page__title">Leads</h1>
+    <div class="leads-page__actions">
+      <button mat-stroked-button (click)="openAddLead()">
+        <mat-icon>add</mat-icon>
+        Adicionar lead
+      </button>
+      <button mat-stroked-button (click)="openImport()">
+        <mat-icon>upload_file</mat-icon>
+        Importar
+      </button>
+      <button mat-stroked-button (click)="exportLeads()">
+        <mat-icon>download</mat-icon>
+        Exportar
+      </button>
+      <button mat-stroked-button (click)="openFilter()">
+        <mat-icon>filter_alt</mat-icon>
+        Filtro
+      </button>
+    </div>
+  </div>
+
+  @if (actionError()) {
+    <p class="leads-page__error" role="alert">{{ actionError() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="leads-page__empty">
+      <p>Carregando leads...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="leads-page__empty">
+      <p>{{ errorMessage() }}</p>
+    </div>
+  } @else {
+    <div class="kanban" cdkDropListGroup>
+      @for (column of columns; track column.status) {
+        <div class="kanban-column">
+          <div class="kanban-column__header" [class]="'kanban-column__header--' + column.status">
+            {{ column.label }}
+            <span class="kanban-column__count">{{ board[column.status].length }}</span>
+          </div>
+
+          <div
+            class="kanban-column__list"
+            cdkDropList
+            [cdkDropListData]="board[column.status]"
+            (cdkDropListDropped)="onDrop($event, column.status)"
+          >
+            @for (lead of board[column.status]; track lead.id) {
+              <div class="lead-card" cdkDrag [cdkDragDisabled]="isDragDisabled(lead)">
+                <p class="lead-card__name">{{ lead.name }}</p>
+                @if (lead.email) {
+                  <p class="lead-card__detail">{{ lead.email }}</p>
+                }
+                @if (lead.phone) {
+                  <p class="lead-card__detail">{{ lead.phone }}</p>
+                }
+
+                @if (column.status === 'VENDIDO' && lead.deal?.value) {
+                  <p class="lead-card__value">{{ formatValue(lead.deal?.value) }}</p>
+                }
+
+                @if (column.status === 'EM_ANDAMENTO' && lead.budgetValue) {
+                  <p class="lead-card__value">{{ formatValue(lead.budgetValue) }} (orçado)</p>
+                }
+
+                <div class="lead-card__actions">
+                  @if (column.status === 'VENDIDO') {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Editar valor"
+                      (click)="editDealValue(lead)"
+                    >
+                      <mat-icon>thumb_up</mat-icon>
+                    </button>
+                  }
+                  @if (column.status === 'EM_ANDAMENTO') {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Editar valor orçado"
+                      (click)="editBudgetValue(lead)"
+                    >
+                      <mat-icon>thumb_up</mat-icon>
+                    </button>
+                  }
+                  <button mat-button type="button" (click)="showDetails(lead)">
+                    Ver detalhes
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,59 @@
+.trend-sparkline {
+  position: relative;
+  width: 100%;
+}
+
+.trend-sparkline__svg {
+  width: 100%;
+  height: 80px;
+  display: block;
+  cursor: crosshair;
+}
+
+.trend-sparkline__line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trend-sparkline__area {
+  stroke: none;
+}
+
+.trend-sparkline__crosshair {
+  stroke: rgba(0, 0, 0, 0.18);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.trend-sparkline__dot {
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.trend-sparkline__tooltip {
+  position: absolute;
+  top: -8px;
+  transform: translate(-50%, -100%);
+  background-color: rgba(33, 33, 33, 0.92);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  z-index: 1;
+
+  strong {
+    font-weight: 600;
+  }
+
+  span {
+    opacity: 0.75;
+  }
+}

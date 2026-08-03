@@ -17,12 +17,40 @@ declare global {
 
 export const app: express.Application = express();
 
-// Lista explícita de domínios autorizados (security.md > CORS) — nunca "*".
-const allowedOrigins = (process.env.CORS_ORIGIN ?? "http://localhost:4200")
+// Lista explícita de domínios autorizados (security.md > CORS) — nunca "*". Um padrão
+// "http://*.cmb.com" (prefixo curinga) autoriza qualquer subdomínio de tenant
+// (crm.cmb.<slug>.com) sem precisar listar cada um — continua sendo uma allowlist
+// fechada por domínio base, não um "*" solto.
+const allowedOriginPatterns = (process.env.CORS_ORIGIN ?? "http://localhost:4200,http://*.localhost:4200")
     .split(",")
     .map((origin) => origin.trim());
 
-app.use(cors({ origin: allowedOrigins }));
+const isOriginAllowed = (origin: string): boolean => {
+    return allowedOriginPatterns.some((pattern) => {
+        if (!pattern.includes("*.")) {
+            return pattern === origin;
+        }
+
+        const [protocol, rest] = pattern.split("://");
+        const baseDomain = (rest ?? "").replace("*.", "");
+
+        return origin.startsWith(`${protocol}://`) && origin.endsWith(`.${baseDomain}`);
+    });
+};
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            // Requisições sem header Origin (curl, health checks) não são navegador — libera.
+            if (!origin || isOriginAllowed(origin)) {
+                callback(null, true);
+                return;
+            }
+
+            callback(new Error("Origem não autorizada."));
+        },
+    }),
+);
 
 // O widget é chamado do site do cliente do tenant — um domínio arbitrário, não dá pra
 // usar a allowlist fixa da SPA acima. CORS permissivo aplicado só a esse prefixo
@@ -39,6 +67,11 @@ const captureRawBody = (req: Request, _res: express.Response, buf: Buffer) => {
 app.use(express.json({ verify: captureRawBody }));
 app.use(express.urlencoded({ extended: true }));
 app.use(requestId);
+
+// Sem autenticação — só pra health check de infraestrutura (Fly.io, load balancer)
+// confirmar que o processo está de pé. Checagens de infra não mandam Origin, então
+// passam pela política de CORS acima sem problema.
+app.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
 
 app.use("/api/v1", apiRouter);
 
