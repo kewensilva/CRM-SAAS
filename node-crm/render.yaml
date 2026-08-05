@@ -8,7 +8,6 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health
-    dockerCommand: sh -c "pnpm run db:migrate:deploy && node dist/src/server.js"
     envVars:
       - key: NODE_ENV
         value: production
