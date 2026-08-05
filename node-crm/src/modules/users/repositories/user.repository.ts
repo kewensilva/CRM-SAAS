@@ -58,6 +58,23 @@ const listCreatedAtExcludingPlatformUsers = (): Promise<{ createdAt: Date }[]> =
     });
 };
 
+// BRANCH "static-domain": sem subdomínio por tenant, o login não tem como saber de
+// antemão a qual tenant o e-mail pertence (e-mail só é único DENTRO do tenant, não
+// globalmente — business-rules.md). authService.login tenta a senha em cada candidato
+// ativo até achar o certo — aqui só filtramos os plausíveis (usuário ativo, tenant ativo,
+// exclui Owner/Analista que já são checados à parte).
+const findActiveByEmailAcrossTenants = (email: string): Promise<User[]> => {
+    return prisma.user.findMany({
+        where: {
+            email,
+            deletedAt: null,
+            status: "ACTIVE",
+            tenantId: { not: null },
+            tenant: { status: "ACTIVE", deletedAt: null },
+        },
+    });
+};
+
 const update = (id: string, data: UpdateUserData): Promise<User> => {
     const updateData = stripUndefined(data) as unknown as Prisma.UserUpdateInput;
 
@@ -75,6 +92,7 @@ export const userRepository = {
     listByTenant,
     countAll,
     listCreatedAtExcludingPlatformUsers,
+    findActiveByEmailAcrossTenants,
     update,
     softDelete,
 };

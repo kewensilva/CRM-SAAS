@@ -17,9 +17,9 @@ const issueTokens = (user: { id: string; tenantId: string | null; profile: strin
     };
 };
 
-// Login num subdomínio de tenant (crm.cmb.<slug>.com) — o front-end resolve o slug a
-// partir do próprio hostname do navegador e manda aqui, sem nenhum campo visível pro
-// usuário preencher. Resolve o tenant pelo domínio e busca o usuário só ali.
+// Login com tenantSlug explícito — continua funcionando nesta branch (útil se algum dia
+// voltar a ter subdomínio por tenant), mas o fluxo padrão do formulário (só e-mail/senha)
+// não manda isso, já que o front-end aqui é servido sempre no mesmo domínio estático.
 const loginWithTenantSlug = async (data: LoginDTO & { tenantSlug: string }): Promise<LoginResult> => {
     const tenant = await tenantRepository.findByDomain(data.tenantSlug);
 
@@ -36,21 +36,31 @@ const loginWithTenantSlug = async (data: LoginDTO & { tenantSlug: string }): Pro
     return issueTokens(user);
 };
 
-// Login no domínio base (crm.cmb.com, sem subdomínio de tenant) — só usuários da
-// plataforma (tenantId nulo: Owner ou Analista) entram por aqui. Não tenta adivinhar
-// tenant nenhum: cada tenant só é acessível pelo próprio subdomínio (loginWithTenantSlug).
-const loginPlatformUser = async (data: LoginDTO): Promise<LoginResult> => {
-    const candidate = await userRepository.findByTenantAndEmail(null, data.email);
+// BRANCH "static-domain": um único domínio (crm-cmb.com.br) serve todos os tenants, sem
+// subdomínio — não há como saber de antemão a qual tenant o e-mail pertence (e-mail só é
+// único DENTRO do tenant, não globalmente, ver business-rules.md). Tenta a senha em cada
+// candidato plausível até achar o certo, começando pelo Owner/Analista (tenantId nulo,
+// sempre único).
+const loginByEmailOnly = async (data: LoginDTO): Promise<LoginResult> => {
+    const platformCandidate = await userRepository.findByTenantAndEmail(null, data.email);
 
     if (
-        !candidate ||
-        candidate.status !== "ACTIVE" ||
-        !(await comparePassword(data.password, candidate.passwordHash))
+        platformCandidate &&
+        platformCandidate.status === "ACTIVE" &&
+        (await comparePassword(data.password, platformCandidate.passwordHash))
     ) {
-        throw new AuthenticationError(INVALID_CREDENTIALS_MESSAGE);
+        return issueTokens(platformCandidate);
     }
 
-    return issueTokens(candidate);
+    const tenantCandidates = await userRepository.findActiveByEmailAcrossTenants(data.email);
+
+    for (const candidate of tenantCandidates) {
+        if (await comparePassword(data.password, candidate.passwordHash)) {
+            return issueTokens(candidate);
+        }
+    }
+
+    throw new AuthenticationError(INVALID_CREDENTIALS_MESSAGE);
 };
 
 const login = (data: LoginDTO): Promise<LoginResult> => {
@@ -58,7 +68,7 @@ const login = (data: LoginDTO): Promise<LoginResult> => {
         return loginWithTenantSlug({ ...data, tenantSlug: data.tenantSlug });
     }
 
-    return loginPlatformUser(data);
+    return loginByEmailOnly(data);
 };
 
 const refresh = async (refreshToken: string): Promise<LoginResult> => {

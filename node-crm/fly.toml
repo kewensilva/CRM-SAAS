@@ -1,24 +1,28 @@
-# Gerado manualmente para o deploy do backend (node-crm). Troque "app" pelo nome real
-# escolhido no passo "fly launch" do guia (precisa ser único globalmente na Fly).
-app = "crm-cmb-api"
-primary_region = "gru"
+# fly.toml app configuration file generated for crm-cmb-api on 2026-08-04T18:04:36-03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'crm-cmb-api'
+primary_region = 'gru'
 
 [build]
-
 [http_service]
   internal_port = 3333
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
 
   [[http_service.checks]]
-    grace_period = "10s"
-    interval = "30s"
-    method = "GET"
-    timeout = "5s"
-    path = "/health"
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '10s'
+    method = 'GET'
+    path = '/health'
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "512mb"
+  size = 'shared-cpu-1x'
+  memory = '512mb'
+  cpus = 1
+  memory_mb = 512
