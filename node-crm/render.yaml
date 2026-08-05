@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: crm-cmb-api
+    runtime: docker
+    plan: free
+    region: oregon
+    rootDir: node-crm
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: META_WEBHOOK_VERIFY_TOKEN
+        sync: false
+      - key: CORS_ORIGIN
+        value: https://crm-cmb.com.br
+    preDeployCommand: pnpm run db:migrate:deploy

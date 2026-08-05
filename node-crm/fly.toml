@@ -7,6 +7,10 @@ app = 'crm-cmb-api'
 primary_region = 'gru'
 
 [build]
+
+[deploy]
+  release_command = 'pnpm run db:migrate:deploy'
+
 [http_service]
   internal_port = 3333
   force_https = true
