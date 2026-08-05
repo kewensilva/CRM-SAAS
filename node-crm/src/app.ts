@@ -38,24 +38,34 @@ const isOriginAllowed = (origin: string): boolean => {
     });
 };
 
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            // Requisições sem header Origin (curl, health checks) não são navegador — libera.
-            if (!origin || isOriginAllowed(origin)) {
-                callback(null, true);
-                return;
-            }
+const WEB_WIDGET_PATH_PREFIX = "/api/v1/webhooks/web-widget";
 
-            callback(new Error("Origem não autorizada."));
-        },
+// Um único middleware de CORS, decidido por requisição — não dois `app.use(cors(...))`
+// em sequência. Antes, a política restritiva global rodava sempre primeiro e já
+// respondia com erro (via callback(new Error(...))) pra qualquer origem fora da
+// allowlist, então a rota do widget nunca alcançava seu próprio `cors({ origin: true })`
+// mais permissivo — o widget, chamado do site do cliente do tenant (domínio arbitrário,
+// não dá pra usar a allowlist fixa da SPA), sempre falhava com "Origem não autorizada.".
+app.use(
+    cors((req, callback) => {
+        if (req.path.startsWith(WEB_WIDGET_PATH_PREFIX)) {
+            callback(null, { origin: true });
+            return;
+        }
+
+        callback(null, {
+            origin: (origin, originCallback) => {
+                // Requisições sem header Origin (curl, health checks) não são navegador — libera.
+                if (!origin || isOriginAllowed(origin)) {
+                    originCallback(null, true);
+                    return;
+                }
+
+                originCallback(new Error("Origem não autorizada."));
+            },
+        });
     }),
 );
-
-// O widget é chamado do site do cliente do tenant — um domínio arbitrário, não dá pra
-// usar a allowlist fixa da SPA acima. CORS permissivo aplicado só a esse prefixo
-// específico, depois da política restritiva global (não afrouxa o resto da API).
-app.use("/api/v1/webhooks/web-widget", cors({ origin: true }));
 
 // Guarda o corpo bruto da requisição — necessário para validar a assinatura
 // HMAC (X-Hub-Signature-256) do webhook da Meta, que precisa dos bytes exatos
