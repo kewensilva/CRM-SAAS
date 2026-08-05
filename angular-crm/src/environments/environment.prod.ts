@@ -1,6 +1,7 @@
-// apiUrl é absoluto (não "/api/v1") porque o backend fica num domínio fixo separado
-// (api.crm-cmb.com.br, no Fly.io), diferente do frontend (Vercel), que responde em
-// qualquer subdomínio de tenant (<slug>.crm-cmb.com.br).
+// Branch de domínio único (static-domain): apiUrl é absoluto porque o backend fica num
+// domínio separado (api.crm-cmb.com.br, no Render); o frontend (Vercel) sempre responde
+// no mesmo domínio (crm-cmb.com.br) — baseDomain só existe pra igualar o hostname atual
+// e nunca resolver nenhum slug (ver core/auth/tenant-slug.util.ts).
 export const environment = {
   production: true,
   apiUrl: 'https://api.crm-cmb.com.br/api/v1',
