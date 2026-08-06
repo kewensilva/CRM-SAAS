@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
+import { SessionService } from '../../../core/auth/session.service';
 import { UsersService } from '../../../core/users/users.service';
 import { LeadSource, LeadStatus } from '../../../models/lead.model';
 import { TenantUser } from '../../../models/tenant.model';
@@ -62,6 +63,7 @@ export class LeadsFilterDialogComponent implements OnInit {
     private readonly dialogRef: MatDialogRef<LeadsFilterDialogComponent, LeadsFilterValue>,
     private readonly formBuilder: FormBuilder,
     private readonly usersService: UsersService,
+    readonly session: SessionService,
   ) {
     this.form = this.formBuilder.group({
       datePreset: [data.filter.datePreset],

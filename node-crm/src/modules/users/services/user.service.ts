@@ -1,5 +1,5 @@
 import { hashPassword } from "../../../shared/auth/password";
-import { ConflictError, NotFoundError } from "../../../shared/errors";
+import { BusinessRuleError, ConflictError, NotFoundError } from "../../../shared/errors";
 import type { CreateUserDTO } from "../dto/create-user.dto";
 import { userRepository } from "../repositories/user.repository";
 import type { User, UserProfile, UserStatus } from "../types/user.types";
@@ -11,11 +11,41 @@ export type UpdateUserDTO = {
     status?: UserStatus | undefined;
 };
 
+// Limite estrutural por tenant: 1 Tenant Admin (o criado pelo Owner na criação do
+// tenant) + 2 Vendedores — vale pra qualquer caminho de criação (tela de Cadastros do
+// próprio tenant OU o Owner gerenciando usuários via Empresas), não é só uma trava de UI.
+const MAX_USERS_BY_PROFILE: Partial<Record<UserProfile, number>> = {
+    TENANT_ADMIN: 1,
+    USER: 2,
+};
+
+const assertProfileLimit = async (tenantId: string, profile: UserProfile): Promise<void> => {
+    const limit = MAX_USERS_BY_PROFILE[profile];
+
+    if (!limit) {
+        return;
+    }
+
+    const current = await userRepository.countByTenantAndProfile(tenantId, profile);
+
+    if (current >= limit) {
+        const label = profile === "TENANT_ADMIN" ? "Administrador" : "Vendedor";
+        const plural = limit === 1 ? "" : "es";
+        throw new BusinessRuleError(
+            `Este tenant já atingiu o limite de ${limit} ${label}${plural}.`,
+        );
+    }
+};
+
 const createUser = async (data: CreateUserDTO): Promise<User> => {
     const existingUser = await userRepository.findByTenantAndEmail(data.tenantId, data.email);
 
     if (existingUser) {
         throw new ConflictError("Já existe um usuário com este e-mail neste tenant.");
+    }
+
+    if (data.tenantId) {
+        await assertProfileLimit(data.tenantId, data.profile);
     }
 
     const passwordHash = await hashPassword(data.password);
@@ -47,7 +77,13 @@ const findUserInTenant = async (id: string, tenantId: string): Promise<User> => 
 };
 
 const updateUserInTenant = async (id: string, tenantId: string, data: UpdateUserDTO): Promise<User> => {
-    await findUserInTenant(id, tenantId);
+    const current = await findUserInTenant(id, tenantId);
+
+    // Só valida o limite se o perfil está realmente mudando pra um perfil limitado —
+    // reenviar o mesmo perfil (ex.: editando só o nome) não deve contar contra si mesmo.
+    if (data.profile && data.profile !== current.profile) {
+        await assertProfileLimit(tenantId, data.profile);
+    }
 
     if (data.email) {
         const existing = await userRepository.findByTenantAndEmail(tenantId, data.email);

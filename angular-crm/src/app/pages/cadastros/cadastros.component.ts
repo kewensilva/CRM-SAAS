@@ -19,12 +19,6 @@ import { Tenant } from '../../models/tenant.model';
 import { TenantUser } from '../../models/tenant.model';
 import { ChangePasswordDialogComponent } from '../../shared/components/change-password-dialog/change-password-dialog.component';
 
-const USER_PROFILE_OPTIONS: { value: CreateUserPayload['profile']; label: string }[] = [
-  { value: 'TENANT_ADMIN', label: 'Administrador' },
-  { value: 'MANAGER', label: 'Gerente' },
-  { value: 'USER', label: 'Vendedor' },
-];
-
 @Component({
   selector: 'app-cadastros',
   standalone: true,
@@ -42,7 +36,6 @@ const USER_PROFILE_OPTIONS: { value: CreateUserPayload['profile']; label: string
   styleUrl: './cadastros.component.scss',
 })
 export class CadastrosComponent implements OnInit {
-  readonly profileOptions = USER_PROFILE_OPTIONS;
 
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);

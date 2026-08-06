@@ -137,6 +137,8 @@ const moveLeadStatus = async (req: Request, res: Response) => {
         req.params.id as string,
         req.auth.tenantId as string,
         parsed.data,
+        req.auth.userId,
+        req.auth.profile,
     );
 
     return res.status(200).json({ success: true, data: result });

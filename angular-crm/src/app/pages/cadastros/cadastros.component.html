@@ -146,17 +146,12 @@
             <input matInput type="password" formControlName="password" />
           </mat-form-field>
 
-          <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
-            <mat-label>Perfil</mat-label>
-            <mat-select formControlName="profile">
-              @for (option of profileOptions; track option.value) {
-                <mat-option [value]="option.value">{{ option.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <p class="cadastros-page__hint">
+            Cada empresa tem no máximo 2 vendedores — o Administrador é criado pelo Owner.
+          </p>
 
           <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
-            Cadastrar usuário
+            Cadastrar vendedor
           </button>
         </form>
       </section>

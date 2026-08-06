@@ -1,6 +1,7 @@
 import { BusinessRuleError, NotFoundError } from "../../../shared/errors";
 import { companyRepository } from "../../companies/repositories/company.repository";
 import { leadRepository } from "../../leads/repositories/lead.repository";
+import { isLeadVisibleToRequester } from "../../leads/services/lead.service";
 import type { LeadStatus } from "../../leads/types/lead.types";
 import { pipelineRepository } from "../../pipelines/repositories/pipeline.repository";
 import { stageRepository } from "../../pipelines/repositories/stage.repository";
@@ -140,10 +141,12 @@ const moveLeadStatus = async (
     leadId: string,
     tenantId: string,
     data: MoveLeadStatusDTO,
+    requestingUserId: string,
+    requestingProfile: string,
 ): Promise<{ leadStatus: LeadStatus; budgetValue: unknown; deal: Deal | null }> => {
     const lead = await leadRepository.findByIdAndTenant(leadId, tenantId);
 
-    if (!lead) {
+    if (!lead || !isLeadVisibleToRequester(lead, requestingUserId, requestingProfile)) {
         throw new NotFoundError("Lead não encontrado.");
     }
 

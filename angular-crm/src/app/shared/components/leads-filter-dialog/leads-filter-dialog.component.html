@@ -47,15 +47,17 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field appearance="fill" floatLabel="always" class="leads-filter-form__field">
-      <mat-label>Vendedor</mat-label>
-      <mat-select formControlName="responsibleUserId">
-        <mat-option [value]="null">Todos</mat-option>
-        @for (user of users(); track user.id) {
-          <mat-option [value]="user.id">{{ user.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+    @if (session.profile() !== 'USER') {
+      <mat-form-field appearance="fill" floatLabel="always" class="leads-filter-form__field">
+        <mat-label>Vendedor</mat-label>
+        <mat-select formControlName="responsibleUserId">
+          <mat-option [value]="null">Todos</mat-option>
+          @for (user of users(); track user.id) {
+            <mat-option [value]="user.id">{{ user.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
   </div>
 
   <div mat-dialog-actions align="end">

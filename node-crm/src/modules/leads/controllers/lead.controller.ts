@@ -33,7 +33,11 @@ const create = async (req: Request, res: Response) => {
 };
 
 const list = async (req: Request, res: Response) => {
-    const leads = await leadService.listWithDetails(req.auth.tenantId as string);
+    const leads = await leadService.listWithDetails(
+        req.auth.tenantId as string,
+        req.auth.userId,
+        req.auth.profile,
+    );
 
     return res.status(200).json({ success: true, data: leads });
 };
@@ -54,6 +58,8 @@ const update = async (req: Request, res: Response) => {
         req.params.id as string,
         req.auth.tenantId as string,
         parsed.data,
+        req.auth.userId,
+        req.auth.profile,
     );
 
     return res.status(200).json({ success: true, data: lead });

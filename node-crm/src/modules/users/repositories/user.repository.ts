@@ -44,6 +44,12 @@ const listByTenant = (tenantId: string): Promise<User[]> => {
     });
 };
 
+// Aplica o limite de usuários por tenant (1 Tenant Admin + 2 Vendedores) — ver
+// createUser em user.service.ts. Não conta soft-deleted, um usuário removido libera vaga.
+const countByTenantAndProfile = (tenantId: string, profile: UserProfile): Promise<number> => {
+    return prisma.user.count({ where: { tenantId, profile, deletedAt: null } });
+};
+
 // Exclui contas do Owner (tenantId nulo) — métrica de plataforma conta só usuários clientes.
 const countAll = (): Promise<number> => {
     return prisma.user.count({ where: { deletedAt: null, tenantId: { not: null } } });
@@ -95,6 +101,7 @@ export const userRepository = {
     findByTenantAndEmail,
     findById,
     listByTenant,
+    countByTenantAndProfile,
     countAll,
     listCreatedAtExcludingPlatformUsers,
     findActiveByEmailAcrossTenants,
