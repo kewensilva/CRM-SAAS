@@ -37,8 +37,18 @@
           <dd>{{ widgetDuplicateStrategyLabel() }}</dd>
         </div>
         <div class="widget-view__row">
+          <dt>Conteúdo do botão</dt>
+          <dd>
+            {{ widget()?.buttonContentType === 'ICON' ? 'Ícone (' + (widget()?.buttonIcon || '—') + ')' : 'Texto' }}
+          </dd>
+        </div>
+        <div class="widget-view__row">
           <dt>Texto do botão</dt>
           <dd>{{ widget()?.buttonLabel || '—' }}</dd>
+        </div>
+        <div class="widget-view__row">
+          <dt>Cor do botão</dt>
+          <dd>{{ widget()?.buttonColor || '—' }}</dd>
         </div>
         <div class="widget-view__row">
           <dt>Campos do formulário</dt>

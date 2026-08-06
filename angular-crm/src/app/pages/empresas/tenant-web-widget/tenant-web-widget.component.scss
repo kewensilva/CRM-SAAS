@@ -39,6 +39,31 @@ $color-primary: #ff9521;
   max-width: 420px;
 }
 
+.widget-form__color-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  input[type='color'] {
+    width: 48px;
+    height: 36px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 2px;
+    cursor: pointer;
+  }
+}
+
+.widget-form__color-label {
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.widget-form__color-value {
+  font-size: 0.85rem;
+  font-family: monospace;
+}
+
 .widget-form__fields-section {
   display: flex;
   flex-direction: column;

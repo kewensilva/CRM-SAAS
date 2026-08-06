@@ -37,9 +37,34 @@
       </mat-form-field>
 
       <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+        <mat-label>Conteúdo do botão</mat-label>
+        <mat-select formControlName="buttonContentType">
+          <mat-option value="TEXT">Texto</mat-option>
+          <mat-option value="ICON">Ícone</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
         <mat-label>Texto do botão</mat-label>
         <input matInput formControlName="buttonLabel" maxlength="60" />
       </mat-form-field>
+
+      @if (form.controls.buttonContentType.value === 'ICON') {
+        <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+          <mat-label>Ícone do botão</mat-label>
+          <mat-select formControlName="buttonIcon">
+            @for (icon of buttonIcons; track icon) {
+              <mat-option [value]="icon">{{ iconLabels[icon] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
+      <div class="widget-form__color-field">
+        <label class="widget-form__color-label" for="buttonColor">Cor do botão</label>
+        <input id="buttonColor" type="color" formControlName="buttonColor" />
+        <span class="widget-form__color-value">{{ form.controls.buttonColor.value }}</span>
+      </div>
 
       <div class="widget-form__fields-section">
         <h2 class="widget-form__fields-title">Campos do formulário</h2>

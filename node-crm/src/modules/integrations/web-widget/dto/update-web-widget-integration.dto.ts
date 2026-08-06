@@ -6,4 +6,7 @@ export type UpdateWebWidgetIntegrationDTO = {
     showPhoneField?: boolean | undefined;
     showMessageField?: boolean | undefined;
     buttonLabel?: string | undefined;
+    buttonContentType?: "TEXT" | "ICON" | undefined;
+    buttonIcon?: string | undefined;
+    buttonColor?: string | undefined;
 };

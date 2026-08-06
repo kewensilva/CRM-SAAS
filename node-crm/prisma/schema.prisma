@@ -71,6 +71,11 @@ enum DuplicateLeadStrategy {
     UPDATE
 }
 
+enum WidgetButtonContentType {
+    TEXT
+    ICON
+}
+
 enum MetaIntegrationLogStatus {
     RECEIVED
     PROCESSED
@@ -479,6 +484,11 @@ model WebWidgetIntegration {
     showPhoneField           Boolean               @default(true) @map("show_phone_field")
     showMessageField         Boolean               @default(true) @map("show_message_field")
     buttonLabel              String                @default("Fale conosco") @map("button_label")
+    buttonContentType        WidgetButtonContentType @default(TEXT) @map("button_content_type")
+    // Só relevante quando buttonContentType = ICON — chave de um conjunto fixo embutido
+    // no próprio widget.js (não é upload de arquivo nem URL livre; ver widget.js).
+    buttonIcon               String?               @map("button_icon")
+    buttonColor              String                @default("#FF9521") @map("button_color")
     createdAt                DateTime              @default(now()) @map("created_at") @db.Timestamptz
     updatedAt                DateTime              @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt                DateTime?             @map("deleted_at") @db.Timestamptz

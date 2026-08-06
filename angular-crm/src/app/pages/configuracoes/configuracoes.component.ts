@@ -30,6 +30,11 @@ const DUPLICATE_STRATEGY_LABELS: Record<'IGNORE' | 'UPDATE', string> = {
   UPDATE: 'Atualizar os dados do Lead existente',
 };
 
+// buttonLabel é texto livre do Tenant Admin — precisa escapar aspas/&/< antes de injetar
+// no atributo do <script> gerado (o snippet é copiado literalmente pro site do cliente).
+const escapeHtmlAttr = (value: string): string =>
+  value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
 function maskToken(token: string): string {
   const visibleChars = 4;
 
@@ -91,13 +96,26 @@ export class ConfiguracoesComponent implements OnInit {
   });
 
   readonly embedSnippet = computed(() => {
-    const publicKey = this.widget()?.publicKey;
+    const widget = this.widget();
 
-    if (!publicKey) {
+    if (!widget) {
       return null;
     }
 
-    return `<script src="${environment.apiUrl}/webhooks/web-widget/widget.js" data-key="${publicKey}" defer></script>`;
+    const attrs = [
+      `data-key="${widget.publicKey}"`,
+      `data-label="${escapeHtmlAttr(widget.buttonLabel)}"`,
+      `data-color="${escapeHtmlAttr(widget.buttonColor)}"`,
+      `data-content-type="${widget.buttonContentType}"`,
+      widget.buttonIcon ? `data-icon="${widget.buttonIcon}"` : null,
+      `data-show-email="${widget.showEmailField}"`,
+      `data-show-phone="${widget.showPhoneField}"`,
+      `data-show-message="${widget.showMessageField}"`,
+    ]
+      .filter((attr): attr is string => attr !== null)
+      .join(' ');
+
+    return `<script src="${environment.apiUrl}/webhooks/web-widget/widget.js" ${attrs} defer></script>`;
   });
 
   readonly metaSaving = signal(false);

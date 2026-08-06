@@ -1,5 +1,6 @@
 export type DuplicateLeadStrategy = "IGNORE" | "UPDATE";
 export type WebWidgetLogStatus = "RECEIVED" | "PROCESSED" | "DUPLICATE" | "FAILED";
+export type WidgetButtonContentType = "TEXT" | "ICON";
 
 export type WebWidgetIntegration = {
     id: string;
@@ -12,6 +13,9 @@ export type WebWidgetIntegration = {
     showPhoneField: boolean;
     showMessageField: boolean;
     buttonLabel: string;
+    buttonContentType: WidgetButtonContentType;
+    buttonIcon: string | null;
+    buttonColor: string;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;

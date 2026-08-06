@@ -20,9 +20,28 @@ import { environment } from '../../../../environments/environment';
 import { TenantsService } from '../../../core/tenants/tenants.service';
 import { WebWidgetService } from '../../../core/web-widget/web-widget.service';
 import { TenantUser } from '../../../models/tenant.model';
-import { WebWidgetIntegration, WebWidgetLog } from '../../../models/web-widget.model';
+import {
+  WebWidgetIntegration,
+  WebWidgetLog,
+  WIDGET_BUTTON_ICONS,
+  WidgetButtonIcon,
+} from '../../../models/web-widget.model';
 
 const LOG_DISPLAYED_COLUMNS = ['createdAt', 'status', 'utmSource', 'message'];
+
+// buttonLabel é texto livre do Tenant Admin — precisa escapar aspas/&/< antes de injetar
+// no atributo do <script> gerado (o snippet é copiado literalmente pro site do cliente).
+const escapeHtmlAttr = (value: string): string =>
+  value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+const ICON_LABELS: Record<WidgetButtonIcon, string> = {
+  chat: 'Balão de chat',
+  message: 'Envelope',
+  whatsapp: 'WhatsApp',
+  help: 'Interrogação',
+  phone: 'Telefone',
+  cart: 'Carrinho',
+};
 
 // Contraparte do Owner de pages/configuracoes/configuracoes.component.ts — mesmo widget,
 // mesma tela, só que configurando o tenant escolhido em "Empresas" em vez do próprio
@@ -51,6 +70,8 @@ const LOG_DISPLAYED_COLUMNS = ['createdAt', 'status', 'utmSource', 'message'];
 })
 export class TenantWebWidgetComponent implements OnInit {
   readonly logDisplayedColumns = LOG_DISPLAYED_COLUMNS;
+  readonly buttonIcons = WIDGET_BUTTON_ICONS;
+  readonly iconLabels = ICON_LABELS;
 
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -62,13 +83,26 @@ export class TenantWebWidgetComponent implements OnInit {
   readonly logs = signal<WebWidgetLog[]>([]);
 
   readonly embedSnippet = computed(() => {
-    const publicKey = this.integration()?.publicKey;
+    const widget = this.integration();
 
-    if (!publicKey) {
+    if (!widget) {
       return null;
     }
 
-    return `<script src="${environment.apiUrl}/webhooks/web-widget/widget.js" data-key="${publicKey}" defer></script>`;
+    const attrs = [
+      `data-key="${widget.publicKey}"`,
+      `data-label="${escapeHtmlAttr(widget.buttonLabel)}"`,
+      `data-color="${escapeHtmlAttr(widget.buttonColor)}"`,
+      `data-content-type="${widget.buttonContentType}"`,
+      widget.buttonIcon ? `data-icon="${widget.buttonIcon}"` : null,
+      `data-show-email="${widget.showEmailField}"`,
+      `data-show-phone="${widget.showPhoneField}"`,
+      `data-show-message="${widget.showMessageField}"`,
+    ]
+      .filter((attr): attr is string => attr !== null)
+      .join(' ');
+
+    return `<script src="${environment.apiUrl}/webhooks/web-widget/widget.js" ${attrs} defer></script>`;
   });
 
   readonly form;
@@ -91,6 +125,9 @@ export class TenantWebWidgetComponent implements OnInit {
       showPhoneField: this.formBuilder.nonNullable.control(true),
       showMessageField: this.formBuilder.nonNullable.control(true),
       buttonLabel: this.formBuilder.nonNullable.control('Fale conosco'),
+      buttonContentType: this.formBuilder.nonNullable.control<'TEXT' | 'ICON'>('TEXT'),
+      buttonIcon: this.formBuilder.control<WidgetButtonIcon | null>(null),
+      buttonColor: this.formBuilder.nonNullable.control('#FF9521'),
     });
   }
 
@@ -130,6 +167,9 @@ export class TenantWebWidgetComponent implements OnInit {
             showPhoneField: widget.showPhoneField,
             showMessageField: widget.showMessageField,
             buttonLabel: widget.buttonLabel,
+            buttonContentType: widget.buttonContentType,
+            buttonIcon: widget.buttonIcon,
+            buttonColor: widget.buttonColor,
           });
         }
 
@@ -165,6 +205,9 @@ export class TenantWebWidgetComponent implements OnInit {
         showPhoneField: value.showPhoneField,
         showMessageField: value.showMessageField,
         buttonLabel: value.buttonLabel || undefined,
+        buttonContentType: value.buttonContentType,
+        buttonIcon: value.buttonContentType === 'ICON' ? (value.buttonIcon ?? undefined) : undefined,
+        buttonColor: value.buttonColor || undefined,
       })
       .subscribe({
         next: (widget) => {
