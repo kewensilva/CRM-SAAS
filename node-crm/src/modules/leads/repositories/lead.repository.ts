@@ -91,6 +91,13 @@ const updateContactInfo = (
     return prisma.lead.update({ where: { id }, data });
 };
 
+// Usado só ao fechar um Lead sem empresa conhecida como Vendido/Perdido — o Deal exige
+// companyId, então deal.service.ts cria uma Empresa automática a partir dos dados do
+// próprio Lead e vincula aqui, pra não repetir a criação a cada novo Deal desse Lead.
+const linkCompany = (id: string, companyId: string): Promise<Lead> => {
+    return prisma.lead.update({ where: { id }, data: { companyId } });
+};
+
 // Transições simples de Kanban (SEM_CONTATO/NAO_ATENDE/EM_ANDAMENTO) — mover pra
 // VENDIDO/PERDIDO passa pela transação de Deal em deal.repository.ts, não por aqui.
 // budgetValue só é relevante ao mover pra EM_ANDAMENTO (valor orçado antes de existir
@@ -146,4 +153,5 @@ export const leadRepository = {
     update,
     updateContactInfo,
     updateStatus,
+    linkCompany,
 };

@@ -169,8 +169,22 @@ const moveLeadStatus = async (
         );
     }
 
-    if (!lead.companyId) {
-        throw new BusinessRuleError("Vincule uma empresa a este Lead antes de finalizar.");
+    // Leads sem empresa conhecida (ex.: vindos do widget do site, onde só se coleta a
+    // pessoa) não têm como o sistema adivinhar a empresa — em vez de travar o vendedor
+    // pedindo uma escolha manual, cria uma Empresa automática a partir dos próprios
+    // dados do Lead. Fica vinculada ao Lead daí em diante (não repete a cada novo Deal).
+    let companyId = lead.companyId;
+
+    if (!companyId) {
+        const autoCompany = await companyRepository.create({
+            tenantId,
+            name: lead.name,
+            email: lead.email ?? undefined,
+            phone: lead.phone ?? undefined,
+        });
+
+        await leadRepository.linkCompany(leadId, autoCompany.id);
+        companyId = autoCompany.id;
     }
 
     const [pipeline] = await pipelineRepository.listByTenant(tenantId);
@@ -188,7 +202,7 @@ const moveLeadStatus = async (
     const deal = await dealRepository.createFinal({
         tenantId,
         leadId,
-        companyId: lead.companyId,
+        companyId,
         responsibleUserId: lead.responsibleUserId,
         pipelineId: pipeline.id,
         stageId: stage.id,

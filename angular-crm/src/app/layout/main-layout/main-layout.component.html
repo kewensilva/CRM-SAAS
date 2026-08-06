@@ -27,6 +27,7 @@
 
     <div class="sidebar__footer">
       <a
+        *ngIf="showSettings()"
         [routerLink]="settingsItem.route"
         routerLinkActive="sidebar__item--active"
         class="sidebar__item"

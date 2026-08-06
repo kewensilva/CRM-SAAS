@@ -88,4 +88,9 @@ export class MainLayoutComponent {
     route: '/configuracoes',
     icon: 'assets/icons/icon-setting-line.svg',
   };
+
+  // Configurações é restrito a Tenant Admin no backend (permissions.md > Configurações:
+  // Manager e User "Sem acesso") — o menu tinha ficado visível pra todo mundo, inclusive
+  // vendedor (User), que via o botão mas caía em 403 ao tentar usar.
+  readonly showSettings = computed<boolean>(() => this.session.profile() === 'TENANT_ADMIN');
 }
