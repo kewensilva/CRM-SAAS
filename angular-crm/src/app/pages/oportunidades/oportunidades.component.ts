@@ -76,6 +76,16 @@ export class OportunidadesComponent implements OnInit {
     return new Date(value).toLocaleDateString('pt-BR');
   }
 
+  // UTM só existe pra leads do Web Widget (Meta Lead Ads é formulário nativo, sem UTM de
+  // site) — mostra "origem / mídia" quando dá (ex.: "instagram / social"), ou só a
+  // origem quando só ela veio preenchida. Nunca editável, ver models/lead.model.ts.
+  utmSummary(lead: Lead): string | null {
+    if (!lead.utmSource) {
+      return null;
+    }
+    return lead.utmMedium ? `${lead.utmSource} / ${lead.utmMedium}` : lead.utmSource;
+  }
+
   formatValue(value: string | null | undefined): string {
     if (!value) {
       return '';

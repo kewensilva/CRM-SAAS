@@ -11,6 +11,11 @@ export type Lead = {
     status: LeadStatus;
     budgetValue: unknown;
     notes: string | null;
+    utmSource: string | null;
+    utmMedium: string | null;
+    utmCampaign: string | null;
+    utmTerm: string | null;
+    utmContent: string | null;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;

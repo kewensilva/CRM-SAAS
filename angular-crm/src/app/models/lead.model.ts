@@ -22,6 +22,12 @@ export interface Lead {
   status: LeadStatus;
   budgetValue: string | null;
   notes: string | null;
+  // Capturados só na criação (origem Web Widget) — nunca editáveis, ver harness.
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  utmTerm: string | null;
+  utmContent: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

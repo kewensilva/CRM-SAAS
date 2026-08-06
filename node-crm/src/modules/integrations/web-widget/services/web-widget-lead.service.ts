@@ -73,6 +73,11 @@ const processSubmission = async (payload: WebWidgetSubmissionPayload): Promise<v
         name: payload.name,
         email: payload.email,
         phone: payload.phone,
+        utmSource: payload.utmSource,
+        utmMedium: payload.utmMedium,
+        utmCampaign: payload.utmCampaign,
+        utmTerm: payload.utmTerm,
+        utmContent: payload.utmContent,
     });
 
     await webWidgetLogRepository.markProcessed(log.id, lead.id);

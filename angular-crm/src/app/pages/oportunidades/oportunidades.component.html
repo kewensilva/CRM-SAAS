@@ -55,6 +55,13 @@
               {{ lead.source }}
             </p>
 
+            @if (utmSummary(lead); as utm) {
+              <p class="opportunity-card__field" title="Campanha de origem (não editável)">
+                <mat-icon>campaign</mat-icon>
+                {{ utm }}
+              </p>
+            }
+
             @if (lead.deal && lead.deal.value) {
               <p class="opportunity-card__value">{{ formatValue(lead.deal.value) }}</p>
             }

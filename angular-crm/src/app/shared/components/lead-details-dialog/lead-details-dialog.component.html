@@ -32,6 +32,13 @@
     <span class="lead-details__value">{{ lead.source }}</span>
   </div>
 
+  @if (utmSummary; as utm) {
+    <div class="lead-details__row">
+      <span class="lead-details__label">Campanha</span>
+      <span class="lead-details__value">{{ utm }}</span>
+    </div>
+  }
+
   <div class="lead-details__row">
     <span class="lead-details__label">Status</span>
     <span class="lead-details__value">{{ statusLabel }}</span>

@@ -5,6 +5,11 @@ export type CreateLeadDTO = {
     name: string;
     email?: string | undefined;
     phone?: string | undefined;
+    utmSource?: string | undefined;
+    utmMedium?: string | undefined;
+    utmCampaign?: string | undefined;
+    utmTerm?: string | undefined;
+    utmContent?: string | undefined;
 };
 
 // Origem não é editável (é calculada, não uma coluna) — só os dados de contato do Lead.

@@ -63,6 +63,14 @@ export class LeadDetailsDialogComponent {
     return STATUS_LABELS[this.lead.status];
   }
 
+  // UTM só existe pra leads do Web Widget — nunca editável (ver models/lead.model.ts).
+  get utmSummary(): string | null {
+    if (!this.lead.utmSource) {
+      return null;
+    }
+    return this.lead.utmMedium ? `${this.lead.utmSource} / ${this.lead.utmMedium}` : this.lead.utmSource;
+  }
+
   formatValue(value: string | null | undefined): string {
     if (!value) {
       return '—';

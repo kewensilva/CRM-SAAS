@@ -31,6 +31,11 @@ const create = (data: CreateLeadDTO): Promise<Lead> => {
             name: data.name,
             email: data.email ?? null,
             phone: data.phone ?? null,
+            utmSource: data.utmSource ?? null,
+            utmMedium: data.utmMedium ?? null,
+            utmCampaign: data.utmCampaign ?? null,
+            utmTerm: data.utmTerm ?? null,
+            utmContent: data.utmContent ?? null,
         },
     });
 };

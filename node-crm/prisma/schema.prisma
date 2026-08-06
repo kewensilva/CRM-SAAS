@@ -195,6 +195,15 @@ model Lead {
     // Vendido/Perdido. Ver moveLeadStatus em deal.service.ts.
     budgetValue       Decimal?   @map("budget_value") @db.Decimal(14, 2)
     notes             String?    @db.Text
+    // Capturados só na criação, a partir da URL de onde o Lead preencheu o formulário
+    // (ex.: veio de um post do Instagram → utmSource "instagram") — nunca editáveis via
+    // API (fora de updateLeadSchema de propósito, ver lead.validator.ts). Só o Web
+    // Widget alimenta isso hoje; Meta Lead Ads é formulário nativo, sem UTM de site.
+    utmSource         String?    @map("utm_source")
+    utmMedium         String?    @map("utm_medium")
+    utmCampaign       String?    @map("utm_campaign")
+    utmTerm           String?    @map("utm_term")
+    utmContent        String?    @map("utm_content")
     createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
     updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz
