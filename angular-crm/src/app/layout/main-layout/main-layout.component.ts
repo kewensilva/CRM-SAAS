@@ -50,6 +50,7 @@ const ACESSOS_ITEM: MenuItem = {
 })
 export class MainLayoutComponent {
   readonly isCollapsed = signal(false);
+  readonly isMobileMenuOpen = signal(false);
 
   constructor(
     private readonly session: SessionService,
@@ -58,6 +59,14 @@ export class MainLayoutComponent {
 
   toggleSidebar(): void {
     this.isCollapsed.update((collapsed) => !collapsed);
+  }
+
+  toggleMobileMenu(): void {
+    this.isMobileMenuOpen.update((open) => !open);
+  }
+
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen.set(false);
   }
 
   logout(): void {

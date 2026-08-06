@@ -147,8 +147,102 @@
   padding: 24px;
   box-sizing: border-box;
   transition: margin-left 0.2s ease;
+  min-width: 0;
 
   &--expanded {
     margin-left: 0;
+  }
+}
+
+// Barra fixa só visível em telas pequenas — abre o sidebar como gaveta (drawer) em vez
+// de disputar espaço com o conteúdo, que numa tela de celular não tem onde sobrar.
+.mobile-topbar {
+  display: none;
+}
+
+.sidebar__backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background-color: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+
+    &__menu-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: none;
+      color: rgba(0, 0, 0, 0.7);
+      cursor: pointer;
+
+      &:hover {
+        background-color: rgba(230, 230, 230, 0.6);
+      }
+    }
+
+    &__logo {
+      height: 32px;
+      width: 32px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+  }
+
+  .sidebar__backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+  }
+
+  // Ignora o estado "collapsed" (só faz sentido em desktop) — no mobile a gaveta é
+  // sempre largura total do menu, só entra/sai de tela via translateX.
+  .sidebar,
+  .sidebar--collapsed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100dvh;
+    width: 260px;
+    max-width: 80vw;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    z-index: 1000;
+    padding: 24px 16px;
+
+    .sidebar__item-label {
+      display: inline !important;
+    }
+
+    .sidebar__toggle {
+      display: none;
+    }
+  }
+
+  .sidebar--mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-layout__content,
+  .main-layout__content--expanded {
+    margin-left: 0;
+    padding: 16px;
   }
 }

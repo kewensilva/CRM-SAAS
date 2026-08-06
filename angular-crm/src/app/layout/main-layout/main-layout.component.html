@@ -1,5 +1,25 @@
 <div class="main-layout">
-  <aside class="sidebar" [class.sidebar--collapsed]="isCollapsed()">
+  <header class="mobile-topbar">
+    <button
+      type="button"
+      class="mobile-topbar__menu-btn"
+      (click)="toggleMobileMenu()"
+      aria-label="Abrir menu"
+    >
+      <mat-icon>menu</mat-icon>
+    </button>
+    <img src="assets/images/sidebar-logo.png" alt="Logo" class="mobile-topbar__logo" />
+  </header>
+
+  @if (isMobileMenuOpen()) {
+    <div class="sidebar__backdrop" (click)="closeMobileMenu()"></div>
+  }
+
+  <aside
+    class="sidebar"
+    [class.sidebar--collapsed]="isCollapsed()"
+    [class.sidebar--mobile-open]="isMobileMenuOpen()"
+  >
     <div class="sidebar__logo">
       <img src="assets/images/sidebar-logo.png" alt="Logo" />
     </div>
@@ -19,6 +39,7 @@
         [routerLink]="item.route"
         routerLinkActive="sidebar__item--active"
         class="sidebar__item"
+        (click)="closeMobileMenu()"
       >
         <img [src]="item.icon" alt="" class="sidebar__item-icon" />
         <span class="sidebar__item-label" *ngIf="!isCollapsed()">{{ item.label }}</span>
@@ -31,6 +52,7 @@
         [routerLink]="settingsItem.route"
         routerLinkActive="sidebar__item--active"
         class="sidebar__item"
+        (click)="closeMobileMenu()"
       >
         <img [src]="settingsItem.icon" alt="" class="sidebar__item-icon" />
         <span class="sidebar__item-label" *ngIf="!isCollapsed()">{{ settingsItem.label }}</span>

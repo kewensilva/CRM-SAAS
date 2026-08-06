@@ -149,8 +149,13 @@ $color-input-placeholder: rgba(0, 0, 0, 0.4);
 }
 
 @media (max-width: 768px) {
+  .login-page {
+    padding: 16px;
+  }
+
   .login-card {
     flex-direction: column;
+    width: 100%;
     min-height: auto;
 
     &__illustration {
@@ -168,5 +173,19 @@ $color-input-placeholder: rgba(0, 0, 0, 0.4);
     &__brand {
       font-size: 28px;
     }
+  }
+}
+
+@media (max-width: 420px) {
+  .login-card__illustration {
+    display: none;
+  }
+
+  .login-card__title {
+    font-size: 28px;
+  }
+
+  .login-card__tagline {
+    font-size: 18px;
   }
 }
