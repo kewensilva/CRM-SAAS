@@ -40,6 +40,18 @@ const create = (tenantData: CreateTenantData, adminData: CreateAdminData): Promi
             data: { tenantId: tenant.id },
         });
 
+        // Deal exige um Pipeline+Etapa (business-rules.md) e deal.service.ts sempre pega
+        // o primeiro do tenant, sem o vendedor escolher — sem isso criado de cara, o
+        // primeiro Lead fechado como Vendido/Perdido travava com "Configure um Pipeline"
+        // e não existia tela nem endpoint óbvio pro Tenant Admin resolver sozinho.
+        const pipeline = await tx.pipeline.create({
+            data: { tenantId: tenant.id, name: "Pipeline padrão" },
+        });
+
+        await tx.pipelineStage.create({
+            data: { tenantId: tenant.id, pipelineId: pipeline.id, name: "Etapa 1", order: 1 },
+        });
+
         return tenant;
     });
 };
