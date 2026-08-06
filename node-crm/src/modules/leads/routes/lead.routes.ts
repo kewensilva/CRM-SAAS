@@ -24,4 +24,5 @@ leadRoutes.post(
     upload.single("file"),
     leadController.importFile,
 );
+leadRoutes.get("/leads/import-template", authenticate, tenantWrite, leadController.importTemplate);
 leadRoutes.post("/leads/export", authenticate, tenantWrite, leadController.exportFile);

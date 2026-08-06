@@ -50,6 +50,10 @@ export class LeadsService {
       .pipe(map((response) => response.data));
   }
 
+  downloadTemplate(): Observable<Blob> {
+    return this.http.get(`${environment.apiUrl}/leads/import-template`, { responseType: 'blob' });
+  }
+
   export(leadIds: string[], filterSummary: string): Observable<Blob> {
     return this.http.post(
       `${environment.apiUrl}/leads/export`,

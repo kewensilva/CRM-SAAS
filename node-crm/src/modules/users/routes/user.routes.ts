@@ -14,3 +14,9 @@ userRoutes.get(
     authorize("TENANT_ADMIN", "MANAGER", "USER"),
     userController.list,
 );
+userRoutes.put(
+    "/users/:id/password",
+    authenticate,
+    authorize("TENANT_ADMIN"),
+    userController.changePassword,
+);

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest",
     "dev": "ts-node-dev ./src/server.ts",
-    "build": "prisma generate && tsc && mkdir -p dist/src/modules/integrations/web-widget/public && cp src/modules/integrations/web-widget/public/widget.js dist/src/modules/integrations/web-widget/public/widget.js",
+    "build": "prisma generate && tsc && mkdir -p dist/src/modules/integrations/web-widget/public dist/src/shared/assets && cp src/modules/integrations/web-widget/public/widget.js dist/src/modules/integrations/web-widget/public/widget.js && cp src/shared/assets/cmb-logo.png dist/src/shared/assets/cmb-logo.png",
     "start": "node dist/src/server.js",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "ts-node --transpile-only prisma/seed.ts",

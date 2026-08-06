@@ -129,6 +129,18 @@ export class LeadsComponent implements OnInit {
     return lead.status === 'VENDIDO' || lead.status === 'PERDIDO';
   }
 
+  // Instagram tem prioridade sobre a origem genérica "Site" — um lead do widget com
+  // utmSource=instagram veio de um post/anúncio do Instagram, não é só "alguém no site".
+  sourceIcon(lead: Lead): 'instagram' | 'site' | null {
+    if (lead.utmSource?.toLowerCase() === 'instagram') {
+      return 'instagram';
+    }
+    if (lead.source === 'Site') {
+      return 'site';
+    }
+    return null;
+  }
+
   onDrop(event: CdkDragDrop<Lead[]>, targetStatus: LeadStatus): void {
     if (event.previousContainer === event.container) {
       return;

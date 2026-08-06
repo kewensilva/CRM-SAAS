@@ -30,4 +30,12 @@ export class UsersService {
       .post<ApiSuccessResponse<TenantUser>>(`${environment.apiUrl}/users`, payload)
       .pipe(map((response) => response.data));
   }
+
+  // Só Tenant Admin (authorize na rota) — reset de senha em nome de outro usuário do
+  // próprio tenant, sem pedir a senha atual.
+  changePassword(id: string, newPassword: string): Observable<void> {
+    return this.http
+      .put<void>(`${environment.apiUrl}/users/${id}/password`, { newPassword })
+      .pipe(map(() => undefined));
+  }
 }

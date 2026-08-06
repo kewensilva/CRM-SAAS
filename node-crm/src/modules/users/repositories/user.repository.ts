@@ -85,6 +85,11 @@ const softDelete = (id: string): Promise<User> => {
     return prisma.user.update({ where: { id }, data: { deletedAt: new Date() } });
 };
 
+// Reset de senha pelo Tenant Admin — só o hash muda, nenhum outro campo do usuário.
+const updatePasswordHash = (id: string, passwordHash: string): Promise<User> => {
+    return prisma.user.update({ where: { id }, data: { passwordHash } });
+};
+
 export const userRepository = {
     create,
     findByTenantAndEmail,
@@ -95,4 +100,5 @@ export const userRepository = {
     findActiveByEmailAcrossTenants,
     update,
     softDelete,
+    updatePasswordHash,
 };

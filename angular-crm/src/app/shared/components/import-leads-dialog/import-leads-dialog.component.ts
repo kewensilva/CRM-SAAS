@@ -23,6 +23,17 @@ export class ImportLeadsDialogComponent {
     private readonly leadsService: LeadsService,
   ) {}
 
+  downloadTemplate(): void {
+    this.leadsService.downloadTemplate().subscribe((blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'modelo-importacao-leads.xlsx';
+      link.click();
+      window.URL.revokeObjectURL(url);
+    });
+  }
+
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.selectedFile.set(input.files?.[0] ?? null);

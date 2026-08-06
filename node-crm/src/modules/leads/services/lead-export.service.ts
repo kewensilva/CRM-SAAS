@@ -1,6 +1,11 @@
+import { readFileSync } from "fs";
+import path from "path";
+
 import ExcelJS from "exceljs";
 
 import { leadRepository } from "../repositories/lead.repository";
+
+const LOGO_PATH = path.join(__dirname, "..", "..", "..", "shared", "assets", "cmb-logo.png");
 
 const STATUS_LABELS: Record<string, string> = {
     SEM_CONTATO: "Sem contato",
@@ -42,6 +47,15 @@ const buildWorkbook = async (
     workbook.created = new Date();
 
     const sheet = workbook.addWorksheet("CRM");
+
+    // Logo no canto (célula E1, ao lado do bloco Data/Cliente/Usuário/Filtros) — não
+    // desloca nenhuma célula existente, só desenha por cima da planilha numa área que
+    // já ficava em branco no layout de referência do usuário.
+    const logoImageId = workbook.addImage({
+        buffer: readFileSync(LOGO_PATH) as unknown as ExcelJS.Buffer,
+        extension: "png",
+    });
+    sheet.addImage(logoImageId, { tl: { col: 4, row: 0 }, ext: { width: 64, height: 64 } });
 
     sheet.getCell("A1").value = "Data:";
     sheet.getCell("B1").value = formatDate(new Date());

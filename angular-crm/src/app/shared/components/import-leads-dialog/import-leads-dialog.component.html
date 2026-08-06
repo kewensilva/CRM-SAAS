@@ -5,6 +5,8 @@
     Selecione um arquivo .xlsx com as colunas Nome (obrigatório), E-mail e Telefone.
   </p>
 
+  <button type="button" mat-button (click)="downloadTemplate()">Baixar modelo de planilha</button>
+
   <input type="file" accept=".xlsx" (change)="onFileSelected($event)" />
 
   @if (errorMessage()) {

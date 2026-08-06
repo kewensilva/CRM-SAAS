@@ -5,6 +5,12 @@ import type { CreateOwnerDTO } from "../dto/create-owner.dto";
 import { ownerRepository } from "../repositories/owner.repository";
 import type { Owner } from "../types/owner.types";
 
+// Conta raiz da plataforma — nunca pode ser removida, nem por outro Owner. Sem isso, uma
+// remoção acidental (ou mal-intencionada) do último Owner administrativo derrubaria o
+// acesso de gestão da CMB à própria plataforma sem ter como recuperar. Configurável via
+// env pra não hardcodar segredo nenhum, mas o e-mail em si não é sensível.
+const PROTECTED_OWNER_EMAIL = process.env["PROTECTED_OWNER_EMAIL"] ?? "dev@cmb.dev";
+
 const createOwner = async (data: CreateOwnerDTO): Promise<Owner> => {
     const existing = await userRepository.findByTenantAndEmail(null, data.email);
 
@@ -33,6 +39,10 @@ const deleteOwner = async (id: string, requestingUserId: string): Promise<void> 
 
     if (!owner) {
         throw new NotFoundError("Owner não encontrado.");
+    }
+
+    if (owner.email === PROTECTED_OWNER_EMAIL) {
+        throw new AuthorizationError("Esta conta é protegida e não pode ser removida.");
     }
 
     await ownerRepository.softDelete(id);

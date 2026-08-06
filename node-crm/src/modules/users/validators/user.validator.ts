@@ -17,11 +17,18 @@ export const createUserSchema = z.object({
 });
 
 // Edição por um Tenant Admin ou pelo Owner (gerenciando os usuários de uma empresa) —
-// sem senha aqui (troca de senha é um fluxo à parte, não implementado ainda) e sem
+// sem senha aqui, troca de senha é um fluxo à parte (ver changePasswordSchema) — e sem
 // permitir virar OWNER/ANALYST por essa via.
 export const updateUserSchema = z.object({
     name: z.string().trim().min(1, "Campo obrigatório.").optional(),
     email: z.string().trim().email("E-mail inválido.").optional(),
     profile: z.enum(["TENANT_ADMIN", "MANAGER", "USER"], { error: "Perfil inválido." }).optional(),
     status: z.enum(["ACTIVE", "INACTIVE"], { error: "Status inválido." }).optional(),
+});
+
+// Reset de senha feito pelo Tenant Admin em nome de outro usuário do próprio tenant —
+// não pede a senha atual (ele não é o dono da conta), diferente de uma troca de senha
+// feita pelo próprio usuário autenticado (fluxo que não existe ainda).
+export const changePasswordSchema = z.object({
+    newPassword: passwordSchema,
 });

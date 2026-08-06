@@ -113,6 +113,8 @@
               </div>
               @if (isSelf(owner)) {
                 <span class="cadastros-page__tag">Você</span>
+              } @else if (isProtected(owner)) {
+                <span class="cadastros-page__tag">Protegido</span>
               } @else {
                 <button mat-icon-button type="button" (click)="removeOwner(owner)">
                   <mat-icon>delete</mat-icon>
@@ -170,6 +172,14 @@
                 <span class="cadastros-page__row-email">{{ user.email }}</span>
               </div>
               <span class="cadastros-page__tag">{{ user.profile }}</span>
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Trocar senha"
+                (click)="changePassword(user)"
+              >
+                <mat-icon>lock_reset</mat-icon>
+              </button>
             </div>
           } @empty {
             <p>Nenhum usuário cadastrado ainda.</p>

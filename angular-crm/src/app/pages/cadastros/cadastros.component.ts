@@ -1,10 +1,12 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AnalystsService } from '../../core/analysts/analysts.service';
 import { SessionService } from '../../core/auth/session.service';
@@ -15,6 +17,7 @@ import { Analyst } from '../../models/analyst.model';
 import { Owner } from '../../models/owner.model';
 import { Tenant } from '../../models/tenant.model';
 import { TenantUser } from '../../models/tenant.model';
+import { ChangePasswordDialogComponent } from '../../shared/components/change-password-dialog/change-password-dialog.component';
 
 const USER_PROFILE_OPTIONS: { value: CreateUserPayload['profile']; label: string }[] = [
   { value: 'TENANT_ADMIN', label: 'Administrador' },
@@ -28,10 +31,12 @@ const USER_PROFILE_OPTIONS: { value: CreateUserPayload['profile']; label: string
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
+    MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatSelectModule,
+    MatTooltipModule,
   ],
   templateUrl: './cadastros.component.html',
   styleUrl: './cadastros.component.scss',
@@ -59,6 +64,7 @@ export class CadastrosComponent implements OnInit {
     private readonly analystsService: AnalystsService,
     private readonly tenantsService: TenantsService,
     private readonly ownersService: OwnersService,
+    private readonly dialog: MatDialog,
   ) {
     this.userForm = this.formBuilder.group({
       name: this.formBuilder.nonNullable.control('', Validators.required),
@@ -226,6 +232,32 @@ export class CadastrosComponent implements OnInit {
 
   isSelf(owner: Owner): boolean {
     return owner.id === this.session.userId();
+  }
+
+  // Só esconde o botão (UX) — a trava real é no backend (owner.service.ts). Mesmo e-mail
+  // protegido dos dois lados, documentado em ambos.
+  isProtected(owner: Owner): boolean {
+    return owner.email === 'dev@cmb.dev';
+  }
+
+  changePassword(user: TenantUser): void {
+    this.errorMessage.set(null);
+
+    const dialogRef = this.dialog.open(ChangePasswordDialogComponent, {
+      data: { userName: user.name },
+    });
+
+    dialogRef.afterClosed().subscribe((newPassword?: string) => {
+      if (!newPassword) {
+        return;
+      }
+
+      this.usersService.changePassword(user.id, newPassword).subscribe({
+        error: (error) => {
+          this.errorMessage.set(this.extractErrorMessage(error));
+        },
+      });
+    });
   }
 
   private extractErrorMessage(error: unknown): string {

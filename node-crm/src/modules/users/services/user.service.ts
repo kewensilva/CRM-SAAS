@@ -65,9 +65,20 @@ const deleteUserInTenant = async (id: string, tenantId: string): Promise<void> =
     await userRepository.softDelete(id);
 };
 
+// Só o Tenant Admin chama isso (authorize na rota) — reset de senha em nome de outro
+// usuário do próprio tenant, sem pedir a senha atual (não é o dono da conta).
+const changePasswordInTenant = async (id: string, tenantId: string, newPassword: string): Promise<void> => {
+    await findUserInTenant(id, tenantId);
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await userRepository.updatePasswordHash(id, passwordHash);
+};
+
 export const userService = {
     createUser,
     listUsersByTenant,
     updateUserInTenant,
     deleteUserInTenant,
+    changePasswordInTenant,
 };

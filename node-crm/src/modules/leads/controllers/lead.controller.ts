@@ -5,6 +5,7 @@ import { tenantRepository } from "../../tenants/repositories/tenant.repository";
 import { userRepository } from "../../users/repositories/user.repository";
 import { leadExportService } from "../services/lead-export.service";
 import { leadImportService } from "../services/lead-import.service";
+import { leadImportTemplateService } from "../services/lead-import-template.service";
 import { leadService } from "../services/lead.service";
 import { createLeadSchema, exportLeadsSchema, updateLeadSchema } from "../validators/lead.validator";
 
@@ -107,10 +108,23 @@ const exportFile = async (req: Request, res: Response) => {
     return res.status(200).send(Buffer.from(buffer));
 };
 
+const importTemplate = async (_req: Request, res: Response) => {
+    const buffer = await leadImportTemplateService.buildTemplateWorkbook();
+
+    res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader("Content-Disposition", 'attachment; filename="modelo-importacao-leads.xlsx"');
+
+    return res.status(200).send(Buffer.from(buffer));
+};
+
 export const leadController = {
     create,
     list,
     update,
     importFile,
+    importTemplate,
     exportFile,
 };

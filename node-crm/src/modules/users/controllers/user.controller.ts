@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 
 import { ValidationError } from "../../../shared/errors";
 import { userService } from "../services/user.service";
-import { createUserSchema } from "../validators/user.validator";
+import { changePasswordSchema, createUserSchema } from "../validators/user.validator";
 
 const create = async (req: Request, res: Response) => {
     const parsed = createUserSchema.safeParse(req.body);
@@ -48,7 +48,29 @@ const list = async (req: Request, res: Response) => {
     });
 };
 
+const changePassword = async (req: Request, res: Response) => {
+    const parsed = changePasswordSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+        const details = parsed.error.issues.map((issue) => ({
+            field: String(issue.path[0] ?? "body"),
+            message: issue.message,
+        }));
+
+        throw new ValidationError("Dados inválidos.", details);
+    }
+
+    await userService.changePasswordInTenant(
+        req.params.id as string,
+        req.auth.tenantId as string,
+        parsed.data.newPassword,
+    );
+
+    return res.status(204).send();
+};
+
 export const userController = {
     create,
     list,
+    changePassword,
 };
