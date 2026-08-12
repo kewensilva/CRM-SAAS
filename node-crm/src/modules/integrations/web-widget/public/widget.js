@@ -69,29 +69,46 @@
 
     var utm = captureUtm();
 
+    // Shadow DOM (mode "open") isola o widget do CSS do site do cliente nos dois
+    // sentidos — sem isso, qualquer regra global do site (ex.: "button { background:
+    // red; padding: 20px 40px; border-radius: 50px }", comum em templates prontos)
+    // vaza pro nosso botão/ícone e vice-versa. Confirmado em produção: sem Shadow DOM,
+    // o botão flutuante saía com o vermelho e o padding do próprio site, escondendo o
+    // ícone. "all:initial" no host zera qualquer propriedade herdada (fonte, line-height
+    // etc. do body do site) antes de aplicar nosso próprio CSS por cima.
+    var host = document.createElement("div");
+    host.id = "crm-widget-host";
+    host.style.all = "initial";
+    document.body.appendChild(host);
+    var root = host.attachShadow({ mode: "open" });
+
     var styleEl = document.createElement("style");
     styleEl.textContent =
+        ":host{all:initial;}" +
+        "*{box-sizing:border-box;}" +
         ".crm-widget-btn{position:fixed;bottom:24px;right:24px;z-index:2147483000;" +
         "background:" + buttonColor + ";color:#fff;border:none;border-radius:999px;" +
         "font-family:sans-serif;font-size:14px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2);" +
-        "display:flex;align-items:center;justify-content:center;}" +
+        "display:flex;align-items:center;justify-content:center;margin:0;line-height:normal;}" +
         ".crm-widget-btn--text{padding:14px 20px;}" +
         ".crm-widget-btn--icon{width:64px;height:64px;padding:0;}" +
-        ".crm-widget-btn--icon svg{width:32px;height:32px;fill:currentColor;}" +
+        ".crm-widget-btn--icon svg{width:32px;height:32px;fill:currentColor;flex-shrink:0;}" +
         ".crm-widget-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2147483001;" +
         "display:none;align-items:center;justify-content:center;}" +
         ".crm-widget-overlay.open{display:flex;}" +
         ".crm-widget-panel{background:#fff;border-radius:8px;padding:24px;width:320px;" +
         "max-width:90vw;font-family:sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25);}" +
-        ".crm-widget-panel h3{margin:0 0 12px;font-size:16px;color:#111;}" +
+        ".crm-widget-panel h3{margin:0 0 12px;font-size:16px;color:#111;font-weight:600;}" +
         ".crm-widget-panel input,.crm-widget-panel textarea{width:100%;box-sizing:border-box;" +
-        "margin-bottom:10px;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:14px;}" +
+        "margin:0 0 10px;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:14px;" +
+        "font-family:sans-serif;color:#111;background:#fff;}" +
         ".crm-widget-panel button[type=submit]{width:100%;background:" + buttonColor + ";color:#fff;" +
-        "border:none;border-radius:4px;padding:10px;font-size:14px;cursor:pointer;}" +
-        ".crm-widget-close{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:#666;}" +
+        "border:none;border-radius:4px;padding:10px;font-size:14px;cursor:pointer;margin:0;}" +
+        ".crm-widget-close{float:right;background:none;border:none;font-size:18px;line-height:1;" +
+        "padding:0;margin:0;cursor:pointer;color:#666;}" +
         ".crm-widget-feedback{font-size:13px;color:#2a7a2a;margin-top:8px;display:none;}" +
         ".crm-widget-website-field{position:absolute;left:-9999px;top:-9999px;}";
-    document.head.appendChild(styleEl);
+    root.appendChild(styleEl);
 
     var button = document.createElement("button");
     button.type = "button";
@@ -125,8 +142,8 @@
         "</form>" +
         "</div>";
 
-    document.body.appendChild(button);
-    document.body.appendChild(overlay);
+    root.appendChild(button);
+    root.appendChild(overlay);
 
     var closeBtn = overlay.querySelector(".crm-widget-close");
     var form = overlay.querySelector(".crm-widget-form");
