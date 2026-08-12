@@ -76,8 +76,8 @@
         "font-family:sans-serif;font-size:14px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2);" +
         "display:flex;align-items:center;justify-content:center;}" +
         ".crm-widget-btn--text{padding:14px 20px;}" +
-        ".crm-widget-btn--icon{width:56px;height:56px;padding:0;}" +
-        ".crm-widget-btn--icon svg{width:24px;height:24px;fill:currentColor;}" +
+        ".crm-widget-btn--icon{width:64px;height:64px;padding:0;}" +
+        ".crm-widget-btn--icon svg{width:32px;height:32px;fill:currentColor;}" +
         ".crm-widget-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2147483001;" +
         "display:none;align-items:center;justify-content:center;}" +
         ".crm-widget-overlay.open{display:flex;}" +

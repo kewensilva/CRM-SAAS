@@ -16,7 +16,10 @@ const WIDGET_SCRIPT_PATH = path.join(__dirname, "..", "public", "widget.js");
 // bundler no projeto, widget.js é JS vanilla escrito diretamente (ver CLAUDE.md).
 const serveScript = (req: Request, res: Response) => {
     res.setHeader("Content-Type", "application/javascript; charset=utf-8");
-    res.setHeader("Cache-Control", "public, max-age=300");
+    // 5min → 30s: Tenant Admin ajusta cor/ícone/conteúdo do botão na tela de config e
+    // espera ver o efeito quase na hora ao testar no site — 5min de cache tornava isso
+    // frustrante (parecia que a config não tinha salvo).
+    res.setHeader("Cache-Control", "public, max-age=30");
 
     return res.sendFile(WIDGET_SCRIPT_PATH);
 };
