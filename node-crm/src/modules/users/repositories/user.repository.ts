@@ -91,9 +91,24 @@ const softDelete = (id: string): Promise<User> => {
     return prisma.user.update({ where: { id }, data: { deletedAt: new Date() } });
 };
 
-// Reset de senha pelo Tenant Admin — só o hash muda, nenhum outro campo do usuário.
-const updatePasswordHash = (id: string, passwordHash: string): Promise<User> => {
-    return prisma.user.update({ where: { id }, data: { passwordHash } });
+// Reset de senha (pelo Tenant Admin em nome de outro usuário, ou pelo próprio usuário
+// trocando a própria senha) — mustChangePassword opcional: quando o próprio usuário
+// troca a senha, zera a flag (ver auth.service.ts > changeOwnPassword); quando é um
+// Tenant Admin resetando a senha de outra pessoa, deixa true de novo (ver
+// user.service.ts > changePasswordInTenant), pra forçar a pessoa a trocar de novo no
+// próximo login já que o Admin passou a conhecer a senha temporária.
+const updatePasswordHash = (
+    id: string,
+    passwordHash: string,
+    options?: { mustChangePassword?: boolean },
+): Promise<User> => {
+    return prisma.user.update({
+        where: { id },
+        data:
+            options?.mustChangePassword === undefined
+                ? { passwordHash }
+                : { passwordHash, mustChangePassword: options.mustChangePassword },
+    });
 };
 
 export const userRepository = {

@@ -2,7 +2,12 @@ import type { Request, Response } from "express";
 
 import { ValidationError } from "../../../shared/errors";
 import { authService } from "../services/auth.service";
-import { loginSchema, refreshTokenSchema, switchTenantSchema } from "../validators/auth.validator";
+import {
+    changeOwnPasswordSchema,
+    loginSchema,
+    refreshTokenSchema,
+    switchTenantSchema,
+} from "../validators/auth.validator";
 
 const login = async (req: Request, res: Response) => {
     const parsed = loginSchema.safeParse(req.body);
@@ -61,9 +66,31 @@ const switchTenant = async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, data: tokens });
 };
 
+const changeOwnPassword = async (req: Request, res: Response) => {
+    const parsed = changeOwnPasswordSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+        const details = parsed.error.issues.map((issue) => ({
+            field: String(issue.path[0] ?? "body"),
+            message: issue.message,
+        }));
+
+        throw new ValidationError("Dados inválidos.", details);
+    }
+
+    await authService.changeOwnPassword(
+        req.auth.userId,
+        parsed.data.currentPassword,
+        parsed.data.newPassword,
+    );
+
+    return res.status(204).send();
+};
+
 export const authController = {
     login,
     refreshToken,
     myTenantAccess,
     switchTenant,
+    changeOwnPassword,
 };

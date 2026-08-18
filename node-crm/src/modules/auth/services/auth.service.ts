@@ -1,4 +1,4 @@
-import { comparePassword } from "../../../shared/auth/password";
+import { comparePassword, hashPassword } from "../../../shared/auth/password";
 import { jwtService } from "../../../shared/auth/jwt";
 import { AuthenticationError, AuthorizationError } from "../../../shared/errors";
 import { analystRepository } from "../../analysts/repositories/analyst.repository";
@@ -8,12 +8,18 @@ import type { LoginDTO, LoginResult } from "../dto/login.dto";
 
 const INVALID_CREDENTIALS_MESSAGE = "E-mail ou senha inválidos.";
 
-const issueTokens = (user: { id: string; tenantId: string | null; profile: string }): LoginResult => {
+const issueTokens = (user: {
+    id: string;
+    tenantId: string | null;
+    profile: string;
+    mustChangePassword: boolean;
+}): LoginResult => {
     const payload = { sub: user.id, tenantId: user.tenantId, profile: user.profile };
 
     return {
         accessToken: jwtService.signAccessToken(payload),
         refreshToken: jwtService.signRefreshToken(payload),
+        mustChangePassword: user.mustChangePassword,
     };
 };
 
@@ -91,6 +97,7 @@ const refresh = async (refreshToken: string): Promise<LoginResult> => {
     return {
         accessToken: jwtService.signAccessToken(newPayload),
         refreshToken: jwtService.signRefreshToken(newPayload),
+        mustChangePassword: user.mustChangePassword,
     };
 };
 
@@ -144,7 +151,30 @@ const switchTenant = async (
     return {
         accessToken: jwtService.signAccessToken(payload),
         refreshToken: jwtService.signRefreshToken(payload),
+        // Só chega aqui quem já passou pela gate de troca de senha no login original
+        // (senão nem teria token válido pra chamar isto) — nunca true aqui.
+        mustChangePassword: false,
     };
+};
+
+// Troca de senha feita pelo próprio usuário autenticado (fluxo obrigatório de primeiro
+// acesso, ou depois de um reset feito por um Tenant Admin) — pede a senha ATUAL, ao
+// contrário do reset administrativo em user.service.ts (changePasswordInTenant), que é
+// feito em nome de outra pessoa e por isso não pede senha nenhuma.
+const changeOwnPassword = async (
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+): Promise<void> => {
+    const user = await userRepository.findById(userId);
+
+    if (!user || !(await comparePassword(currentPassword, user.passwordHash))) {
+        throw new AuthenticationError("Senha atual inválida.");
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await userRepository.updatePasswordHash(userId, passwordHash, { mustChangePassword: false });
 };
 
 export const authService = {
@@ -152,4 +182,5 @@ export const authService = {
     refresh,
     myTenantAccess,
     switchTenant,
+    changeOwnPassword,
 };

@@ -7,6 +7,7 @@ export interface LoginRequest {
 export interface LoginResponseData {
   accessToken: string;
   refreshToken: string;
+  mustChangePassword: boolean;
 }
 
 export interface ApiSuccessResponse<T> {

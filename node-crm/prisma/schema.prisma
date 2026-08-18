@@ -146,6 +146,11 @@ model User {
     passwordHash String      @map("password_hash")
     profile      UserProfile
     status       UserStatus  @default(ACTIVE)
+    // Força a tela de troca de senha no primeiro login, qualquer perfil (Owner, Analista,
+    // Tenant Admin, Manager, User) — true por padrão em toda conta nova; contas que já
+    // existiam antes dessa feature são retroativamente marcadas como já tendo passado
+    // pelo primeiro acesso (ver migration), não fica todo mundo travado de repente.
+    mustChangePassword Boolean @default(true) @map("must_change_password")
     createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz
     updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt    DateTime?   @map("deleted_at") @db.Timestamptz

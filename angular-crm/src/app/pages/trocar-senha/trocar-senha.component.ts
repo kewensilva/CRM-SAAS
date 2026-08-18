@@ -1,21 +1,24 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-
-import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiErrorResponse } from '../../models/auth.model';
 
-const PASSWORD_MIN_LENGTH = 8;
+const NEW_PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
+// Tela obrigatória de primeiro acesso (ou depois de um reset feito por um Tenant Admin)
+// — fora do MainLayoutComponent de propósito, igual ao login: nada de menu lateral até
+// a senha ser trocada. session.mustChangePassword() é o que decide se essa tela aparece
+// (ver main-layout.component.ts, que redireciona pra cá enquanto a flag for true).
 @Component({
-  selector: 'app-login',
+  selector: 'app-trocar-senha',
   standalone: true,
   imports: [
     ReactiveFormsModule,
@@ -25,13 +28,14 @@ const PASSWORD_MIN_LENGTH = 8;
     MatIconModule,
     MatProgressSpinnerModule,
   ],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
+  templateUrl: './trocar-senha.component.html',
+  styleUrl: './trocar-senha.component.scss',
 })
-export class LoginComponent {
+export class TrocarSenhaComponent {
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly hidePassword = signal(true);
+  readonly hideCurrentPassword = signal(true);
+  readonly hideNewPassword = signal(true);
 
   readonly form;
 
@@ -41,13 +45,17 @@ export class LoginComponent {
     private readonly router: Router,
   ) {
     this.form = this.formBuilder.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH)]],
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.pattern(NEW_PASSWORD_PATTERN)]],
     });
   }
 
-  togglePasswordVisibility(): void {
-    this.hidePassword.update((value) => !value);
+  toggleCurrentPasswordVisibility(): void {
+    this.hideCurrentPassword.update((value) => !value);
+  }
+
+  toggleNewPasswordVisibility(): void {
+    this.hideNewPassword.update((value) => !value);
   }
 
   submit(): void {
@@ -56,22 +64,20 @@ export class LoginComponent {
       return;
     }
 
-    const { email, password } = this.form.getRawValue();
+    const { currentPassword, newPassword } = this.form.getRawValue();
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
 
-    // Sem campo de empresa/domínio: o tenant é resolvido pelo subdomínio atual dentro de
-    // AuthService.login (ver core/auth/tenant-slug.util.ts).
-    this.authService.login({ email: email ?? '', password: password ?? '' }).subscribe({
-      next: (response) => {
+    this.authService.changePassword(currentPassword ?? '', newPassword ?? '').subscribe({
+      next: () => {
         this.isSubmitting.set(false);
-        this.router.navigate([response.data.mustChangePassword ? '/trocar-senha' : '/dashboard']);
+        this.router.navigate(['/dashboard']);
       },
       error: (error: HttpErrorResponse) => {
         this.isSubmitting.set(false);
         const apiError = error.error as ApiErrorResponse | undefined;
         this.errorMessage.set(
-          apiError?.message ?? 'Não foi possível fazer login. Tente novamente.',
+          apiError?.message ?? 'Não foi possível trocar a senha. Tente novamente.',
         );
       },
     });

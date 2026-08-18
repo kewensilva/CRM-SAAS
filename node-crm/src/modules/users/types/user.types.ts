@@ -9,6 +9,7 @@ export type User = {
     passwordHash: string;
     profile: UserProfile;
     status: UserStatus;
+    mustChangePassword: boolean;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;

@@ -1,0 +1,69 @@
+<div class="trocar-senha-page">
+  <div class="trocar-senha-card">
+    <h1 class="font-display trocar-senha-card__title">Troque sua senha</h1>
+    <p class="trocar-senha-card__hint">
+      Este é o seu primeiro acesso — por segurança, defina uma nova senha antes de continuar.
+    </p>
+
+    <form class="trocar-senha-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <mat-form-field class="trocar-senha-form__field" appearance="fill" floatLabel="always">
+        <mat-label>Senha atual</mat-label>
+        <input
+          matInput
+          [type]="hideCurrentPassword() ? 'password' : 'text'"
+          formControlName="currentPassword"
+          autocomplete="current-password"
+        />
+        <button
+          type="button"
+          mat-icon-button
+          matSuffix
+          (click)="toggleCurrentPasswordVisibility()"
+          [attr.aria-label]="hideCurrentPassword() ? 'Mostrar senha' : 'Ocultar senha'"
+        >
+          <mat-icon>{{ hideCurrentPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (form.controls.currentPassword.touched && form.controls.currentPassword.hasError('required')) {
+          <mat-error>A senha atual é obrigatória.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="trocar-senha-form__field" appearance="fill" floatLabel="always">
+        <mat-label>Nova senha</mat-label>
+        <input
+          matInput
+          [type]="hideNewPassword() ? 'password' : 'text'"
+          formControlName="newPassword"
+          autocomplete="new-password"
+        />
+        <button
+          type="button"
+          mat-icon-button
+          matSuffix
+          (click)="toggleNewPasswordVisibility()"
+          [attr.aria-label]="hideNewPassword() ? 'Mostrar senha' : 'Ocultar senha'"
+        >
+          <mat-icon>{{ hideNewPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (form.controls.newPassword.touched && form.controls.newPassword.hasError('required')) {
+          <mat-error>A nova senha é obrigatória.</mat-error>
+        }
+        @if (form.controls.newPassword.touched && form.controls.newPassword.hasError('pattern')) {
+          <mat-error>Mínimo 8 caracteres, com maiúscula, minúscula e número.</mat-error>
+        }
+      </mat-form-field>
+
+      @if (errorMessage()) {
+        <p class="trocar-senha-form__error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <button type="submit" class="trocar-senha-form__submit" [disabled]="isSubmitting()">
+        @if (isSubmitting()) {
+          <mat-spinner diameter="22" color="accent" />
+        } @else {
+          Trocar senha e continuar
+        }
+      </button>
+    </form>
+  </div>
+</div>

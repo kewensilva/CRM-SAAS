@@ -1,6 +1,6 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -48,14 +48,25 @@ const ACESSOS_ITEM: MenuItem = {
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
 })
-export class MainLayoutComponent {
+export class MainLayoutComponent implements OnInit {
   readonly isCollapsed = signal(false);
   readonly isMobileMenuOpen = signal(false);
 
   constructor(
     private readonly session: SessionService,
     private readonly authService: AuthService,
+    private readonly router: Router,
   ) {}
+
+  // Rede de segurança contra navegação direta/refresh: login e a própria tela de troca
+  // de senha já cuidam do fluxo normal, mas se alguém digitar /dashboard na URL (ou
+  // atualizar a página) com a flag ainda true, o layout principal não deve nem montar —
+  // manda pra tela obrigatória antes de qualquer coisa renderizar.
+  ngOnInit(): void {
+    if (this.session.mustChangePassword()) {
+      this.router.navigateByUrl('/trocar-senha');
+    }
+  }
 
   toggleSidebar(): void {
     this.isCollapsed.update((collapsed) => !collapsed);

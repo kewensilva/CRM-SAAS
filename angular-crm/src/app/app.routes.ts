@@ -7,6 +7,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent),
   },
   {
+    path: 'trocar-senha',
+    loadComponent: () =>
+      import('./pages/trocar-senha/trocar-senha.component').then((m) => m.TrocarSenhaComponent),
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./layout/main-layout/main-layout.component').then((m) => m.MainLayoutComponent),

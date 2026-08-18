@@ -10,6 +10,7 @@ import { resolveTenantSlug } from './tenant-slug.util';
 
 export const ACCESS_TOKEN_KEY = 'crm_access_token';
 export const REFRESH_TOKEN_KEY = 'crm_refresh_token';
+export const MUST_CHANGE_PASSWORD_KEY = 'crm_must_change_password';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -34,7 +35,23 @@ export class AuthService {
   storeTokens(tokens: LoginResponseData): void {
     localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+    localStorage.setItem(MUST_CHANGE_PASSWORD_KEY, String(tokens.mustChangePassword));
     this.session.loadFromAccessToken(tokens.accessToken);
+    this.session.setMustChangePassword(tokens.mustChangePassword);
+  }
+
+  // Primeiro acesso (qualquer perfil) ou depois de um reset de senha feito por um Tenant
+  // Admin — pede a senha atual por segurança, mesmo sendo obrigatório (ver
+  // auth.service.ts > changeOwnPassword no backend).
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http
+      .put<void>(`${environment.apiUrl}/auth/change-password`, { currentPassword, newPassword })
+      .pipe(
+        tap(() => {
+          localStorage.setItem(MUST_CHANGE_PASSWORD_KEY, 'false');
+          this.session.setMustChangePassword(false);
+        }),
+      );
   }
 
   // Usado tanto pelo clique manual em "Sair" quanto pelo interceptor de erro (sessão
@@ -42,6 +59,7 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(MUST_CHANGE_PASSWORD_KEY);
     this.session.clear();
     this.router.navigateByUrl('/login');
   }

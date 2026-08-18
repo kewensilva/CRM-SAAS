@@ -22,3 +22,4 @@ authRoutes.post("/auth/refresh-token", authRateLimiter, authController.refreshTo
 // Analista (perfil ANALYST de base ou já com claim "analystId" de uma troca anterior).
 authRoutes.get("/auth/my-tenant-access", authenticate, authController.myTenantAccess);
 authRoutes.post("/auth/switch-tenant", authenticate, authController.switchTenant);
+authRoutes.put("/auth/change-password", authenticate, authController.changeOwnPassword);

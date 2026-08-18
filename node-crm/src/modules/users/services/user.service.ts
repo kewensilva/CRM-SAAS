@@ -102,13 +102,16 @@ const deleteUserInTenant = async (id: string, tenantId: string): Promise<void> =
 };
 
 // Só o Tenant Admin chama isso (authorize na rota) — reset de senha em nome de outro
-// usuário do próprio tenant, sem pedir a senha atual (não é o dono da conta).
+// usuário do próprio tenant, sem pedir a senha atual (não é o dono da conta). Marca
+// mustChangePassword de volta pra true: o Admin passou a conhecer essa senha temporária,
+// então a pessoa é obrigada a trocar de novo no próximo login (mesma tela do primeiro
+// acesso, ver auth.service.ts > changeOwnPassword).
 const changePasswordInTenant = async (id: string, tenantId: string, newPassword: string): Promise<void> => {
     await findUserInTenant(id, tenantId);
 
     const passwordHash = await hashPassword(newPassword);
 
-    await userRepository.updatePasswordHash(id, passwordHash);
+    await userRepository.updatePasswordHash(id, passwordHash, { mustChangePassword: true });
 };
 
 export const userService = {

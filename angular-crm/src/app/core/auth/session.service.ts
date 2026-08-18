@@ -1,6 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 
-import { ACCESS_TOKEN_KEY } from './auth.service';
+import { ACCESS_TOKEN_KEY, MUST_CHANGE_PASSWORD_KEY } from './auth.service';
 
 export type UserProfile = 'OWNER' | 'TENANT_ADMIN' | 'MANAGER' | 'USER' | 'ANALYST';
 
@@ -33,9 +33,14 @@ export class SessionService {
   private readonly profileSignal = signal<UserProfile | null>(null);
   private readonly analystIdSignal = signal<string | null>(null);
   private readonly userIdSignal = signal<string | null>(null);
+  // Não vem do JWT (não é claim de autorização, é só um estado de UI) — setado direto
+  // pelo AuthService a partir da resposta de /auth/login, persistido à parte pra
+  // sobreviver a um refresh de página (ver auth.service.ts > storeTokens).
+  private readonly mustChangePasswordSignal = signal<boolean>(false);
 
   readonly profile = this.profileSignal.asReadonly();
   readonly userId = this.userIdSignal.asReadonly();
+  readonly mustChangePassword = this.mustChangePasswordSignal.asReadonly();
   readonly isOwner = computed(() => this.profileSignal() === 'OWNER');
   readonly isAnalystBase = computed(() => this.profileSignal() === 'ANALYST');
   readonly isAnalystSession = computed(() => this.analystIdSignal() !== null);
@@ -46,6 +51,8 @@ export class SessionService {
     if (existingToken) {
       this.loadFromAccessToken(existingToken);
     }
+
+    this.mustChangePasswordSignal.set(localStorage.getItem(MUST_CHANGE_PASSWORD_KEY) === 'true');
   }
 
   loadFromAccessToken(accessToken: string): void {
@@ -55,9 +62,14 @@ export class SessionService {
     this.userIdSignal.set(payload?.sub ?? null);
   }
 
+  setMustChangePassword(value: boolean): void {
+    this.mustChangePasswordSignal.set(value);
+  }
+
   clear(): void {
     this.profileSignal.set(null);
     this.analystIdSignal.set(null);
     this.userIdSignal.set(null);
+    this.mustChangePasswordSignal.set(false);
   }
 }
