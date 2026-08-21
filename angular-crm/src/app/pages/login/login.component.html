@@ -58,6 +58,8 @@
           }
         </mat-form-field>
 
+        <a routerLink="/esqueci-senha" class="login-form__forgot-link">Esqueci minha senha</a>
+
         @if (errorMessage()) {
           <p class="login-form__error" role="alert">{{ errorMessage() }}</p>
         }

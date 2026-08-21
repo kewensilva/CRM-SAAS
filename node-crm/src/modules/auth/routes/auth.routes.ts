@@ -15,8 +15,19 @@ const authRateLimiter = createRateLimiter({
     message: "Muitas tentativas em pouco tempo. Tente novamente em instantes.",
 });
 
+// Mais restrito que o geral (5/hora, não 10/min) — cada chamada dispara um e-mail de
+// verdade via Resend; sem isso alguém poderia usar o endpoint pra spammar a caixa de
+// entrada de qualquer e-mail cadastrado.
+const forgotPasswordRateLimiter = createRateLimiter({
+    windowMs: 60 * 60_000,
+    max: 5,
+    message: "Muitas tentativas em pouco tempo. Tente novamente mais tarde.",
+});
+
 authRoutes.post("/auth/login", authRateLimiter, authController.login);
 authRoutes.post("/auth/refresh-token", authRateLimiter, authController.refreshToken);
+authRoutes.post("/auth/forgot-password", forgotPasswordRateLimiter, authController.forgotPassword);
+authRoutes.post("/auth/reset-password", authRateLimiter, authController.resetPassword);
 
 // Sem authorize() por perfil fixo — o próprio service valida que quem chama é um
 // Analista (perfil ANALYST de base ou já com claim "analystId" de uma troca anterior).

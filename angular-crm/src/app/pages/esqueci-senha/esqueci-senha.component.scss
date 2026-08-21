@@ -1,0 +1,121 @@
+@use 'sass:color';
+
+$color-primary: #ff9521;
+$color-page-bg: rgba(230, 230, 230, 0.9);
+$color-input-bg: #e6e6e6;
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.esqueci-senha-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  background-color: $color-page-bg;
+  box-sizing: border-box;
+}
+
+.esqueci-senha-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 420px;
+  max-width: 100%;
+  padding: 48px;
+  background-color: #fff;
+  border-radius: 22px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+
+  &__title {
+    margin: 0;
+    font-size: 32px;
+    line-height: 1.1;
+    color: #000;
+  }
+
+  &__hint {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  &__back-link {
+    align-self: flex-start;
+    margin-top: 4px;
+    color: $color-primary;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.esqueci-senha-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &__field {
+    width: 100%;
+
+    ::ng-deep .mat-mdc-text-field-wrapper {
+      background-color: $color-input-bg;
+      border-radius: 8px;
+    }
+
+    ::ng-deep .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+      background-color: $color-input-bg;
+    }
+
+    ::ng-deep .mdc-line-ripple {
+      display: none;
+    }
+  }
+
+  &__error {
+    margin: 0 0 8px;
+    color: #c62828;
+    font-size: 14px;
+  }
+
+  &__submit {
+    height: 52px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 12px;
+    background-color: $color-primary;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease-in-out;
+
+    &:hover:not(:disabled) {
+      background-color: color.adjust($color-primary, $lightness: -6%);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .esqueci-senha-page {
+    padding: 16px;
+  }
+
+  .esqueci-senha-card {
+    padding: 32px 24px;
+  }
+}

@@ -1,6 +1,10 @@
+import { randomBytes, createHash } from "crypto";
+
+import { emailConfig } from "../../../config/email";
 import { comparePassword, hashPassword } from "../../../shared/auth/password";
 import { jwtService } from "../../../shared/auth/jwt";
-import { AuthenticationError, AuthorizationError } from "../../../shared/errors";
+import { AuthenticationError, AuthorizationError, ValidationError } from "../../../shared/errors";
+import { emailService } from "../../../shared/email/email.service";
 import { analystRepository } from "../../analysts/repositories/analyst.repository";
 import { tenantRepository } from "../../tenants/repositories/tenant.repository";
 import { userRepository } from "../../users/repositories/user.repository";
@@ -177,10 +181,56 @@ const changeOwnPassword = async (
     await userRepository.updatePasswordHash(userId, passwordHash, { mustChangePassword: false });
 };
 
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1h
+const hashResetToken = (token: string): string => createHash("sha256").update(token).digest("hex");
+
+// Gera um token, manda por e-mail (sempre "sucesso" pro chamador, exista ou não a conta —
+// não dá pra vazar se um e-mail está cadastrado). E-mail só é único DENTRO de um tenant
+// (business-rules.md), então a mesma conta de e-mail pode corresponder a até duas contas
+// diferentes aqui (o candidato de plataforma — Owner/Analista — e um usuário de tenant);
+// cada uma recebe seu próprio token/e-mail, igual loginByEmailOnly já lida com essa
+// ambiguidade.
+const forgotPassword = async (email: string): Promise<void> => {
+    const platformCandidate = await userRepository.findByTenantAndEmail(null, email);
+    const tenantCandidates = await userRepository.findActiveByEmailAcrossTenants(email);
+    const candidates = [platformCandidate, ...tenantCandidates].filter(
+        (user): user is NonNullable<typeof user> => user !== null && user.status === "ACTIVE",
+    );
+
+    await Promise.all(
+        candidates.map(async (user) => {
+            const token = randomBytes(32).toString("hex");
+            const tokenHash = hashResetToken(token);
+            const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+
+            await userRepository.setResetToken(user.id, tokenHash, expiresAt);
+
+            const resetUrl = `${emailConfig.frontendUrl}/redefinir-senha?token=${token}`;
+
+            await emailService.sendPasswordResetEmail(user.email, resetUrl);
+        }),
+    );
+};
+
+const resetPassword = async (token: string, newPassword: string): Promise<void> => {
+    const tokenHash = hashResetToken(token);
+    const user = await userRepository.findByValidResetTokenHash(tokenHash);
+
+    if (!user) {
+        throw new ValidationError("Link inválido ou expirado. Peça uma nova redefinição.", []);
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await userRepository.completePasswordReset(user.id, passwordHash);
+};
+
 export const authService = {
     login,
     refresh,
     myTenantAccess,
     switchTenant,
     changeOwnPassword,
+    forgotPassword,
+    resetPassword,
 };

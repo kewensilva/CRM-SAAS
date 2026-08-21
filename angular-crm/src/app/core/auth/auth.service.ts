@@ -4,7 +4,12 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ApiSuccessResponse, LoginRequest, LoginResponseData } from '../../models/auth.model';
+import {
+  ApiSuccessResponse,
+  ForgotPasswordResponseData,
+  LoginRequest,
+  LoginResponseData,
+} from '../../models/auth.model';
 import { SessionService } from './session.service';
 import { resolveTenantSlug } from './tenant-slug.util';
 
@@ -52,6 +57,19 @@ export class AuthService {
           this.session.setMustChangePassword(false);
         }),
       );
+  }
+
+  // Sempre "sucesso" na resposta, exista ou não o e-mail (o backend nunca revela isso) —
+  // a tela sempre mostra a mesma mensagem genérica.
+  forgotPassword(email: string): Observable<ApiSuccessResponse<ForgotPasswordResponseData>> {
+    return this.http.post<ApiSuccessResponse<ForgotPasswordResponseData>>(
+      `${environment.apiUrl}/auth/forgot-password`,
+      { email },
+    );
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/auth/reset-password`, { token, newPassword });
   }
 
   // Usado tanto pelo clique manual em "Sair" quanto pelo interceptor de erro (sessão

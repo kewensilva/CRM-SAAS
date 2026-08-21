@@ -1,0 +1,59 @@
+<div class="redefinir-senha-page">
+  <div class="redefinir-senha-card">
+    @if (!hasToken()) {
+      <h1 class="font-display redefinir-senha-card__title">Link inválido</h1>
+      <p class="redefinir-senha-card__hint">
+        Este link de redefinição está incompleto ou inválido.
+      </p>
+      <a routerLink="/esqueci-senha" class="redefinir-senha-card__back-link">
+        Pedir um novo link
+      </a>
+    } @else if (success()) {
+      <h1 class="font-display redefinir-senha-card__title">Senha redefinida!</h1>
+      <p class="redefinir-senha-card__hint">Você já pode entrar com sua nova senha.</p>
+      <a routerLink="/login" class="redefinir-senha-card__back-link">Ir para o login</a>
+    } @else {
+      <h1 class="font-display redefinir-senha-card__title">Redefinir senha</h1>
+      <p class="redefinir-senha-card__hint">Escolha sua nova senha de acesso.</p>
+
+      <form class="redefinir-senha-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <mat-form-field class="redefinir-senha-form__field" appearance="fill" floatLabel="always">
+          <mat-label>Nova senha</mat-label>
+          <input
+            matInput
+            [type]="hideNewPassword() ? 'password' : 'text'"
+            formControlName="newPassword"
+            autocomplete="new-password"
+          />
+          <button
+            type="button"
+            mat-icon-button
+            matSuffix
+            (click)="toggleNewPasswordVisibility()"
+            [attr.aria-label]="hideNewPassword() ? 'Mostrar senha' : 'Ocultar senha'"
+          >
+            <mat-icon>{{ hideNewPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.controls.newPassword.touched && form.controls.newPassword.hasError('required')) {
+            <mat-error>A nova senha é obrigatória.</mat-error>
+          }
+          @if (form.controls.newPassword.touched && form.controls.newPassword.hasError('pattern')) {
+            <mat-error>Mínimo 8 caracteres, com maiúscula, minúscula e número.</mat-error>
+          }
+        </mat-form-field>
+
+        @if (errorMessage()) {
+          <p class="redefinir-senha-form__error" role="alert">{{ errorMessage() }}</p>
+        }
+
+        <button type="submit" class="redefinir-senha-form__submit" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <mat-spinner diameter="22" color="accent" />
+          } @else {
+            Redefinir senha
+          }
+        </button>
+      </form>
+    }
+  </div>
+</div>

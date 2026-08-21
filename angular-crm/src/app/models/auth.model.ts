@@ -10,6 +10,10 @@ export interface LoginResponseData {
   mustChangePassword: boolean;
 }
 
+export interface ForgotPasswordResponseData {
+  message: string;
+}
+
 export interface ApiSuccessResponse<T> {
   success: true;
   data: T;

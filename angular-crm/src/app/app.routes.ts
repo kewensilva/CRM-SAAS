@@ -12,6 +12,18 @@ export const routes: Routes = [
       import('./pages/trocar-senha/trocar-senha.component').then((m) => m.TrocarSenhaComponent),
   },
   {
+    path: 'esqueci-senha',
+    loadComponent: () =>
+      import('./pages/esqueci-senha/esqueci-senha.component').then((m) => m.EsqueciSenhaComponent),
+  },
+  {
+    path: 'redefinir-senha',
+    loadComponent: () =>
+      import('./pages/redefinir-senha/redefinir-senha.component').then(
+        (m) => m.RedefinirSenhaComponent,
+      ),
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./layout/main-layout/main-layout.component').then((m) => m.MainLayoutComponent),

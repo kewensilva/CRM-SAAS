@@ -119,6 +119,19 @@ $color-input-placeholder: rgba(0, 0, 0, 0.4);
     font-size: 14px;
   }
 
+  &__forgot-link {
+    align-self: flex-start;
+    margin: -4px 0 8px;
+    color: $color-primary;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
   &__submit {
     align-self: flex-start;
     min-width: 160px;

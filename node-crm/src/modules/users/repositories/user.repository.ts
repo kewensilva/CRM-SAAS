@@ -111,6 +111,44 @@ const updatePasswordHash = (
     });
 };
 
+// "Esqueci minha senha" — grava o hash do token (nunca o valor cru, ver
+// auth.service.ts > forgotPassword) e a expiração. Um novo pedido sobrescreve
+// qualquer token anterior ainda pendente (só um válido por vez).
+const setResetToken = (id: string, tokenHash: string, expiresAt: Date): Promise<User> => {
+    return prisma.user.update({
+        where: { id },
+        data: { resetPasswordTokenHash: tokenHash, resetPasswordExpiresAt: expiresAt },
+    });
+};
+
+// Filtra expiração aqui mesmo na query (não em código) — evita a corrida de "token
+// existe mas já venceu" precisar de uma segunda checagem em memória.
+const findByValidResetTokenHash = (tokenHash: string): Promise<User | null> => {
+    return prisma.user.findFirst({
+        where: {
+            resetPasswordTokenHash: tokenHash,
+            resetPasswordExpiresAt: { gt: new Date() },
+            deletedAt: null,
+        },
+    });
+};
+
+// Troca a senha via link de "esqueci minha senha" — limpa o token no mesmo update
+// (usado uma vez só, mesmo que a expiração ainda não tenha chegado) e zera
+// mustChangePassword: a pessoa acabou de escolher a própria senha, não precisa
+// trocar de novo no próximo login.
+const completePasswordReset = (id: string, passwordHash: string): Promise<User> => {
+    return prisma.user.update({
+        where: { id },
+        data: {
+            passwordHash,
+            mustChangePassword: false,
+            resetPasswordTokenHash: null,
+            resetPasswordExpiresAt: null,
+        },
+    });
+};
+
 export const userRepository = {
     create,
     findByTenantAndEmail,
@@ -123,4 +161,7 @@ export const userRepository = {
     update,
     softDelete,
     updatePasswordHash,
+    setResetToken,
+    findByValidResetTokenHash,
+    completePasswordReset,
 };

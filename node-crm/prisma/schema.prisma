@@ -151,6 +151,12 @@ model User {
     // existiam antes dessa feature são retroativamente marcadas como já tendo passado
     // pelo primeiro acesso (ver migration), não fica todo mundo travado de repente.
     mustChangePassword Boolean @default(true) @map("must_change_password")
+    // "Esqueci minha senha": só guarda o HASH do token (nunca o valor cru — mesmo
+    // princípio de nunca guardar senha em texto puro), com expiração curta. Nulos quando
+    // não há pedido de reset pendente; um novo pedido sobrescreve o anterior (só um
+    // token válido por vez), e o reset bem-sucedido limpa os dois campos.
+    resetPasswordTokenHash String?   @map("reset_password_token_hash")
+    resetPasswordExpiresAt DateTime? @map("reset_password_expires_at") @db.Timestamptz
     createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz
     updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt    DateTime?   @map("deleted_at") @db.Timestamptz
