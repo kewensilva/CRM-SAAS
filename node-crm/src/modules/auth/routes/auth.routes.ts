@@ -33,4 +33,11 @@ authRoutes.post("/auth/reset-password", authRateLimiter, authController.resetPas
 // Analista (perfil ANALYST de base ou já com claim "analystId" de uma troca anterior).
 authRoutes.get("/auth/my-tenant-access", authenticate, authController.myTenantAccess);
 authRoutes.post("/auth/switch-tenant", authenticate, authController.switchTenant);
+
+// Owner acessando/saindo diretamente da base de um cliente — mesmo sem authorize() fixo
+// por perfil, o service (enterTenant/exitTenant) rejeita quem não é Owner (ou não tem a
+// claim ownerId de uma sessão de acesso já ativa).
+authRoutes.post("/auth/enter-tenant", authenticate, authController.enterTenant);
+authRoutes.post("/auth/exit-tenant", authenticate, authController.exitTenant);
+
 authRoutes.put("/auth/change-password", authenticate, authController.changeOwnPassword);

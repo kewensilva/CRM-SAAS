@@ -112,7 +112,7 @@ const importLeads = async (
             continue;
         }
 
-        await leadRepository.create({ ...parsed.data, tenantId, responsibleUserId });
+        await leadRepository.create({ ...parsed.data, tenantId, responsibleUserId }, responsibleUserId);
         createdCount += 1;
     }
 

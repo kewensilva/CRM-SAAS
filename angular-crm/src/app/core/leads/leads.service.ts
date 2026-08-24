@@ -8,6 +8,7 @@ import {
   CreateLeadPayload,
   ImportLeadsResult,
   Lead,
+  LeadHistoryEntry,
   MoveLeadStatusPayload,
   MoveLeadStatusResult,
   UpdateLeadPayload,
@@ -38,6 +39,12 @@ export class LeadsService {
   update(id: string, payload: UpdateLeadPayload): Observable<Lead> {
     return this.http
       .put<ApiSuccessResponse<Lead>>(`${environment.apiUrl}/leads/${id}`, payload)
+      .pipe(map((response) => response.data));
+  }
+
+  history(id: string): Observable<LeadHistoryEntry[]> {
+    return this.http
+      .get<ApiSuccessResponse<LeadHistoryEntry[]>>(`${environment.apiUrl}/leads/${id}/history`)
       .pipe(map((response) => response.data));
   }
 

@@ -3,6 +3,7 @@ import type { DealStatus } from "../../../../generated/prisma/enums";
 import { prisma } from "../../../shared/database/prisma-client";
 import { stripUndefined } from "../../../shared/helpers/nullable-fields";
 import { BusinessRuleError } from "../../../shared/errors";
+import type { LeadStatus } from "../../leads/types/lead.types";
 import type { CreateDealDTO, UpdateDealDTO } from "../dto/create-deal.dto";
 import type { Deal, DealStageHistoryEntry } from "../types/deal.types";
 
@@ -11,7 +12,7 @@ import type { Deal, DealStageHistoryEntry } from "../types/deal.types";
 // duplicidade é `deal: null` no updateMany (Deal.leadId também é @unique no schema, uma
 // segunda camada de proteção a nível de banco): se o Lead já tem uma negociação (criada por
 // este fluxo OU pelo Kanban via createFinal), `count` vem 0 e a transação é desfeita.
-const create = (data: CreateDealDTO, changedByUserId: string): Promise<Deal> => {
+const create = (data: CreateDealDTO, changedByUserId: string, leadFromStatus: LeadStatus): Promise<Deal> => {
     return prisma.$transaction(async (tx) => {
         const conversion = await tx.lead.updateMany({
             where: { id: data.leadId, deal: null },
@@ -21,6 +22,16 @@ const create = (data: CreateDealDTO, changedByUserId: string): Promise<Deal> => 
         if (conversion.count === 0) {
             throw new BusinessRuleError("Lead já possui uma negociação.");
         }
+
+        await tx.leadHistory.create({
+            data: {
+                tenantId: data.tenantId,
+                leadId: data.leadId,
+                fromStatus: leadFromStatus,
+                toStatus: "EM_ANDAMENTO",
+                changedByUserId,
+            },
+        });
 
         const deal = await tx.deal.create({ data });
 
@@ -45,16 +56,31 @@ const create = (data: CreateDealDTO, changedByUserId: string): Promise<Deal> => 
 // Mesmo guard atômico `deal: null` do `create` acima.
 const createFinal = (
     data: CreateDealDTO & { status: "WON" | "LOST"; value: number | null; lostReason: string | null },
+    changedByUserId: string,
 ): Promise<Deal> => {
+    const toStatus = data.status === "WON" ? "VENDIDO" : "PERDIDO";
+
     return prisma.$transaction(async (tx) => {
         const conversion = await tx.lead.updateMany({
             where: { id: data.leadId, deal: null },
-            data: { status: data.status === "WON" ? "VENDIDO" : "PERDIDO" },
+            data: { status: toStatus },
         });
 
         if (conversion.count === 0) {
             throw new BusinessRuleError("Lead já finalizado.");
         }
+
+        await tx.leadHistory.create({
+            data: {
+                tenantId: data.tenantId,
+                leadId: data.leadId,
+                // Só chega aqui vindo de "Em andamento" — checagem em deal.service.ts >
+                // moveLeadStatus antes de chamar createFinal.
+                fromStatus: "EM_ANDAMENTO",
+                toStatus,
+                changedByUserId,
+            },
+        });
 
         return tx.deal.create({ data });
     });

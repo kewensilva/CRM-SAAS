@@ -72,6 +72,18 @@
                 <mat-icon>edit</mat-icon>
               </button>
 
+              @if (tenant.status === 'ACTIVE') {
+                <button
+                  type="button"
+                  mat-icon-button
+                  matTooltip="Acessar base do cliente"
+                  [disabled]="accessingId() === tenant.id"
+                  (click)="accessTenant(tenant)"
+                >
+                  <mat-icon>login</mat-icon>
+                </button>
+              }
+
               <button
                 type="button"
                 mat-icon-button

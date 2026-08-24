@@ -85,13 +85,17 @@ const processLeadgenChange = async (change: LeadgenChange, rawPayload: MetaWebho
         return;
     }
 
-    const lead = await leadRepository.create({
-        tenantId: integration.tenantId,
-        responsibleUserId: integration.defaultResponsibleUserId,
-        name: mappedLead.name,
-        email: mappedLead.email,
-        phone: mappedLead.phone,
-    });
+    // changedByUserId nulo: lead criado pela integração, sem usuário autenticado por trás.
+    const lead = await leadRepository.create(
+        {
+            tenantId: integration.tenantId,
+            responsibleUserId: integration.defaultResponsibleUserId,
+            name: mappedLead.name,
+            email: mappedLead.email,
+            phone: mappedLead.phone,
+        },
+        null,
+    );
 
     await metaLogRepository.markProcessed(log.id, lead.id);
 };

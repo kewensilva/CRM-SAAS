@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDatepickerIntl, MatDatepickerModule } from '@angular/material/datepicker';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { SessionService } from '../../../core/auth/session.service';
 import { UsersService } from '../../../core/users/users.service';
+import { PtBrDatepickerIntl } from '../../../core/i18n/pt-br-datepicker-intl';
 import { LeadSource, LeadStatus } from '../../../models/lead.model';
 import { TenantUser } from '../../../models/tenant.model';
 import { DatePreset, LeadsFilterValue } from '../../utils/lead-filter.util';
@@ -47,6 +48,7 @@ export const PERIOD_OPTIONS: { value: DatePreset; label: string }[] = [
     MatInputModule,
     MatSelectModule,
   ],
+  providers: [{ provide: MatDatepickerIntl, useClass: PtBrDatepickerIntl }],
   templateUrl: './leads-filter-dialog.component.html',
   styleUrl: './leads-filter-dialog.component.scss',
 })

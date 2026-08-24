@@ -12,6 +12,9 @@ interface AccessTokenPayload {
   // /auth/switch-tenant) — o id do usuário Analista original, mesmo com profile
   // "TENANT_ADMIN" no restante do token (mesmo poder de um Tenant Admin no tenant escolhido).
   analystId?: string;
+  // Mesma ideia de analystId, mas para o Owner acessando diretamente a base de um
+  // cliente (POST /auth/enter-tenant) — permite voltar à visão de plataforma depois.
+  ownerId?: string;
 }
 
 const decodeAccessToken = (token: string): AccessTokenPayload | null => {
@@ -32,6 +35,7 @@ const decodeAccessToken = (token: string): AccessTokenPayload | null => {
 export class SessionService {
   private readonly profileSignal = signal<UserProfile | null>(null);
   private readonly analystIdSignal = signal<string | null>(null);
+  private readonly ownerIdSignal = signal<string | null>(null);
   private readonly userIdSignal = signal<string | null>(null);
   // Não vem do JWT (não é claim de autorização, é só um estado de UI) — setado direto
   // pelo AuthService a partir da resposta de /auth/login, persistido à parte pra
@@ -44,6 +48,10 @@ export class SessionService {
   readonly isOwner = computed(() => this.profileSignal() === 'OWNER');
   readonly isAnalystBase = computed(() => this.profileSignal() === 'ANALYST');
   readonly isAnalystSession = computed(() => this.analystIdSignal() !== null);
+  // true quando o Owner está acessando diretamente a base de um cliente (POST
+  // /auth/enter-tenant) — profile já vira "TENANT_ADMIN" no restante do token, então essa
+  // flag é o único jeito de saber que a sessão atual "pertence" a um Owner.
+  readonly isOwnerImpersonating = computed(() => this.ownerIdSignal() !== null);
 
   constructor() {
     const existingToken = localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -59,6 +67,7 @@ export class SessionService {
     const payload = decodeAccessToken(accessToken);
     this.profileSignal.set(payload?.profile ?? null);
     this.analystIdSignal.set(payload?.analystId ?? null);
+    this.ownerIdSignal.set(payload?.ownerId ?? null);
     this.userIdSignal.set(payload?.sub ?? null);
   }
 
@@ -69,6 +78,7 @@ export class SessionService {
   clear(): void {
     this.profileSignal.set(null);
     this.analystIdSignal.set(null);
+    this.ownerIdSignal.set(null);
     this.userIdSignal.set(null);
     this.mustChangePasswordSignal.set(false);
   }

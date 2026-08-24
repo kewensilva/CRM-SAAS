@@ -2,7 +2,7 @@ import type { Prisma } from "../../../../generated/prisma/client";
 import { prisma } from "../../../shared/database/prisma-client";
 import { stripUndefined } from "../../../shared/helpers/nullable-fields";
 import type { CreateLeadDTO, UpdateLeadDTO } from "../dto/create-lead.dto";
-import type { Lead, LeadStatus } from "../types/lead.types";
+import type { Lead, LeadHistoryEntry, LeadStatus } from "../types/lead.types";
 
 // Shape bruto retornado por listByTenantWithDetails — leadService.listWithDetails
 // converte isso em LeadWithDetails (calcula "source" a partir de webWidgetLogs/metaLogs).
@@ -22,21 +22,38 @@ export type LeadRawForExport = Lead & {
     responsible: { name: string };
 };
 
-const create = (data: CreateLeadDTO): Promise<Lead> => {
-    return prisma.lead.create({
-        data: {
-            tenantId: data.tenantId,
-            companyId: data.companyId ?? null,
-            responsibleUserId: data.responsibleUserId,
-            name: data.name,
-            email: data.email ?? null,
-            phone: data.phone ?? null,
-            utmSource: data.utmSource ?? null,
-            utmMedium: data.utmMedium ?? null,
-            utmCampaign: data.utmCampaign ?? null,
-            utmTerm: data.utmTerm ?? null,
-            utmContent: data.utmContent ?? null,
-        },
+// changedByUserId é nulo quando a criação vem de uma integração automática (Meta Lead
+// Ads, Web Widget) — não há usuário autenticado nesses fluxos. Criação + primeira
+// entrada de histórico numa única transação, mesmo padrão de dealRepository.create.
+const create = (data: CreateLeadDTO, changedByUserId: string | null): Promise<Lead> => {
+    return prisma.$transaction(async (tx) => {
+        const lead = await tx.lead.create({
+            data: {
+                tenantId: data.tenantId,
+                companyId: data.companyId ?? null,
+                responsibleUserId: data.responsibleUserId,
+                name: data.name,
+                email: data.email ?? null,
+                phone: data.phone ?? null,
+                utmSource: data.utmSource ?? null,
+                utmMedium: data.utmMedium ?? null,
+                utmCampaign: data.utmCampaign ?? null,
+                utmTerm: data.utmTerm ?? null,
+                utmContent: data.utmContent ?? null,
+            },
+        });
+
+        await tx.leadHistory.create({
+            data: {
+                tenantId: data.tenantId,
+                leadId: lead.id,
+                fromStatus: null,
+                toStatus: lead.status,
+                changedByUserId,
+            },
+        });
+
+        return lead;
     });
 };
 
@@ -107,11 +124,36 @@ const linkCompany = (id: string, companyId: string): Promise<Lead> => {
 // VENDIDO/PERDIDO passa pela transação de Deal em deal.repository.ts, não por aqui.
 // budgetValue só é relevante ao mover pra EM_ANDAMENTO (valor orçado antes de existir
 // negociação de fato); demais status nunca chamam com esse parâmetro preenchido.
-const updateStatus = (id: string, status: LeadStatus, budgetValue?: number | null): Promise<Lead> => {
-    return prisma.lead.update({
-        where: { id },
-        data: budgetValue === undefined ? { status } : { status, budgetValue },
+// Atualização + entrada de histórico numa única transação — mesmo padrão de
+// dealRepository.changeStage.
+const updateStatus = (
+    id: string,
+    tenantId: string,
+    fromStatus: LeadStatus,
+    status: LeadStatus,
+    changedByUserId: string,
+    budgetValue?: number | null,
+): Promise<Lead> => {
+    return prisma.$transaction(async (tx) => {
+        const lead = await tx.lead.update({
+            where: { id },
+            data: budgetValue === undefined ? { status } : { status, budgetValue },
+        });
+
+        await tx.leadHistory.create({
+            data: { tenantId, leadId: id, fromStatus, toStatus: status, changedByUserId },
+        });
+
+        return lead;
     });
+};
+
+const listHistoryByLead = (leadId: string, tenantId: string): Promise<LeadHistoryEntry[]> => {
+    return prisma.leadHistory.findMany({
+        where: { leadId, tenantId },
+        orderBy: { changedAt: "asc" },
+        include: { changedByUser: { select: { name: true } } },
+    }) as unknown as Promise<LeadHistoryEntry[]>;
 };
 
 // Kanban de Leads (GET /leads): traz o Deal associado (se já Vendido/Perdido) e a
@@ -159,4 +201,5 @@ export const leadRepository = {
     updateContactInfo,
     updateStatus,
     linkCompany,
+    listHistoryByLead,
 };

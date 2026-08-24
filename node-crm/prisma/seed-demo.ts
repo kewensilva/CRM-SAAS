@@ -277,14 +277,17 @@ const seedTenant = async (blueprint: TenantBlueprint) => {
     const leads = [];
     for (const leadBlueprint of blueprint.leads) {
         const company = leadBlueprint.companyIndex !== undefined ? companies[leadBlueprint.companyIndex] : undefined;
-        const lead = await leadService.createLead({
-            tenantId: tenant.id,
-            responsibleUserId: responsibleForLeads.id,
-            name: leadBlueprint.name,
-            email: leadBlueprint.email,
-            phone: leadBlueprint.phone,
-            ...(company ? { companyId: company.id } : {}),
-        });
+        const lead = await leadService.createLead(
+            {
+                tenantId: tenant.id,
+                responsibleUserId: responsibleForLeads.id,
+                name: leadBlueprint.name,
+                email: leadBlueprint.email,
+                phone: leadBlueprint.phone,
+                ...(company ? { companyId: company.id } : {}),
+            },
+            responsibleForLeads.id,
+        );
         leads.push(lead);
     }
 

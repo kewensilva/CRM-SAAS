@@ -2,7 +2,7 @@ import { NotFoundError } from "../../../shared/errors";
 import { companyRepository } from "../../companies/repositories/company.repository";
 import type { CreateLeadDTO, UpdateLeadDTO } from "../dto/create-lead.dto";
 import { leadRepository } from "../repositories/lead.repository";
-import type { Lead, LeadWithDetails } from "../types/lead.types";
+import type { Lead, LeadHistoryEntry, LeadWithDetails } from "../types/lead.types";
 
 // Regra de visibilidade do Vendedor (USER): enxerga Leads em "Sem contato" (fila comum)
 // + os que ele mesmo é responsável. Usado tanto pra filtrar a listagem (listWithDetails)
@@ -21,7 +21,7 @@ export const isLeadVisibleToRequester = (
     return lead.status === "SEM_CONTATO" || lead.responsibleUserId === requestingUserId;
 };
 
-const createLead = async (data: CreateLeadDTO): Promise<Lead> => {
+const createLead = async (data: CreateLeadDTO, changedByUserId: string | null): Promise<Lead> => {
     if (data.companyId) {
         const company = await companyRepository.findByIdAndTenant(data.companyId, data.tenantId);
 
@@ -30,7 +30,7 @@ const createLead = async (data: CreateLeadDTO): Promise<Lead> => {
         }
     }
 
-    return leadRepository.create(data);
+    return leadRepository.create(data, changedByUserId);
 };
 
 const listLeadsByTenant = (tenantId: string): Promise<Lead[]> => {
@@ -77,9 +77,27 @@ const listWithDetails = async (
     }));
 };
 
+// Ver detalhes do Lead > histórico: mesma regra de visibilidade da listagem (Vendedor
+// só enxerga o próprio Lead ou um ainda sem responsável assumido).
+const listHistory = async (
+    id: string,
+    tenantId: string,
+    requestingUserId: string,
+    requestingProfile: string,
+): Promise<LeadHistoryEntry[]> => {
+    const lead = await leadRepository.findByIdAndTenant(id, tenantId);
+
+    if (!lead || !isLeadVisibleToRequester(lead, requestingUserId, requestingProfile)) {
+        throw new NotFoundError("Lead não encontrado.");
+    }
+
+    return leadRepository.listHistoryByLead(id, tenantId);
+};
+
 export const leadService = {
     createLead,
     listLeadsByTenant,
     listWithDetails,
     updateLead,
+    listHistory,
 };

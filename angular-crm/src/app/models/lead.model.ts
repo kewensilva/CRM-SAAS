@@ -64,3 +64,14 @@ export interface ImportLeadsResult {
   createdCount: number;
   errors: { row: number; message: string }[];
 }
+
+export interface LeadHistoryEntry {
+  id: string;
+  tenantId: string;
+  leadId: string;
+  fromStatus: LeadStatus | null;
+  toStatus: LeadStatus;
+  changedByUserId: string | null;
+  changedAt: string;
+  changedByUser: { name: string } | null;
+}

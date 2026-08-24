@@ -86,6 +86,33 @@
   @if (saved()) {
     <p class="lead-details__success">Alterações salvas.</p>
   }
+
+  <div class="lead-details__history">
+    <h3 class="lead-details__history-title">Histórico</h3>
+
+    @if (historyLoading()) {
+      <mat-spinner diameter="20" />
+    } @else if (history().length === 0) {
+      <p class="lead-details__value">Nenhum histórico registrado.</p>
+    } @else {
+      <ul class="lead-details__timeline">
+        @for (entry of history(); track entry.id) {
+          <li class="lead-details__timeline-item">
+            <div class="lead-details__timeline-status">
+              @if (entry.fromStatus) {
+                {{ statusLabelFor(entry.fromStatus) }} → {{ statusLabelFor(entry.toStatus) }}
+              } @else {
+                Lead criado ({{ statusLabelFor(entry.toStatus) }})
+              }
+            </div>
+            <div class="lead-details__timeline-meta">
+              {{ changedByLabel(entry) }} · {{ entry.changedAt | date: 'dd/MM/yyyy HH:mm' }}
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
 </div>
 
 <div mat-dialog-actions align="end">

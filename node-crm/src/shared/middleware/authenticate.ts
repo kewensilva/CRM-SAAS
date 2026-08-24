@@ -11,6 +11,7 @@ declare global {
                 tenantId: string | null;
                 profile: string;
                 analystId?: string;
+                ownerId?: string;
             };
         }
     }
@@ -33,6 +34,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
             tenantId: payload.tenantId,
             profile: payload.profile,
             ...(payload.analystId ? { analystId: payload.analystId } : {}),
+            ...(payload.ownerId ? { ownerId: payload.ownerId } : {}),
         };
 
         next();

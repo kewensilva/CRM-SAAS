@@ -38,3 +38,17 @@ export type LeadWithDetails = Lead & {
     deal: LeadDeal | null;
     source: LeadSource;
 };
+
+// Uma entrada por evento do ciclo de vida do Lead: criação (fromStatus null) e cada
+// mudança de status depois. changedByUserId nulo = mudança automática de integração
+// (Meta Lead Ads, Web Widget), sem usuário autenticado por trás.
+export type LeadHistoryEntry = {
+    id: string;
+    tenantId: string;
+    leadId: string;
+    fromStatus: LeadStatus | null;
+    toStatus: LeadStatus;
+    changedByUserId: string | null;
+    changedAt: Date;
+    changedByUser: { name: string } | null;
+};

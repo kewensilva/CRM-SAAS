@@ -56,7 +56,7 @@ const createDeal = async (data: CreateDealDTO, changedByUserId: string): Promise
     await pipelineService.getPipeline(data.pipelineId, data.tenantId);
     await assertStageBelongsToPipeline(data.stageId, data.pipelineId, data.tenantId);
 
-    return dealRepository.create(data, changedByUserId);
+    return dealRepository.create(data, changedByUserId, lead.status);
 };
 
 const getDeal = async (id: string, tenantId: string): Promise<Deal> => {
@@ -157,7 +157,10 @@ const moveLeadStatus = async (
     if (SIMPLE_LEAD_STATUSES.includes(data.status)) {
         const updated = await leadRepository.updateStatus(
             leadId,
+            tenantId,
+            lead.status,
             data.status,
+            requestingUserId,
             data.status === "EM_ANDAMENTO" ? (data.value ?? null) : undefined,
         );
 
@@ -202,17 +205,20 @@ const moveLeadStatus = async (
         throw new BusinessRuleError("Configure ao menos uma Etapa no Pipeline antes de finalizar Leads.");
     }
 
-    const deal = await dealRepository.createFinal({
-        tenantId,
-        leadId,
-        companyId,
-        responsibleUserId: lead.responsibleUserId,
-        pipelineId: pipeline.id,
-        stageId: stage.id,
-        status: data.status === "VENDIDO" ? "WON" : "LOST",
-        value: data.value ?? null,
-        lostReason: data.lostReason ?? null,
-    });
+    const deal = await dealRepository.createFinal(
+        {
+            tenantId,
+            leadId,
+            companyId,
+            responsibleUserId: lead.responsibleUserId,
+            pipelineId: pipeline.id,
+            stageId: stage.id,
+            status: data.status === "VENDIDO" ? "WON" : "LOST",
+            value: data.value ?? null,
+            lostReason: data.lostReason ?? null,
+        },
+        requestingUserId,
+    );
 
     return { leadStatus: data.status, budgetValue: lead.budgetValue, deal };
 };

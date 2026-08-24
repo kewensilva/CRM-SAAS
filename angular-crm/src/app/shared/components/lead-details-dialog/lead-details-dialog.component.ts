@@ -1,14 +1,15 @@
 import { DatePipe } from '@angular/common';
-import { Component, Inject, signal } from '@angular/core';
+import { Component, Inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { DealsService } from '../../../core/deals/deals.service';
 import { LeadsService } from '../../../core/leads/leads.service';
-import { Lead } from '../../../models/lead.model';
+import { Lead, LeadHistoryEntry } from '../../../models/lead.model';
 
 export interface LeadDetailsDialogData {
   lead: Lead;
@@ -25,15 +26,26 @@ const STATUS_LABELS: Record<Lead['status'], string> = {
 @Component({
   selector: 'app-lead-details-dialog',
   standalone: true,
-  imports: [DatePipe, ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
+  imports: [
+    DatePipe,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+  ],
   templateUrl: './lead-details-dialog.component.html',
   styleUrl: './lead-details-dialog.component.scss',
 })
-export class LeadDetailsDialogComponent {
+export class LeadDetailsDialogComponent implements OnInit {
   readonly lead: Lead;
   readonly saving = signal(false);
   readonly saveError = signal<string | null>(null);
   readonly saved = signal(false);
+
+  readonly history = signal<LeadHistoryEntry[]>([]);
+  readonly historyLoading = signal(true);
 
   readonly form;
   readonly valueForm;
@@ -57,6 +69,24 @@ export class LeadDetailsDialogComponent {
       value: [this.parseValue(this.lead.deal?.value ?? null)],
       lostReason: [this.lead.deal?.lostReason ?? ''],
     });
+  }
+
+  ngOnInit(): void {
+    this.leadsService.history(this.lead.id).subscribe({
+      next: (entries) => {
+        this.history.set(entries);
+        this.historyLoading.set(false);
+      },
+      error: () => this.historyLoading.set(false),
+    });
+  }
+
+  statusLabelFor(status: Lead['status'] | null): string {
+    return status ? STATUS_LABELS[status] : 'Criação';
+  }
+
+  changedByLabel(entry: LeadHistoryEntry): string {
+    return entry.changedByUser?.name ?? 'Integração automática';
   }
 
   get statusLabel(): string {

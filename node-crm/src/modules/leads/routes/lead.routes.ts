@@ -17,6 +17,7 @@ const tenantWrite = authorize("TENANT_ADMIN", "MANAGER", "USER");
 leadRoutes.post("/leads", authenticate, tenantWrite, leadController.create);
 leadRoutes.get("/leads", authenticate, tenantWrite, leadController.list);
 leadRoutes.put("/leads/:id", authenticate, tenantWrite, leadController.update);
+leadRoutes.get("/leads/:id/history", authenticate, tenantWrite, leadController.history);
 leadRoutes.post(
     "/leads/import",
     authenticate,

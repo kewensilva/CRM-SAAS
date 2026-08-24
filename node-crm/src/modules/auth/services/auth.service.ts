@@ -6,6 +6,7 @@ import { jwtService } from "../../../shared/auth/jwt";
 import { AuthenticationError, AuthorizationError, ValidationError } from "../../../shared/errors";
 import { emailService } from "../../../shared/email/email.service";
 import { analystRepository } from "../../analysts/repositories/analyst.repository";
+import { ownerRepository } from "../../owners/repositories/owner.repository";
 import { tenantRepository } from "../../tenants/repositories/tenant.repository";
 import { userRepository } from "../../users/repositories/user.repository";
 import type { LoginDTO, LoginResult } from "../dto/login.dto";
@@ -161,6 +162,63 @@ const switchTenant = async (
     };
 };
 
+// Owner acessando diretamente a base de um cliente (ícone "Acessar" na tela Empresas do
+// Owner) — mesmo mecanismo de switchTenant do Analista (novo token com profile
+// "TENANT_ADMIN" no tenant escolhido), mas sem tabela de acesso pra checar: o Owner já
+// administra a plataforma inteira, então tem acesso implícito a qualquer tenant ativo. A
+// claim "ownerId" preserva quem ele realmente é, pra permitir voltar depois (exitTenant).
+const enterTenant = async (
+    auth: { userId: string; profile: string },
+    tenantId: string,
+): Promise<LoginResult> => {
+    if (auth.profile !== "OWNER") {
+        throw new AuthorizationError("Somente o Owner pode acessar diretamente a base de um cliente.");
+    }
+
+    const tenant = await tenantRepository.findById(tenantId);
+
+    if (!tenant || tenant.status !== "ACTIVE") {
+        throw new AuthenticationError("Empresa inválida ou inativa.");
+    }
+
+    const payload = {
+        sub: auth.userId,
+        tenantId: tenant.id,
+        profile: "TENANT_ADMIN",
+        ownerId: auth.userId,
+    };
+
+    return {
+        accessToken: jwtService.signAccessToken(payload),
+        refreshToken: jwtService.signRefreshToken(payload),
+        mustChangePassword: false,
+    };
+};
+
+// Volta da base do cliente pra visão de plataforma (botão "Voltar para plataforma" no
+// menu, só visível durante uma sessão iniciada por enterTenant) — reemite um token OWNER
+// puro (tenantId nulo), reconfirmando que o Owner original ainda existe e está ativo (não
+// confia cegamente na claim antiga, caso a conta tenha sido removida nesse meio tempo).
+const exitTenant = async (auth: { ownerId?: string }): Promise<LoginResult> => {
+    if (!auth.ownerId) {
+        throw new AuthorizationError("Esta sessão não foi iniciada por um Owner.");
+    }
+
+    const owner = await ownerRepository.findById(auth.ownerId);
+
+    if (!owner || owner.status !== "ACTIVE") {
+        throw new AuthenticationError("Owner inválido ou inativo.");
+    }
+
+    const payload = { sub: owner.id, tenantId: null, profile: "OWNER" };
+
+    return {
+        accessToken: jwtService.signAccessToken(payload),
+        refreshToken: jwtService.signRefreshToken(payload),
+        mustChangePassword: false,
+    };
+};
+
 // Troca de senha feita pelo próprio usuário autenticado (fluxo obrigatório de primeiro
 // acesso, ou depois de um reset feito por um Tenant Admin) — pede a senha ATUAL, ao
 // contrário do reset administrativo em user.service.ts (changePasswordInTenant), que é
@@ -230,6 +288,8 @@ export const authService = {
     refresh,
     myTenantAccess,
     switchTenant,
+    enterTenant,
+    exitTenant,
     changeOwnPassword,
     forgotPassword,
     resetPassword,

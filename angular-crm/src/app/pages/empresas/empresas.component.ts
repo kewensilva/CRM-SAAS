@@ -6,6 +6,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 
+import { OwnerTenantAccessService } from '../../core/auth/owner-tenant-access.service';
 import { TenantsService } from '../../core/tenants/tenants.service';
 import { Tenant } from '../../models/tenant.model';
 import { CreateTenantDialogComponent } from './create-tenant-dialog/create-tenant-dialog.component';
@@ -33,9 +34,11 @@ export class EmpresasComponent implements OnInit {
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly togglingId = signal<string | null>(null);
+  readonly accessingId = signal<string | null>(null);
 
   constructor(
     private readonly tenantsService: TenantsService,
+    private readonly ownerTenantAccessService: OwnerTenantAccessService,
     private readonly dialog: MatDialog,
     private readonly router: Router,
   ) {}
@@ -122,6 +125,21 @@ export class EmpresasComponent implements OnInit {
           this.errorMessage.set('Não foi possível excluir a empresa.');
         },
       });
+    });
+  }
+
+  accessTenant(tenant: Tenant): void {
+    this.accessingId.set(tenant.id);
+    this.errorMessage.set(null);
+
+    this.ownerTenantAccessService.enterTenant(tenant.id).subscribe({
+      next: () => {
+        this.router.navigateByUrl('/dashboard');
+      },
+      error: () => {
+        this.accessingId.set(null);
+        this.errorMessage.set('Não foi possível acessar a base deste cliente.');
+      },
     });
   }
 

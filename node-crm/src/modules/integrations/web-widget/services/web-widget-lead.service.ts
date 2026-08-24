@@ -67,18 +67,22 @@ const processSubmission = async (payload: WebWidgetSubmissionPayload): Promise<v
         return;
     }
 
-    const lead = await leadRepository.create({
-        tenantId: integration.tenantId,
-        responsibleUserId: integration.defaultResponsibleUserId,
-        name: payload.name,
-        email: payload.email,
-        phone: payload.phone,
-        utmSource: payload.utmSource,
-        utmMedium: payload.utmMedium,
-        utmCampaign: payload.utmCampaign,
-        utmTerm: payload.utmTerm,
-        utmContent: payload.utmContent,
-    });
+    // changedByUserId nulo: lead criado pela integração, sem usuário autenticado por trás.
+    const lead = await leadRepository.create(
+        {
+            tenantId: integration.tenantId,
+            responsibleUserId: integration.defaultResponsibleUserId,
+            name: payload.name,
+            email: payload.email,
+            phone: payload.phone,
+            utmSource: payload.utmSource,
+            utmMedium: payload.utmMedium,
+            utmCampaign: payload.utmCampaign,
+            utmTerm: payload.utmTerm,
+            utmContent: payload.utmContent,
+        },
+        null,
+    );
 
     await webWidgetLogRepository.markProcessed(log.id, lead.id);
 };

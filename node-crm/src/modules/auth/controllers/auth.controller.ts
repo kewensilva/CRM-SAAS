@@ -72,6 +72,29 @@ const switchTenant = async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, data: tokens });
 };
 
+const enterTenant = async (req: Request, res: Response) => {
+    const parsed = switchTenantSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+        const details = parsed.error.issues.map((issue) => ({
+            field: String(issue.path[0] ?? "body"),
+            message: issue.message,
+        }));
+
+        throw new ValidationError("Dados inválidos.", details);
+    }
+
+    const tokens = await authService.enterTenant(req.auth, parsed.data.tenantId);
+
+    return res.status(200).json({ success: true, data: tokens });
+};
+
+const exitTenant = async (req: Request, res: Response) => {
+    const tokens = await authService.exitTenant(req.auth);
+
+    return res.status(200).json({ success: true, data: tokens });
+};
+
 const changeOwnPassword = async (req: Request, res: Response) => {
     const parsed = changeOwnPasswordSchema.safeParse(req.body);
 
@@ -141,6 +164,8 @@ export const authController = {
     refreshToken,
     myTenantAccess,
     switchTenant,
+    enterTenant,
+    exitTenant,
     changeOwnPassword,
     forgotPassword,
     resetPassword,

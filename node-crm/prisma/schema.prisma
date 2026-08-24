@@ -108,6 +108,7 @@ model Tenant {
     pipelineStages   PipelineStage[]
     deals            Deal[]
     dealStageHistory DealStageHistory[]
+    leadHistory      LeadHistory[]
     activities       Activity[]
     settings         Settings?
     metaIntegration  MetaIntegration?
@@ -165,6 +166,7 @@ model User {
     leads                 Lead[]
     deals                 Deal[]
     dealStageChanges      DealStageHistory[]
+    leadStatusChanges     LeadHistory[]
     activities            Activity[]
     metaIntegrationsAsDefaultResponsible MetaIntegration[]
     webWidgetIntegrationsAsDefaultResponsible WebWidgetIntegration[]
@@ -231,12 +233,36 @@ model Lead {
     activities  Activity[]
     metaLogs    MetaIntegrationLog[]
     webWidgetLogs WebWidgetLog[]
+    history     LeadHistory[]
 
     @@index([tenantId])
     @@index([companyId])
     @@index([status])
     @@index([createdAt])
     @@map("leads")
+}
+
+// Histórico imutável do Lead — nunca é editado nem apagado (mesmo princípio de
+// DealStageHistory abaixo). Uma entrada por evento: criação (fromStatus null) e cada
+// mudança de status subsequente. changedByUserId é nulo quando o Lead nasce/muda por uma
+// integração automática (Meta Lead Ads, Web Widget) — não há usuário autenticado nesses
+// fluxos, ver meta-webhook.service.ts / web-widget-lead.service.ts.
+model LeadHistory {
+    id              String      @id @default(uuid()) @db.Uuid
+    tenantId        String      @map("tenant_id") @db.Uuid
+    leadId          String      @map("lead_id") @db.Uuid
+    fromStatus      LeadStatus? @map("from_status")
+    toStatus        LeadStatus  @map("to_status")
+    changedByUserId String?     @map("changed_by_user_id") @db.Uuid
+    changedAt       DateTime    @default(now()) @map("changed_at") @db.Timestamptz
+
+    tenant        Tenant  @relation(fields: [tenantId], references: [id])
+    lead          Lead    @relation(fields: [leadId], references: [id])
+    changedByUser User?   @relation(fields: [changedByUserId], references: [id])
+
+    @@index([tenantId])
+    @@index([leadId])
+    @@map("lead_history")
 }
 
 model Company {

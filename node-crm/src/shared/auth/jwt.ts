@@ -10,6 +10,10 @@ export type JwtPayload = {
     // ANALYST original, mesmo com profile "TENANT_ADMIN" no restante do token (opera com
     // o mesmo poder de um Tenant Admin dentro do tenant escolhido).
     analystId?: string;
+    // Mesma ideia de analystId, mas para o Owner acessando diretamente a base de um
+    // cliente (POST /auth/enter-tenant) — preserva quem ele realmente é, pra permitir
+    // voltar à visão de plataforma depois (POST /auth/exit-tenant).
+    ownerId?: string;
 };
 
 const signAccessToken = (payload: JwtPayload): string => {

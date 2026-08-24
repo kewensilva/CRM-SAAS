@@ -23,11 +23,14 @@ const create = async (req: Request, res: Response) => {
 
     // Responsável assume-se como o próprio usuário autenticado até o Pipeline
     // permitir reatribuição (ver business-rules.md — Leads > Responsável).
-    const lead = await leadService.createLead({
-        ...parsed.data,
-        tenantId: req.auth.tenantId as string,
-        responsibleUserId: req.auth.userId,
-    });
+    const lead = await leadService.createLead(
+        {
+            ...parsed.data,
+            tenantId: req.auth.tenantId as string,
+            responsibleUserId: req.auth.userId,
+        },
+        req.auth.userId,
+    );
 
     return res.status(201).json({ success: true, data: lead });
 };
@@ -114,6 +117,17 @@ const exportFile = async (req: Request, res: Response) => {
     return res.status(200).send(Buffer.from(buffer));
 };
 
+const history = async (req: Request, res: Response) => {
+    const entries = await leadService.listHistory(
+        req.params.id as string,
+        req.auth.tenantId as string,
+        req.auth.userId,
+        req.auth.profile,
+    );
+
+    return res.status(200).json({ success: true, data: entries });
+};
+
 const importTemplate = async (_req: Request, res: Response) => {
     const buffer = await leadImportTemplateService.buildTemplateWorkbook();
 
@@ -130,6 +144,7 @@ export const leadController = {
     create,
     list,
     update,
+    history,
     importFile,
     importTemplate,
     exportFile,

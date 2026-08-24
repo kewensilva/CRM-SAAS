@@ -4,6 +4,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { MatIconModule } from '@angular/material/icon';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { OwnerTenantAccessService } from '../../core/auth/owner-tenant-access.service';
 import { SessionService } from '../../core/auth/session.service';
 
 interface MenuItem {
@@ -51,10 +52,12 @@ const ACESSOS_ITEM: MenuItem = {
 export class MainLayoutComponent implements OnInit {
   readonly isCollapsed = signal(false);
   readonly isMobileMenuOpen = signal(false);
+  readonly exitingTenant = signal(false);
 
   constructor(
-    private readonly session: SessionService,
+    readonly session: SessionService,
     private readonly authService: AuthService,
+    private readonly ownerTenantAccessService: OwnerTenantAccessService,
     private readonly router: Router,
   ) {}
 
@@ -82,6 +85,23 @@ export class MainLayoutComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  // Só aparece durante uma sessão iniciada pelo Owner acessando diretamente a base de um
+  // cliente (ver empresas.component.ts > accessTenant) — reemite um token OWNER puro e
+  // volta pra tela de gestão de tenants.
+  exitTenant(): void {
+    this.exitingTenant.set(true);
+
+    this.ownerTenantAccessService.exitTenant().subscribe({
+      next: () => {
+        this.exitingTenant.set(false);
+        this.router.navigateByUrl('/empresas');
+      },
+      error: () => {
+        this.exitingTenant.set(false);
+      },
+    });
   }
 
   readonly menuItems = computed<MenuItem[]>(() => {
