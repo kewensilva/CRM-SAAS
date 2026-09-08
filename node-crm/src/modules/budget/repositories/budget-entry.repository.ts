@@ -18,9 +18,13 @@ const upsertEntry = (data: CreateBudgetEntryDTO): Promise<BudgetEntry> => {
                 month: data.month,
             },
         },
+        // deletedAt: null reativa o registro se o Analista excluiu esse canal/mês e depois
+        // recadastrou o mesmo canal+mês — sem isso o upsert só atualizava budget/investment
+        // e o registro continuava invisível pra listByTenant (que filtra deletedAt: null).
         update: stripUndefined({
             budget: data.budget,
             investment: data.investment,
+            deletedAt: null,
         }) as unknown as Prisma.BudgetEntryUpdateInput,
         create: createData,
     }) as unknown as Promise<BudgetEntry>;
