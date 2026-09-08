@@ -18,6 +18,7 @@ const TENANT_BASE_MENU_ITEMS: MenuItem[] = [
   { label: 'CRM', route: '/crm', icon: 'assets/icons/icon-group.svg' },
   { label: 'Leads', route: '/leads', icon: 'assets/icons/icon-filter-alt.svg' },
   { label: 'Oportunidades', route: '/oportunidades', icon: 'assets/icons/icon-send.svg' },
+  { label: 'Relatórios', route: '/relatorios', icon: 'assets/icons/icon-trophy.svg' },
 ];
 
 // Motivos e Cadastros são administrativos — só o Tenant Admin gerencia (Manager/User

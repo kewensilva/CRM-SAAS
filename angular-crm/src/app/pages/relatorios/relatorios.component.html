@@ -1,0 +1,112 @@
+<div class="reports">
+  <div class="reports__toolbar">
+    <h1 class="reports__title">Relatórios</h1>
+    <label class="reports__month">
+      <span>Mês</span>
+      <input type="month" [formControl]="monthControl" />
+    </label>
+  </div>
+
+  <p *ngIf="loading()">Carregando...</p>
+  <p class="reports__error" *ngIf="errorMessage()" role="alert">{{ errorMessage() }}</p>
+
+  @if (!loading() && !errorMessage() && summary(); as data) {
+    <div class="reports__grid">
+      <div class="report-card">
+        <h2 class="report-card__title">Budget x Investimento ({{ data.month }})</h2>
+        <div class="report-card__budget-row">
+          <div class="report-card__budget-col">
+            <span class="report-card__big-label">Budget</span>
+            <span class="report-card__big-value">{{ formatCurrency(data.budget.total) }}</span>
+            <ul class="report-card__channel-list">
+              @for (channel of data.budget.byChannel; track channel.channelName) {
+                <li>
+                  <span>{{ channel.channelName }}</span>
+                  <span>{{ formatCurrency(channel.budget) }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <div class="report-card__budget-col">
+            <span class="report-card__big-label">Investimento</span>
+            <span class="report-card__big-value">{{ formatCurrency(data.investment.total) }}</span>
+            <span class="report-card__hint">
+              Mês anterior: {{ formatCurrency(data.investment.previousMonthTotal) }}
+            </span>
+            <span
+              class="report-card__hint"
+              [class.report-card__hint--negative]="data.investment.percentChange < 0"
+              [class.report-card__hint--positive]="data.investment.percentChange > 0"
+            >
+              {{ formatPercent(data.investment.percentChange) }}
+            </span>
+            <ul class="report-card__channel-list">
+              @for (channel of data.budget.byChannel; track channel.channelName) {
+                <li>
+                  <span>{{ channel.channelName }}</span>
+                  <span>{{ formatCurrency(channel.investment) }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-card">
+        <h2 class="report-card__title">Conversões</h2>
+        <div class="report-card__conversions">
+          @for (channel of data.conversionsByChannel; track channel.channelName) {
+            <div class="conversion-row">
+              <span class="conversion-row__label">{{ channel.channelName }}</span>
+              <div class="conversion-row__bar">
+                <div class="conversion-row__bar-fill" [style.width.%]="channel.percentage"></div>
+              </div>
+              <span class="conversion-row__value">{{ channel.percentage }}%</span>
+            </div>
+          } @empty {
+            <p class="reports__hint">Nenhum canal com budget cadastrado neste mês.</p>
+          }
+        </div>
+      </div>
+
+      <div class="report-card report-card--metrics">
+        <div class="metric-tile">
+          <span class="metric-tile__label">CPA</span>
+          <span class="metric-tile__value">{{ data.cpa !== null ? formatCurrency(data.cpa) : '—' }}</span>
+          <span class="metric-tile__hint">Custo por Aquisição (investimento / leads)</span>
+        </div>
+        <div class="metric-tile">
+          <span class="metric-tile__label">SQL</span>
+          <span class="metric-tile__value">{{ data.sql }}</span>
+          <span class="metric-tile__hint">Leads qualificados no mês</span>
+        </div>
+        <div class="metric-tile">
+          <span class="metric-tile__label">CPV</span>
+          <span class="metric-tile__value">{{ data.cpv !== null ? formatCurrency(data.cpv) : '—' }}</span>
+          <span class="metric-tile__hint">Custo por Venda (investimento / vendas)</span>
+        </div>
+      </div>
+
+      <div class="report-card">
+        <h2 class="report-card__title">Conversão de leads</h2>
+        <div class="funnel">
+          <div class="funnel__stage">
+            <span class="funnel__value">{{ data.funnel.totalLeads }}</span>
+            <span class="funnel__label">Total de Leads</span>
+          </div>
+          <div class="funnel__stage">
+            <span class="funnel__value">{{ data.funnel.qualifiedLeads }}</span>
+            <span class="funnel__label">Qualificados</span>
+            <span class="funnel__rate">{{ data.funnel.qualifiedRate }}%</span>
+          </div>
+          <div class="funnel__stage">
+            <span class="funnel__value">{{ data.funnel.wonLeads }}</span>
+            <span class="funnel__label">Vendido</span>
+            <span class="funnel__rate">{{ data.funnel.wonRate }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -68,6 +68,11 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'relatorios',
+        loadComponent: () =>
+          import('./pages/relatorios/relatorios.component').then((m) => m.RelatoriosComponent),
+      },
+      {
         path: 'configuracoes',
         loadComponent: () =>
           import('./pages/configuracoes/configuracoes.component').then(

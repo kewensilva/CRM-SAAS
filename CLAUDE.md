@@ -398,4 +398,36 @@ Pendente, na ordem oficial: Auditoria — provavelmente onde a decisão de não 
 `shared/events/` finalmente precisa ser revisitada, já que auditoria é o consumidor óbvio de
 eventos como `LeadCreated`/`DealWon`/`UserCreated` que a esta altura já têm origem real.
 
-`angular-crm/` está vazio — frontend ainda não iniciado.
+- **Budget & Relatórios** (`modules/budget/` + `modules/reports/`, branch `config-parametrizacao`,
+  standby — não mesclada em `static-domain` nem publicada): parametrização mês a mês de
+  budget/investimento por canal (`BudgetEntry`, campo livre `channelName` — "campos livres para
+  analista cadastrar", não é enum) e um endpoint de agregação (`GET /api/v1/reports/summary`)
+  que consome `BudgetEntry` + `Lead` pra devolver: totais de budget/investimento (com breakdown
+  por canal e comparação com o mês anterior), CPA/SQL/CPV e um funil de conversão de leads
+  (Total → Qualificados → Vendido). `month` trafega como string `"YYYY-MM"`, normalizado pro dia
+  1 `00:00:00.000Z` UTC (`@db.Timestamptz`, não `@db.Date`, pra seguir database-patterns.md).
+  `BudgetEntry` é upsert por `(tenantId, channelName, month)` — recadastrar o mesmo canal/mês
+  atualiza em vez de dar 409, que é o fluxo natural do analista ajustando um valor. CPA/SQL/CPV
+  e a atribuição de conversão por canal (`Lead.utmSource` comparado ao `channelName` sem o
+  sufixo " Ads", case-insensitive) são definições **minhas**, não documentadas em
+  business-rules.md — ver comentários em `reports/services/report.service.ts`. Escrita restrita
+  a `TENANT_ADMIN` no backend (mesma role de Configurações), mas no frontend a UI de cadastro
+  (`configuracoes.component.ts`, `canManageBudget`) só aparece pro Analista — mesmo mecanismo
+  já usado pra Produtos (Feature 4): Tenant Admin autêntico nunca vê o formulário, mesmo tendo
+  a permissão de escrita no backend. Sem testes unitários dedicados (mesmo gap que o módulo
+  Products já tinha — só `web-widget` tem `.spec.ts` no projeto hoje).
+  - Frontend: página nova `pages/relatorios/` (rota `/relatorios`, item de menu "Relatórios"
+    visível a `TENANT_ADMIN`/`MANAGER`/`USER`, mesmo escopo do `authorize()` do backend) reúne
+    Budget x Investimento + Conversões (Feature 5), CPA/SQL/CPV na mesma página (Feature 6,
+    pedido explícito "na mesma página") e o funil de conversão de leads (Feature 7) — juntei as
+    três nesta única página em vez de 3 telas separadas porque são todas visões mensais sobre os
+    mesmos dados e o próprio pedido do Feature 6 já pedia agrupamento. Testado no navegador como
+    Tenant Admin (`admin@agencia-delta.com`) e como Analista (`analista.standby@cmb.dev` via
+    Acessos → Agência Delta Marketing): números batem com os dados reais cadastrados
+    (R$29.400 budget → R$34.400 após adicionar Linkedin Ads R$5.000/R$3.200, removido depois do
+    teste), CRUD completo de `BudgetEntry` (criar/listar/remover) validado ponta a ponta, seção
+    de cadastro corretamente ausente para o Tenant Admin.
+
+`angular-crm/` já tem várias páginas construídas (login, dashboard Owner/Tenant, CRM, Leads,
+Oportunidades, Relatórios, Empresas, Configurações, Motivos, Cadastros, Acessos) — a nota
+anterior de "frontend ainda não iniciado" ficou desatualizada e foi removida.

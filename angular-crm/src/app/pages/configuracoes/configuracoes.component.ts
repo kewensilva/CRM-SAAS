@@ -24,10 +24,12 @@ import { forkJoin } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { SessionService } from '../../core/auth/session.service';
+import { BudgetEntriesService } from '../../core/budget/budget-entries.service';
 import { MetaService } from '../../core/meta/meta.service';
 import { ProductsService } from '../../core/products/products.service';
 import { UsersService } from '../../core/users/users.service';
 import { WebWidgetService } from '../../core/web-widget/web-widget.service';
+import { BudgetEntry } from '../../models/budget-entry.model';
 import { MetaIntegration, MetaIntegrationLog } from '../../models/meta-integration.model';
 import { Product } from '../../models/product.model';
 import { TenantUser } from '../../models/tenant.model';
@@ -59,6 +61,13 @@ const DUPLICATE_STRATEGY_LABELS: Record<'IGNORE' | 'UPDATE', string> = {
 // no atributo do <script> gerado (o snippet é copiado literalmente pro site do cliente).
 const escapeHtmlAttr = (value: string): string =>
   value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+// "2026-09" — mesmo formato aceito pelo <input type="month"> e pela API (ver
+// budget-entry.validator.ts no backend).
+const currentMonthValue = (): string => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+};
 
 function maskToken(token: string): string {
   const visibleChars = 4;
@@ -154,6 +163,9 @@ export class ConfiguracoesComponent implements OnInit {
   // Mesma regra do widget acima — cadastro de produtos também é parametrização do
   // Analista (ver products module no backend).
   readonly canManageProducts = computed(() => this.session.isAnalystSession());
+  // Idem — Budget x Investimento (feature Relatórios) também é parametrizado só pelo
+  // Analista (ver budget module no backend).
+  readonly canManageBudget = computed(() => this.session.isAnalystSession());
 
   readonly widgetForm;
   readonly widgetSaving = signal(false);
@@ -181,18 +193,33 @@ export class ConfiguracoesComponent implements OnInit {
   readonly productsError = signal<string | null>(null);
   readonly productForm;
 
+  readonly budgetEntries = signal<BudgetEntry[]>([]);
+  readonly budgetSaving = signal(false);
+  readonly budgetError = signal<string | null>(null);
+  readonly budgetForm;
+  readonly budgetMonthControl;
+
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly usersService: UsersService,
     private readonly webWidgetService: WebWidgetService,
     private readonly metaService: MetaService,
     private readonly productsService: ProductsService,
+    private readonly budgetEntriesService: BudgetEntriesService,
     private readonly clipboard: Clipboard,
     readonly session: SessionService,
   ) {
     this.productForm = this.formBuilder.group({
       name: this.formBuilder.nonNullable.control('', Validators.required),
       price: this.formBuilder.control<number | null>(null),
+    });
+
+    this.budgetMonthControl = this.formBuilder.nonNullable.control(currentMonthValue());
+
+    this.budgetForm = this.formBuilder.group({
+      channelName: this.formBuilder.nonNullable.control('', Validators.required),
+      budget: this.formBuilder.control<number | null>(null),
+      investment: this.formBuilder.control<number | null>(null),
     });
 
     this.metaForm = this.formBuilder.group({
@@ -290,6 +317,10 @@ export class ConfiguracoesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAll();
+
+    this.budgetMonthControl.valueChanges.subscribe((month) => {
+      this.loadBudgetEntries(month);
+    });
   }
 
   private loadAll(): void {
@@ -303,13 +334,15 @@ export class ConfiguracoesComponent implements OnInit {
       meta: this.metaService.get(),
       metaLogs: this.metaService.listLogs(),
       products: this.productsService.list(),
+      budgetEntries: this.budgetEntriesService.list(this.budgetMonthControl.value),
     }).subscribe({
-      next: ({ users, widget, widgetLogs, meta, metaLogs, products }) => {
+      next: ({ users, widget, widgetLogs, meta, metaLogs, products, budgetEntries }) => {
         this.users.set(users);
         this.widget.set(widget);
         this.widgetLogs.set(widgetLogs);
         this.metaLogs.set(metaLogs);
         this.products.set(products);
+        this.budgetEntries.set(budgetEntries);
 
         if (widget) {
           this.widgetForm.patchValue({
@@ -436,6 +469,58 @@ export class ConfiguracoesComponent implements OnInit {
       },
       error: () => {
         this.productsError.set('Não foi possível remover o produto.');
+      },
+    });
+  }
+
+  private loadBudgetEntries(month: string): void {
+    this.budgetEntriesService.list(month).subscribe({
+      next: (entries) => this.budgetEntries.set(entries),
+      error: () => this.budgetError.set('Não foi possível carregar os lançamentos de budget.'),
+    });
+  }
+
+  addBudgetEntry(): void {
+    if (this.budgetForm.invalid) {
+      this.budgetForm.markAllAsTouched();
+      return;
+    }
+
+    const { channelName, budget, investment } = this.budgetForm.getRawValue();
+
+    this.budgetSaving.set(true);
+    this.budgetError.set(null);
+
+    this.budgetEntriesService
+      .upsert({
+        channelName: channelName.trim(),
+        month: this.budgetMonthControl.value,
+        budget: budget ?? undefined,
+        investment: investment ?? undefined,
+      })
+      .subscribe({
+        next: (entry) => {
+          this.budgetEntries.update((current) => [
+            ...current.filter((item) => item.id !== entry.id),
+            entry,
+          ]);
+          this.budgetForm.reset({ channelName: '', budget: null, investment: null });
+          this.budgetSaving.set(false);
+        },
+        error: () => {
+          this.budgetSaving.set(false);
+          this.budgetError.set('Não foi possível salvar o lançamento de budget.');
+        },
+      });
+  }
+
+  removeBudgetEntry(entry: BudgetEntry): void {
+    this.budgetEntriesService.remove(entry.id).subscribe({
+      next: () => {
+        this.budgetEntries.update((current) => current.filter((item) => item.id !== entry.id));
+      },
+      error: () => {
+        this.budgetError.set('Não foi possível remover o lançamento de budget.');
       },
     });
   }

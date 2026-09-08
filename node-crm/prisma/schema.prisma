@@ -127,6 +127,7 @@ model Tenant {
     analystAccess        AnalystTenantAccess[]
     products             Product[]
     leadRoundRobinState  LeadRoundRobinState?
+    budgetEntries        BudgetEntry[]
 
     @@map("tenants")
 }
@@ -576,6 +577,31 @@ model LostReason {
 
     @@index([tenantId])
     @@map("lost_reasons")
+}
+
+// Parametrização mensal de Budget x Investimento por canal de mídia paga (feature
+// "Relatórios" — cadastrado pelo Analista em Parâmetros, mesma regra de permissão das
+// outras parametrizações). channelName é texto livre (não um enum fixo): o Analista
+// digita o nome do canal ("Google Ads", "Facebook Ads" etc.) — isso também é o texto
+// usado para casar com Lead.utmSource ao calcular conversão por canal (ver
+// reports.service.ts), então families de nomes precisam ser consistentes por tenant.
+// month é sempre normalizado pro dia 1 do mês às 00:00 UTC (ver budget.validator.ts).
+model BudgetEntry {
+    id          String    @id @default(uuid()) @db.Uuid
+    tenantId    String    @map("tenant_id") @db.Uuid
+    channelName String    @map("channel_name")
+    month       DateTime  @map("month") @db.Timestamptz
+    budget      Decimal   @default(0) @db.Decimal(14, 2)
+    investment  Decimal   @default(0) @db.Decimal(14, 2)
+    createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+    tenant Tenant @relation(fields: [tenantId], references: [id])
+
+    @@unique([tenantId, channelName, month])
+    @@index([tenantId, month])
+    @@map("budget_entries")
 }
 
 enum ProductStatus {

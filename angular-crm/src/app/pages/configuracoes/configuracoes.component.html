@@ -391,6 +391,70 @@
       </section>
     }
 
+    @if (canManageBudget()) {
+      <section class="products-section">
+        <h2 class="section-title">Budget &amp; Investimento</h2>
+        <p class="section-hint">
+          Parametrize, mês a mês, o budget e o investimento de cada canal — os valores
+          alimentam o relatório de Budget x Investimento em Relatórios.
+        </p>
+
+        <mat-form-field appearance="fill" floatLabel="always" class="products-form__field products-form__field--price">
+          <mat-label>Mês</mat-label>
+          <input matInput type="month" [formControl]="budgetMonthControl" />
+        </mat-form-field>
+
+        <form [formGroup]="budgetForm" (ngSubmit)="addBudgetEntry()" novalidate class="products-form">
+          <mat-form-field appearance="fill" floatLabel="always" class="products-form__field">
+            <mat-label>Canal</mat-label>
+            <input matInput formControlName="channelName" maxlength="80" placeholder="Ex.: Google Ads" />
+            @if (budgetForm.controls.channelName.touched && budgetForm.controls.channelName.hasError('required')) {
+              <mat-error>Campo obrigatório.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="products-form__field products-form__field--price">
+            <mat-label>Budget</mat-label>
+            <span matPrefix>R$&nbsp;</span>
+            <input matInput type="number" step="0.01" min="0" formControlName="budget" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="products-form__field products-form__field--price">
+            <mat-label>Investimento</mat-label>
+            <span matPrefix>R$&nbsp;</span>
+            <input matInput type="number" step="0.01" min="0" formControlName="investment" />
+          </mat-form-field>
+
+          <button type="submit" mat-flat-button color="primary" [disabled]="budgetSaving()">
+            @if (budgetSaving()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Adicionar
+            }
+          </button>
+        </form>
+
+        @if (budgetError()) {
+          <p class="configuracoes-page__error" role="alert">{{ budgetError() }}</p>
+        }
+
+        <div class="products-list">
+          @for (entry of budgetEntries(); track entry.id) {
+            <div class="products-list__row">
+              <span class="products-list__name">{{ entry.channelName }}</span>
+              <span class="products-list__price">Budget: R$ {{ entry.budget }}</span>
+              <span class="products-list__price">Investimento: R$ {{ entry.investment }}</span>
+              <button type="button" mat-icon-button matTooltip="Remover lançamento" (click)="removeBudgetEntry(entry)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          } @empty {
+            <p class="products-list__empty">Nenhum lançamento cadastrado para este mês.</p>
+          }
+        </div>
+      </section>
+    }
+
     <section class="meta-form-section">
       <h2 class="section-title">Integração Meta Lead Ads</h2>
       <p class="section-hint">

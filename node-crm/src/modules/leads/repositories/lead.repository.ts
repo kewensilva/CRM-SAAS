@@ -78,6 +78,15 @@ const listByTenant = (tenantId: string): Promise<Lead[]> => {
     });
 };
 
+// Leads criados dentro de um intervalo [start, end) — usado pelo relatório mensal
+// (CPA/SQL/CPV/funil de conversão, ver reports.service.ts): a "coorte" de um mês são os
+// leads que nasceram nele, independente de terem avançado de status depois.
+const listCreatedBetween = (tenantId: string, start: Date, end: Date): Promise<Lead[]> => {
+    return prisma.lead.findMany({
+        where: { tenantId, deletedAt: null, createdAt: { gte: start, lt: end } },
+    });
+};
+
 const countByTenant = (tenantId: string): Promise<number> => {
     return prisma.lead.count({ where: { tenantId, deletedAt: null } });
 };
@@ -208,6 +217,7 @@ export const leadRepository = {
     create,
     findByIdAndTenant,
     listByTenant,
+    listCreatedBetween,
     listByTenantWithLogs,
     listByIdsAndTenantForExport,
     countByTenant,
