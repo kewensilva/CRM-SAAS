@@ -1,8 +1,16 @@
 import { Clipboard, ClipboardModule } from '@angular/cdk/clipboard';
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -15,12 +23,27 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { forkJoin } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { SessionService } from '../../core/auth/session.service';
 import { MetaService } from '../../core/meta/meta.service';
 import { UsersService } from '../../core/users/users.service';
 import { WebWidgetService } from '../../core/web-widget/web-widget.service';
 import { MetaIntegration, MetaIntegrationLog } from '../../models/meta-integration.model';
 import { TenantUser } from '../../models/tenant.model';
-import { WebWidgetIntegration, WebWidgetLog } from '../../models/web-widget.model';
+import {
+  MAX_WIDGET_MESSAGE_FIELDS,
+  WebWidgetIntegration,
+  WebWidgetLog,
+  WebWidgetMessageField,
+  WIDGET_BUTTON_ICONS,
+  WidgetButtonIcon,
+} from '../../models/web-widget.model';
+
+type MessageFieldGroup = FormGroup<{
+  key: FormControl<string>;
+  label: FormControl<string>;
+}>;
+
+const generateFieldKey = (): string => `campo_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 const WIDGET_LOG_DISPLAYED_COLUMNS = ['createdAt', 'status', 'utmSource', 'message'];
 const META_LOG_DISPLAYED_COLUMNS = ['createdAt', 'status', 'formId', 'message'];
@@ -53,6 +76,7 @@ function maskToken(token: string): string {
     ClipboardModule,
     DatePipe,
     MatButtonModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -110,13 +134,28 @@ export class ConfiguracoesComponent implements OnInit {
       widget.buttonIcon ? `data-icon="${widget.buttonIcon}"` : null,
       `data-show-email="${widget.showEmailField}"`,
       `data-show-phone="${widget.showPhoneField}"`,
-      `data-show-message="${widget.showMessageField}"`,
+      widget.messageFields.length > 0
+        ? `data-message-fields="${escapeHtmlAttr(JSON.stringify(widget.messageFields))}"`
+        : null,
     ]
       .filter((attr): attr is string => attr !== null)
       .join(' ');
 
     return `<script src="${environment.apiUrl}/webhooks/web-widget/widget.js" ${attrs} defer></script>`;
   });
+
+  // Parametrização do widget (feature de "standby"): por ora só o Analista, atuando
+  // dentro do tenant (session.isAnalystSession), pode editar — Tenant Admin comum
+  // continua só consultando, mesma regra "gerenciado pelo administrador da plataforma"
+  // já documentada no hint acima. Ver CLAUDE.md > gap de permissões de Integrações.
+  readonly canEditWidget = computed(() => this.session.isAnalystSession());
+
+  readonly widgetForm;
+  readonly widgetSaving = signal(false);
+  readonly widgetEditError = signal<string | null>(null);
+  readonly widgetEditSuccess = signal<string | null>(null);
+  readonly widgetButtonIcons = WIDGET_BUTTON_ICONS;
+  readonly maxMessageFields = MAX_WIDGET_MESSAGE_FIELDS;
 
   readonly metaSaving = signal(false);
   readonly metaErrorMessage = signal<string | null>(null);
@@ -138,6 +177,7 @@ export class ConfiguracoesComponent implements OnInit {
     private readonly webWidgetService: WebWidgetService,
     private readonly metaService: MetaService,
     private readonly clipboard: Clipboard,
+    readonly session: SessionService,
   ) {
     this.metaForm = this.formBuilder.group({
       enabled: this.formBuilder.nonNullable.control(false),
@@ -146,6 +186,90 @@ export class ConfiguracoesComponent implements OnInit {
       defaultResponsibleUserId: this.formBuilder.control<string | null>(null),
       duplicateStrategy: this.formBuilder.nonNullable.control<'IGNORE' | 'UPDATE'>('IGNORE'),
     });
+
+    this.widgetForm = this.formBuilder.group({
+      enabled: this.formBuilder.nonNullable.control(false),
+      defaultResponsibleUserId: this.formBuilder.control<string | null>(null),
+      duplicateStrategy: this.formBuilder.nonNullable.control<'IGNORE' | 'UPDATE'>('IGNORE'),
+      showEmailField: this.formBuilder.nonNullable.control(true),
+      showPhoneField: this.formBuilder.nonNullable.control(true),
+      messageFields: this.formBuilder.array<MessageFieldGroup>([]),
+      buttonLabel: this.formBuilder.nonNullable.control('Fale conosco'),
+      buttonContentType: this.formBuilder.nonNullable.control<'TEXT' | 'ICON'>('TEXT'),
+      buttonIcon: this.formBuilder.control<WidgetButtonIcon | null>(null),
+      buttonColor: this.formBuilder.nonNullable.control('#FF9521'),
+    });
+  }
+
+  get widgetMessageFields(): FormArray<MessageFieldGroup> {
+    return this.widgetForm.controls.messageFields;
+  }
+
+  addWidgetMessageField(): void {
+    if (this.widgetMessageFields.length >= MAX_WIDGET_MESSAGE_FIELDS) {
+      return;
+    }
+
+    this.widgetMessageFields.push(
+      this.formBuilder.group({
+        key: this.formBuilder.nonNullable.control(generateFieldKey()),
+        label: this.formBuilder.nonNullable.control('', Validators.required),
+      }),
+    );
+  }
+
+  removeWidgetMessageField(index: number): void {
+    this.widgetMessageFields.removeAt(index);
+  }
+
+  private setWidgetMessageFields(fields: WebWidgetMessageField[]): void {
+    this.widgetMessageFields.clear();
+    fields.forEach((field) => {
+      this.widgetMessageFields.push(
+        this.formBuilder.group({
+          key: this.formBuilder.nonNullable.control(field.key),
+          label: this.formBuilder.nonNullable.control(field.label, Validators.required),
+        }),
+      );
+    });
+  }
+
+  saveWidget(): void {
+    if (this.widgetForm.invalid) {
+      this.widgetForm.markAllAsTouched();
+      return;
+    }
+
+    const value = this.widgetForm.getRawValue();
+
+    this.widgetSaving.set(true);
+    this.widgetEditError.set(null);
+    this.widgetEditSuccess.set(null);
+
+    this.webWidgetService
+      .update({
+        enabled: value.enabled,
+        defaultResponsibleUserId: value.defaultResponsibleUserId ?? undefined,
+        duplicateStrategy: value.duplicateStrategy,
+        showEmailField: value.showEmailField,
+        showPhoneField: value.showPhoneField,
+        messageFields: value.messageFields.filter((field) => field.label.trim().length > 0),
+        buttonLabel: value.buttonLabel || undefined,
+        buttonContentType: value.buttonContentType,
+        buttonIcon: value.buttonContentType === 'ICON' ? (value.buttonIcon ?? undefined) : undefined,
+        buttonColor: value.buttonColor || undefined,
+      })
+      .subscribe({
+        next: (widget) => {
+          this.widget.set(widget);
+          this.widgetSaving.set(false);
+          this.widgetEditSuccess.set('Configuração do widget salva com sucesso.');
+        },
+        error: () => {
+          this.widgetSaving.set(false);
+          this.widgetEditError.set('Não foi possível salvar a configuração do widget.');
+        },
+      });
   }
 
   ngOnInit(): void {
@@ -168,6 +292,21 @@ export class ConfiguracoesComponent implements OnInit {
         this.widget.set(widget);
         this.widgetLogs.set(widgetLogs);
         this.metaLogs.set(metaLogs);
+
+        if (widget) {
+          this.widgetForm.patchValue({
+            enabled: widget.enabled,
+            defaultResponsibleUserId: widget.defaultResponsibleUserId,
+            duplicateStrategy: widget.duplicateStrategy,
+            showEmailField: widget.showEmailField,
+            showPhoneField: widget.showPhoneField,
+            buttonLabel: widget.buttonLabel,
+            buttonContentType: widget.buttonContentType,
+            buttonIcon: widget.buttonIcon,
+            buttonColor: widget.buttonColor,
+          });
+          this.setWidgetMessageFields(widget.messageFields);
+        }
 
         this.meta.set(meta);
         this.metaForm.patchValue({

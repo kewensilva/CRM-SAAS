@@ -19,7 +19,7 @@ const baseIntegration: WebWidgetIntegration = {
     duplicateStrategy: "IGNORE",
     showEmailField: true,
     showPhoneField: true,
-    showMessageField: true,
+    messageFields: [{ key: "mensagem", label: "Mensagem" }],
     buttonLabel: "Fale conosco",
     createdAt: new Date(),
     updatedAt: new Date(),

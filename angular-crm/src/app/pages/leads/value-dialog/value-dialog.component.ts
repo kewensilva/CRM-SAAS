@@ -4,10 +4,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 
 import { LostReasonsService } from '../../../core/lost-reasons/lost-reasons.service';
 import { LostReason } from '../../../models/lost-reason.model';
+import { DEAL_INSTALLMENT_OPTIONS, DealPaymentType } from '../../../models/lead.model';
 
 export type ValueDialogMode = 'won' | 'lost' | 'edit-value' | 'in-progress';
 
@@ -20,6 +22,8 @@ export interface ValueDialogData {
 export interface ValueDialogResult {
   value?: number;
   lostReason?: string;
+  paymentType?: DealPaymentType;
+  installments?: number;
 }
 
 @Component({
@@ -31,6 +35,7 @@ export interface ValueDialogResult {
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    MatRadioModule,
     MatSelectModule,
   ],
   templateUrl: './value-dialog.component.html',
@@ -39,6 +44,7 @@ export interface ValueDialogResult {
 export class ValueDialogComponent implements OnInit {
   readonly form;
   readonly lostReasonOptions = signal<LostReason[]>([]);
+  readonly installmentOptions = DEAL_INSTALLMENT_OPTIONS;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) readonly data: ValueDialogData,
@@ -55,6 +61,8 @@ export class ValueDialogComponent implements OnInit {
         this.data.initialReason ?? '',
         this.data.mode === 'lost' ? [Validators.required] : [],
       ],
+      paymentType: this.formBuilder.nonNullable.control<DealPaymentType>('UNICO'),
+      installments: this.formBuilder.control<number | null>(null),
     });
   }
 
@@ -84,6 +92,14 @@ export class ValueDialogComponent implements OnInit {
     return this.data.mode === 'lost';
   }
 
+  get showPaymentTypeField(): boolean {
+    return this.data.mode === 'won';
+  }
+
+  get showInstallmentsField(): boolean {
+    return this.showPaymentTypeField && this.form.controls.paymentType.value === 'RECORRENTE';
+  }
+
   get canSubmitWithoutValue(): boolean {
     return this.data.mode === 'won' || this.data.mode === 'in-progress';
   }
@@ -102,6 +118,9 @@ export class ValueDialogComponent implements OnInit {
     if (this.data.mode === 'edit-value') {
       return !this.form.controls.value.value;
     }
+    if (this.showInstallmentsField) {
+      return !this.form.controls.installments.value;
+    }
     return false;
   }
 
@@ -111,7 +130,7 @@ export class ValueDialogComponent implements OnInit {
       return;
     }
 
-    const { value, lostReason } = this.form.getRawValue();
+    const { value, lostReason, paymentType, installments } = this.form.getRawValue();
     const result: ValueDialogResult = {};
 
     if (value !== null && value !== undefined) {
@@ -120,6 +139,13 @@ export class ValueDialogComponent implements OnInit {
 
     if (this.data.mode === 'lost' && lostReason) {
       result.lostReason = lostReason.trim();
+    }
+
+    if (this.showPaymentTypeField) {
+      result.paymentType = paymentType;
+      if (paymentType === 'RECORRENTE' && installments) {
+        result.installments = Number(installments);
+      }
     }
 
     this.dialogRef.close(result);

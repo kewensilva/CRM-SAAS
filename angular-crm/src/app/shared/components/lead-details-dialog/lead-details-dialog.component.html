@@ -28,6 +28,11 @@
   </form>
 
   <div class="lead-details__row">
+    <span class="lead-details__label">Criado em</span>
+    <span class="lead-details__value">{{ lead.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+  </div>
+
+  <div class="lead-details__row">
     <span class="lead-details__label">Origem</span>
     <span class="lead-details__value">{{ lead.source }}</span>
   </div>
@@ -42,11 +47,6 @@
   <div class="lead-details__row">
     <span class="lead-details__label">Status</span>
     <span class="lead-details__value">{{ statusLabel }}</span>
-  </div>
-
-  <div class="lead-details__row">
-    <span class="lead-details__label">Criado em</span>
-    <span class="lead-details__value">{{ lead.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
   </div>
 
   @if (lead.status === 'EM_ANDAMENTO' && !lead.deal) {
@@ -77,6 +77,13 @@
         </button>
       }
     </form>
+
+    @if (lead.status === 'VENDIDO') {
+      <div class="lead-details__row">
+        <span class="lead-details__label">Forma de pagamento</span>
+        <span class="lead-details__value">{{ paymentTypeLabel }}</span>
+      </div>
+    }
   }
 
   @if (saveError()) {

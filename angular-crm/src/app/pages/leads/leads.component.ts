@@ -7,7 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { DealsService } from '../../core/deals/deals.service';
 import { LeadsService } from '../../core/leads/leads.service';
-import { Lead, LeadStatus } from '../../models/lead.model';
+import { Lead, LeadStatus, MoveLeadStatusPayload } from '../../models/lead.model';
 import {
   AddLeadDialogComponent,
 } from '../../shared/components/add-lead-dialog/add-lead-dialog.component';
@@ -206,12 +206,18 @@ export class LeadsComponent implements OnInit {
   ): void {
     this.actionError.set(null);
 
-    const payload: { status: LeadStatus; value?: number; lostReason?: string } = { status };
+    const payload: MoveLeadStatusPayload = { status };
     if (result.value !== undefined) {
       payload.value = result.value;
     }
     if (result.lostReason !== undefined) {
       payload.lostReason = result.lostReason;
+    }
+    if (result.paymentType !== undefined) {
+      payload.paymentType = result.paymentType;
+    }
+    if (result.installments !== undefined) {
+      payload.installments = result.installments;
     }
 
     this.leadsService.moveStatus(lead.id, payload).subscribe({

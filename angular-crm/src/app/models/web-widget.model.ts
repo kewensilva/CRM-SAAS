@@ -6,6 +6,15 @@ export type WidgetButtonContentType = 'TEXT' | 'ICON';
 export const WIDGET_BUTTON_ICONS = ['chat', 'message', 'whatsapp', 'help', 'phone', 'cart'] as const;
 export type WidgetButtonIcon = (typeof WIDGET_BUTTON_ICONS)[number];
 
+// key liga a resposta do widget à pergunta configurada; label é o texto exibido pro
+// visitante. Ordem no array = ordem de exibição no formulário do widget.
+export interface WebWidgetMessageField {
+  key: string;
+  label: string;
+}
+
+export const MAX_WIDGET_MESSAGE_FIELDS = 5;
+
 export interface WebWidgetIntegration {
   id: string;
   tenantId: string;
@@ -15,7 +24,7 @@ export interface WebWidgetIntegration {
   duplicateStrategy: DuplicateLeadStrategy;
   showEmailField: boolean;
   showPhoneField: boolean;
-  showMessageField: boolean;
+  messageFields: WebWidgetMessageField[];
   buttonLabel: string;
   buttonContentType: WidgetButtonContentType;
   buttonIcon: WidgetButtonIcon | null;

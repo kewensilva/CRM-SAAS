@@ -191,6 +191,77 @@ $color-primary: #ff9521;
   width: 100%;
 }
 
+.widget-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.widget-form__field {
+  width: 100%;
+  max-width: 420px;
+}
+
+.widget-form__color-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.widget-form__color-label {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.widget-form__color-value {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.widget-form__fields-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.widget-form__fields-title {
+  margin: 0;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.widget-form__fields-hint {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.widget-form__fields-grid {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.widget-form__message-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .widget-form__field {
+    flex: 1 1 auto;
+  }
+}
+
+.widget-form__success {
+  color: #2e7d32;
+  margin: 0;
+}
+
+.widget-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;

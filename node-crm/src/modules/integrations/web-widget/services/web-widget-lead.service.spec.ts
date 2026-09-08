@@ -28,7 +28,7 @@ const baseIntegration: WebWidgetIntegration = {
     duplicateStrategy: "IGNORE",
     showEmailField: true,
     showPhoneField: true,
-    showMessageField: true,
+    messageFields: [{ key: "mensagem", label: "Mensagem" }],
     buttonLabel: "Fale conosco",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -65,13 +65,16 @@ describe("webWidgetLeadService.processSubmission", () => {
 
         await webWidgetLeadService.processSubmission(basePayload);
 
-        expect(mockedLeadRepository.create).toHaveBeenCalledWith({
-            tenantId: "tenant-1",
-            responsibleUserId: "user-1",
-            name: "João Silva",
-            email: "joao@example.com",
-            phone: "11999999999",
-        });
+        expect(mockedLeadRepository.create).toHaveBeenCalledWith(
+            {
+                tenantId: "tenant-1",
+                responsibleUserId: "user-1",
+                name: "João Silva",
+                email: "joao@example.com",
+                phone: "11999999999",
+            },
+            null,
+        );
         expect(mockedLogRepository.markProcessed).toHaveBeenCalledWith("log-1", "lead-1");
     });
 

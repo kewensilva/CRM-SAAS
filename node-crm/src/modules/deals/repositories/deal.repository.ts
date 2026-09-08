@@ -55,7 +55,13 @@ const create = (data: CreateDealDTO, changedByUserId: string, leadFromStatus: Le
 // (a negociação nunca esteve "em andamento" numa etapa visível do Kanban de Pipeline).
 // Mesmo guard atômico `deal: null` do `create` acima.
 const createFinal = (
-    data: CreateDealDTO & { status: "WON" | "LOST"; value: number | null; lostReason: string | null },
+    data: CreateDealDTO & {
+        status: "WON" | "LOST";
+        value: number | null;
+        lostReason: string | null;
+        paymentType?: "UNICO" | "RECORRENTE" | undefined;
+        installments?: number | undefined;
+    },
     changedByUserId: string,
 ): Promise<Deal> => {
     const toStatus = data.status === "WON" ? "VENDIDO" : "PERDIDO";
@@ -82,7 +88,13 @@ const createFinal = (
             },
         });
 
-        return tx.deal.create({ data });
+        // paymentType/installments podem vir undefined (Vendido sem forma de pagamento
+        // informada) — stripUndefined evita o erro de exactOptionalPropertyTypes do
+        // Prisma, que não aceita undefined explícito em campos opcionais (ele espera a
+        // chave simplesmente ausente, deixando a coluna cair no @default do schema).
+        return tx.deal.create({
+            data: stripUndefined(data) as unknown as Prisma.DealUncheckedCreateInput,
+        });
     });
 };
 

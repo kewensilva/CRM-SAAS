@@ -93,6 +93,13 @@ export class LeadDetailsDialogComponent implements OnInit {
     return STATUS_LABELS[this.lead.status];
   }
 
+  get paymentTypeLabel(): string {
+    if (!this.lead.deal || this.lead.deal.paymentType !== 'RECORRENTE') {
+      return 'Único';
+    }
+    return `Recorrência em ${this.lead.deal.installments}x`;
+  }
+
   // UTM só existe pra leads do Web Widget — nunca editável (ver models/lead.model.ts).
   get utmSummary(): string | null {
     if (!this.lead.utmSource) {

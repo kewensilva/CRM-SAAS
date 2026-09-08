@@ -14,58 +14,183 @@
   @if (!loading()) {
     <section class="widget-view">
       <h2 class="section-title">Widget de Captação de Lead</h2>
-      <p class="section-hint">
-        A configuração deste widget é gerenciada pelo administrador da plataforma, na tela de
-        Empresas. Aqui você só pode consultar os dados atuais e o código de instalação.
-      </p>
 
-      <dl class="widget-view__summary">
-        <div class="widget-view__row">
-          <dt>Status</dt>
-          <dd>
-            <span class="status-badge" [class.status-badge--inactive]="!widget()?.enabled">
-              {{ widget()?.enabled ? 'Ativo' : 'Inativo' }}
-            </span>
-          </dd>
-        </div>
-        <div class="widget-view__row">
-          <dt>Responsável padrão</dt>
-          <dd>{{ widgetResponsibleUserName() }}</dd>
-        </div>
-        <div class="widget-view__row">
-          <dt>Ao encontrar um Lead com o mesmo e-mail</dt>
-          <dd>{{ widgetDuplicateStrategyLabel() }}</dd>
-        </div>
-        <div class="widget-view__row">
-          <dt>Conteúdo do botão</dt>
-          <dd>
-            {{ widget()?.buttonContentType === 'ICON' ? 'Ícone (' + (widget()?.buttonIcon || '—') + ')' : 'Texto' }}
-          </dd>
-        </div>
-        <div class="widget-view__row">
-          <dt>Texto do botão</dt>
-          <dd>{{ widget()?.buttonLabel || '—' }}</dd>
-        </div>
-        <div class="widget-view__row">
-          <dt>Cor do botão</dt>
-          <dd>{{ widget()?.buttonColor || '—' }}</dd>
-        </div>
-        <div class="widget-view__row">
-          <dt>Campos do formulário</dt>
-          <dd>
-            Nome
-            @if (widget()?.showEmailField) {
-              , E-mail
+      @if (!canEditWidget()) {
+        <p class="section-hint">
+          A configuração deste widget é gerenciada pelo administrador da plataforma, na tela de
+          Empresas. Aqui você só pode consultar os dados atuais e o código de instalação.
+        </p>
+
+        <dl class="widget-view__summary">
+          <div class="widget-view__row">
+            <dt>Status</dt>
+            <dd>
+              <span class="status-badge" [class.status-badge--inactive]="!widget()?.enabled">
+                {{ widget()?.enabled ? 'Ativo' : 'Inativo' }}
+              </span>
+            </dd>
+          </div>
+          <div class="widget-view__row">
+            <dt>Responsável padrão</dt>
+            <dd>{{ widgetResponsibleUserName() }}</dd>
+          </div>
+          <div class="widget-view__row">
+            <dt>Ao encontrar um Lead com o mesmo e-mail</dt>
+            <dd>{{ widgetDuplicateStrategyLabel() }}</dd>
+          </div>
+          <div class="widget-view__row">
+            <dt>Conteúdo do botão</dt>
+            <dd>
+              {{ widget()?.buttonContentType === 'ICON' ? 'Ícone (' + (widget()?.buttonIcon || '—') + ')' : 'Texto' }}
+            </dd>
+          </div>
+          <div class="widget-view__row">
+            <dt>Texto do botão</dt>
+            <dd>{{ widget()?.buttonLabel || '—' }}</dd>
+          </div>
+          <div class="widget-view__row">
+            <dt>Cor do botão</dt>
+            <dd>{{ widget()?.buttonColor || '—' }}</dd>
+          </div>
+          <div class="widget-view__row">
+            <dt>Campos do formulário</dt>
+            <dd>
+              Nome
+              @if (widget()?.showEmailField) {
+                , E-mail
+              }
+              @if (widget()?.showPhoneField) {
+                , Telefone
+              }
+              @for (field of widget()?.messageFields; track field.key) {
+                , {{ field.label }}
+              }
+            </dd>
+          </div>
+        </dl>
+      } @else {
+        <p class="section-hint">
+          Como Analista, você pode editar a parametrização deste widget diretamente aqui.
+        </p>
+
+        <form [formGroup]="widgetForm" (ngSubmit)="saveWidget()" novalidate class="widget-form">
+          <mat-slide-toggle formControlName="enabled">Widget ativo</mat-slide-toggle>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+            <mat-label>Responsável padrão</mat-label>
+            <mat-select formControlName="defaultResponsibleUserId">
+              <mat-option [value]="null">Nenhum</mat-option>
+              @for (user of users(); track user.id) {
+                <mat-option [value]="user.id">{{ user.name }} ({{ user.email }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+            <mat-label>Ao encontrar um Lead com o mesmo e-mail</mat-label>
+            <mat-select formControlName="duplicateStrategy">
+              <mat-option value="IGNORE">Manter o Lead existente</mat-option>
+              <mat-option value="UPDATE">Atualizar os dados do Lead existente</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+            <mat-label>Conteúdo do botão</mat-label>
+            <mat-select formControlName="buttonContentType">
+              <mat-option value="TEXT">Texto</mat-option>
+              <mat-option value="ICON">Ícone</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+            <mat-label>Texto do botão</mat-label>
+            <input matInput formControlName="buttonLabel" maxlength="60" />
+          </mat-form-field>
+
+          @if (widgetForm.controls.buttonContentType.value === 'ICON') {
+            <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+              <mat-label>Ícone do botão</mat-label>
+              <mat-select formControlName="buttonIcon">
+                @for (icon of widgetButtonIcons; track icon) {
+                  <mat-option [value]="icon">{{ icon }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+
+          <div class="widget-form__color-field">
+            <label class="widget-form__color-label" for="widgetButtonColor">Cor do botão</label>
+            <input id="widgetButtonColor" type="color" formControlName="buttonColor" />
+            <span class="widget-form__color-value">{{ widgetForm.controls.buttonColor.value }}</span>
+          </div>
+
+          <div class="widget-form__fields-section">
+            <h3 class="widget-form__fields-title">Campos do formulário</h3>
+            <p class="widget-form__fields-hint">Nome é sempre coletado.</p>
+
+            <div class="widget-form__fields-grid">
+              <mat-checkbox formControlName="showEmailField">E-mail</mat-checkbox>
+              <mat-checkbox formControlName="showPhoneField">Telefone</mat-checkbox>
+            </div>
+          </div>
+
+          <div class="widget-form__fields-section" formArrayName="messageFields">
+            <h3 class="widget-form__fields-title">Campos de mensagem</h3>
+            <p class="widget-form__fields-hint">
+              Cada campo vira uma pergunta de texto livre no widget — ex.: "Qual cidade você
+              está?". Se não adicionar nenhum, o widget não pede mensagem.
+            </p>
+
+            @for (group of widgetMessageFields.controls; track $index) {
+              <div class="widget-form__message-field" [formGroupName]="$index">
+                <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+                  <mat-label>Pergunta / label do campo {{ $index + 1 }}</mat-label>
+                  <input matInput formControlName="label" maxlength="140" />
+                  @if (group.controls.label.touched && group.controls.label.hasError('required')) {
+                    <mat-error>Campo obrigatório.</mat-error>
+                  }
+                </mat-form-field>
+                <button
+                  type="button"
+                  mat-icon-button
+                  matTooltip="Remover campo"
+                  (click)="removeWidgetMessageField($index)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
             }
-            @if (widget()?.showPhoneField) {
-              , Telefone
-            }
-            @if (widget()?.showMessageField) {
-              , Mensagem
-            }
-          </dd>
-        </div>
-      </dl>
+
+            <button
+              type="button"
+              mat-stroked-button
+              [disabled]="widgetMessageFields.length >= maxMessageFields"
+              (click)="addWidgetMessageField()"
+            >
+              <mat-icon>add</mat-icon>
+              Adicionar campo de mensagem
+            </button>
+          </div>
+
+          @if (widgetEditError()) {
+            <p class="configuracoes-page__error" role="alert">{{ widgetEditError() }}</p>
+          }
+
+          @if (widgetEditSuccess()) {
+            <p class="widget-form__success" role="status">{{ widgetEditSuccess() }}</p>
+          }
+
+          <div class="widget-form__actions">
+            <button type="submit" mat-flat-button color="primary" [disabled]="widgetSaving()">
+              @if (widgetSaving()) {
+                <mat-spinner diameter="20" />
+              } @else {
+                Salvar
+              }
+            </button>
+          </div>
+        </form>
+      }
 
       @if (embedSnippet(); as snippet) {
         <div class="widget-embed">

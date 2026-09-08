@@ -7,7 +7,14 @@ import type { Lead, LeadHistoryEntry, LeadStatus } from "../types/lead.types";
 // Shape bruto retornado por listByTenantWithDetails — leadService.listWithDetails
 // converte isso em LeadWithDetails (calcula "source" a partir de webWidgetLogs/metaLogs).
 export type LeadRawWithLogs = Lead & {
-    deal: { id: string; status: "IN_PROGRESS" | "WON" | "LOST"; value: unknown; lostReason: string | null } | null;
+    deal: {
+        id: string;
+        status: "IN_PROGRESS" | "WON" | "LOST";
+        value: unknown;
+        lostReason: string | null;
+        paymentType: "UNICO" | "RECORRENTE";
+        installments: number | null;
+    } | null;
     webWidgetLogs: { id: string }[];
     metaLogs: { id: string }[];
 };
@@ -164,7 +171,16 @@ const listByTenantWithLogs = (tenantId: string): Promise<LeadRawWithLogs[]> => {
         where: { tenantId, deletedAt: null },
         orderBy: { createdAt: "desc" },
         include: {
-            deal: { select: { id: true, status: true, value: true, lostReason: true } },
+            deal: {
+                select: {
+                    id: true,
+                    status: true,
+                    value: true,
+                    lostReason: true,
+                    paymentType: true,
+                    installments: true,
+                },
+            },
             webWidgetLogs: { take: 1, select: { id: true } },
             metaLogs: { take: 1, select: { id: true } },
         },

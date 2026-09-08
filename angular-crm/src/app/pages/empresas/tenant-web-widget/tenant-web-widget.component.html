@@ -73,8 +73,49 @@
         <div class="widget-form__fields-grid">
           <mat-checkbox formControlName="showEmailField">E-mail</mat-checkbox>
           <mat-checkbox formControlName="showPhoneField">Telefone</mat-checkbox>
-          <mat-checkbox formControlName="showMessageField">Mensagem</mat-checkbox>
         </div>
+      </div>
+
+      <div class="widget-form__fields-section" formArrayName="messageFields">
+        <h2 class="widget-form__fields-title">Campos de mensagem</h2>
+        <p class="widget-form__fields-hint">
+          Cada campo vira uma pergunta de texto livre no widget — ex.: "Qual cidade você
+          está?". Se não adicionar nenhum, o widget não pede mensagem.
+        </p>
+
+        @for (group of messageFields.controls; track $index) {
+          <div class="widget-form__message-field" [formGroupName]="$index">
+            <mat-form-field appearance="fill" floatLabel="always" class="widget-form__field">
+              <mat-label>Pergunta / label do campo {{ $index + 1 }}</mat-label>
+              <input matInput formControlName="label" maxlength="140" />
+              @if (group.controls.label.touched && group.controls.label.hasError('required')) {
+                <mat-error>Campo obrigatório.</mat-error>
+              }
+            </mat-form-field>
+            <button
+              type="button"
+              mat-icon-button
+              matTooltip="Remover campo"
+              (click)="removeMessageField($index)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        }
+
+        <button
+          type="button"
+          mat-stroked-button
+          [disabled]="messageFields.length >= maxMessageFields"
+          (click)="addMessageField()"
+        >
+          <mat-icon>add</mat-icon>
+          Adicionar campo de mensagem
+        </button>
+
+        @if (messageFields.length >= maxMessageFields) {
+          <p class="widget-form__fields-hint">Máximo de {{ maxMessageFields }} campos.</p>
+        }
       </div>
 
       @if (successMessage()) {

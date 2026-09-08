@@ -1,5 +1,10 @@
 export type DealStatus = "IN_PROGRESS" | "WON" | "LOST";
 
+// Só relevante quando o Deal é fechado como Vendido — ver moveLeadStatus em
+// deal.service.ts. UNICO é o default (inclusive pra negociações fechadas antes desta
+// feature, via backfill de migration).
+export type DealPaymentType = "UNICO" | "RECORRENTE";
+
 export type Deal = {
     id: string;
     tenantId: string;
@@ -11,6 +16,8 @@ export type Deal = {
     status: DealStatus;
     value: unknown;
     lostReason: string | null;
+    paymentType: DealPaymentType;
+    installments: number | null;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;

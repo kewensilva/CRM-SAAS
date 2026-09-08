@@ -4,11 +4,19 @@ export type LeadSource = 'Site' | 'Meta' | 'Manual';
 
 export type DealStatus = 'IN_PROGRESS' | 'WON' | 'LOST';
 
+// Só relevante quando o Deal é Vendido — UNICO é o default (inclusive negociações
+// fechadas antes desta feature).
+export type DealPaymentType = 'UNICO' | 'RECORRENTE';
+
+export const DEAL_INSTALLMENT_OPTIONS = [3, 6, 12, 24, 36] as const;
+
 export interface LeadDeal {
   id: string;
   status: DealStatus;
   value: string | null;
   lostReason: string | null;
+  paymentType: DealPaymentType;
+  installments: number | null;
 }
 
 export interface Lead {
@@ -39,6 +47,8 @@ export interface MoveLeadStatusPayload {
   status: LeadStatus;
   value?: number;
   lostReason?: string;
+  paymentType?: DealPaymentType;
+  installments?: number;
 }
 
 export interface MoveLeadStatusResult {

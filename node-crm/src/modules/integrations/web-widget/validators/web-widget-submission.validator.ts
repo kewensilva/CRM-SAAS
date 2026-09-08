@@ -8,7 +8,10 @@ export const webWidgetSubmissionSchema = z.object({
     name: z.string().trim().min(2, "Nome obrigatório."),
     email: z.string().trim().email("E-mail inválido.").optional().or(z.literal("")),
     phone: z.string().trim().max(30).optional(),
-    message: z.string().trim().max(2000).optional(),
+    // Mapa key (do campo de mensagem configurado no tenant) -> resposta do visitante —
+    // best-effort, o backend não valida contra a config do tenant aqui (isso já muda com
+    // frequência e o payload é público/não confiável de qualquer forma).
+    messageAnswers: z.record(z.string(), z.string().trim().max(2000)).optional(),
     utmSource: z.string().trim().max(255).optional(),
     utmMedium: z.string().trim().max(255).optional(),
     utmCampaign: z.string().trim().max(255).optional(),

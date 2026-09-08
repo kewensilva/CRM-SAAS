@@ -2,6 +2,14 @@ export type DuplicateLeadStrategy = "IGNORE" | "UPDATE";
 export type WebWidgetLogStatus = "RECEIVED" | "PROCESSED" | "DUPLICATE" | "FAILED";
 export type WidgetButtonContentType = "TEXT" | "ICON";
 
+// key identifica o campo de forma estável (liga a resposta enviada pelo widget.js à
+// pergunta configurada) — label é o texto exibido pro visitante do site. Ordem no array =
+// ordem de exibição no formulário.
+export type WebWidgetMessageField = {
+    key: string;
+    label: string;
+};
+
 export type WebWidgetIntegration = {
     id: string;
     tenantId: string;
@@ -11,7 +19,7 @@ export type WebWidgetIntegration = {
     duplicateStrategy: DuplicateLeadStrategy;
     showEmailField: boolean;
     showPhoneField: boolean;
-    showMessageField: boolean;
+    messageFields: WebWidgetMessageField[];
     buttonLabel: string;
     buttonContentType: WidgetButtonContentType;
     buttonIcon: string | null;
@@ -40,13 +48,15 @@ export type WebWidgetLog = {
     updatedAt: Date;
 };
 
-// Payload enviado pelo widget.js embutido no site do cliente.
+// Payload enviado pelo widget.js embutido no site do cliente. messageAnswers é um mapa
+// key (do WebWidgetMessageField configurado) -> resposta do visitante — substitui o antigo
+// campo "message" único.
 export type WebWidgetSubmissionPayload = {
     publicKey: string;
     name: string;
     email?: string | undefined;
     phone?: string | undefined;
-    message?: string | undefined;
+    messageAnswers?: Record<string, string> | undefined;
     utmSource?: string | undefined;
     utmMedium?: string | undefined;
     utmCampaign?: string | undefined;

@@ -6,16 +6,20 @@ import { stripUndefined } from "../../../../shared/helpers/nullable-fields";
 import type { UpdateWebWidgetIntegrationDTO } from "../dto/update-web-widget-integration.dto";
 import type { WebWidgetIntegration } from "../types/web-widget-integration.types";
 
+// messageFields é Json no Prisma (Prisma.JsonValue) — cast pro tipo estruturado
+// WebWidgetMessageField[] que o resto do módulo usa, mesmo padrão de
+// lead.repository.ts > listByTenantWithLogs pra campos que o Prisma não tipa
+// automaticamente como o shape real gravado.
 const findByTenant = (tenantId: string): Promise<WebWidgetIntegration | null> => {
     return prisma.webWidgetIntegration.findFirst({
         where: { tenantId, deletedAt: null },
-    });
+    }) as unknown as Promise<WebWidgetIntegration | null>;
 };
 
 const findByPublicKey = (publicKey: string): Promise<WebWidgetIntegration | null> => {
     return prisma.webWidgetIntegration.findFirst({
         where: { publicKey, enabled: true, deletedAt: null },
-    });
+    }) as unknown as Promise<WebWidgetIntegration | null>;
 };
 
 const generatePublicKey = (): string => randomBytes(24).toString("hex");
@@ -38,14 +42,14 @@ const upsertByTenant = async (
         where: { tenantId },
         update: updateData,
         create: createData,
-    });
+    }) as unknown as Promise<WebWidgetIntegration>;
 };
 
 const regenerateKey = async (tenantId: string): Promise<WebWidgetIntegration> => {
     return prisma.webWidgetIntegration.update({
         where: { tenantId },
         data: { publicKey: generatePublicKey() },
-    });
+    }) as unknown as Promise<WebWidgetIntegration>;
 };
 
 export const webWidgetIntegrationRepository = {

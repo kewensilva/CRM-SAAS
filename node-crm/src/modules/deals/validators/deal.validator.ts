@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+// Opções fixas de parcelamento — não é um número livre, evita valores fora do padrão de
+// cobrança da CMB (ex.: "vendido em 7x").
+export const DEAL_INSTALLMENT_OPTIONS = [3, 6, 12, 24, 36] as const;
+
 export const createDealSchema = z.object({
     leadId: z.string({ error: "Campo obrigatório." }).trim().uuid("Lead inválido."),
     companyId: z.string({ error: "Campo obrigatório." }).trim().uuid("Empresa inválida."),
@@ -23,8 +27,9 @@ export const changeStatusSchema = z.object({
 });
 
 // Kanban de Leads — mover um card entre as 5 colunas (ver deal.service.ts > moveLeadStatus).
-// Perdido exige motivo e valor; Vendido aceita valor opcional; os demais status não usam
-// nenhum dos dois campos.
+// Perdido exige motivo e valor; Vendido aceita valor opcional + forma de pagamento
+// (único ou recorrente — recorrente exige installments); os demais status não usam
+// nenhum desses campos.
 export const moveLeadStatusSchema = z
     .object({
         status: z.enum(["SEM_CONTATO", "NAO_ATENDE", "EM_ANDAMENTO", "VENDIDO", "PERDIDO"], {
@@ -32,22 +37,61 @@ export const moveLeadStatusSchema = z
         }),
         value: z.number().positive("Valor inválido.").optional(),
         lostReason: z.string().trim().min(1, "Campo obrigatório.").optional(),
+        paymentType: z.enum(["UNICO", "RECORRENTE"], { error: "Forma de pagamento inválida." }).optional(),
+        installments: z
+            .number()
+            .refine((value) => (DEAL_INSTALLMENT_OPTIONS as readonly number[]).includes(value), {
+                error: "Número de parcelas inválido.",
+            })
+            .optional(),
     })
     .refine(
         (data) => {
             if (data.status === "PERDIDO") {
-                return data.value !== undefined && data.lostReason !== undefined;
+                return (
+                    data.value !== undefined &&
+                    data.lostReason !== undefined &&
+                    data.paymentType === undefined &&
+                    data.installments === undefined
+                );
             }
 
-            if (data.status === "VENDIDO" || data.status === "EM_ANDAMENTO") {
+            if (data.status === "VENDIDO") {
                 return data.lostReason === undefined;
             }
 
-            return data.value === undefined && data.lostReason === undefined;
+            if (data.status === "EM_ANDAMENTO") {
+                return (
+                    data.lostReason === undefined &&
+                    data.paymentType === undefined &&
+                    data.installments === undefined
+                );
+            }
+
+            return (
+                data.value === undefined &&
+                data.lostReason === undefined &&
+                data.paymentType === undefined &&
+                data.installments === undefined
+            );
         },
         {
             message:
-                "Perdido exige motivo e valor; Vendido e Em andamento aceitam valor opcional; os demais status não usam nenhum dos dois.",
+                "Perdido exige motivo e valor; Vendido aceita valor e forma de pagamento opcionais; Em andamento aceita valor opcional; os demais status não usam nenhum desses campos.",
             path: ["status"],
+        },
+    )
+    .refine(
+        (data) => data.paymentType !== "RECORRENTE" || data.installments !== undefined,
+        {
+            message: "Recorrência exige o número de parcelas.",
+            path: ["installments"],
+        },
+    )
+    .refine(
+        (data) => data.paymentType === "RECORRENTE" || data.installments === undefined,
+        {
+            message: "Parcelas só fazem sentido com forma de pagamento recorrente.",
+            path: ["installments"],
         },
     );

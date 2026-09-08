@@ -30,6 +30,8 @@ export type LeadDeal = {
     status: "IN_PROGRESS" | "WON" | "LOST";
     value: unknown;
     lostReason: string | null;
+    paymentType: "UNICO" | "RECORRENTE";
+    installments: number | null;
 };
 
 // Shape usado pelo Kanban de Leads (GET /leads) — Lead + Deal associado (se já

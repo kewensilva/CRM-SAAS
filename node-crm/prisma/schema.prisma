@@ -59,6 +59,14 @@ enum DealStatus {
     LOST
 }
 
+// Só relevante quando o Deal é fechado como Vendido — ver moveLeadStatus em
+// deal.service.ts. RECORRENTE exige installments preenchido (uma das opções fixas: 3, 6,
+// 12, 24 ou 36).
+enum DealPaymentType {
+    UNICO
+    RECORRENTE
+}
+
 enum ActivityStatus {
     PENDING
     IN_PROGRESS
@@ -380,6 +388,10 @@ model Deal {
     // obrigatórios) no Kanban — ver moveLeadStatus em deal.service.ts.
     value             Decimal?   @db.Decimal(14, 2)
     lostReason        String?    @map("lost_reason")
+    // Só preenchidos ao fechar como Vendido — UNICO é o default histórico (negociações
+    // fechadas antes desta feature), installments só existe quando paymentType RECORRENTE.
+    paymentType       DealPaymentType @default(UNICO) @map("payment_type")
+    installments      Int?            @map("installments")
     createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
     updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz
@@ -519,7 +531,11 @@ model WebWidgetIntegration {
     duplicateStrategy        DuplicateLeadStrategy @default(IGNORE) @map("duplicate_strategy")
     showEmailField           Boolean               @default(true) @map("show_email_field")
     showPhoneField           Boolean               @default(true) @map("show_phone_field")
-    showMessageField         Boolean               @default(true) @map("show_message_field")
+    // Substitui o antigo showMessageField (boolean único) — lista ordenada e parametrizável
+    // de campos de mensagem, cada um com sua própria pergunta/label (ex.: "Qual cidade?"),
+    // definida pelo Tenant Admin/Analista. Formato: { key: string; label: string }[]. Vazio
+    // = nenhum campo de mensagem no widget. Ver web-widget-integration.types.ts.
+    messageFields            Json                  @default("[]") @map("message_fields")
     buttonLabel              String                @default("Fale conosco") @map("button_label")
     buttonContentType        WidgetButtonContentType @default(TEXT) @map("button_content_type")
     // Só relevante quando buttonContentType = ICON — chave de um conjunto fixo embutido

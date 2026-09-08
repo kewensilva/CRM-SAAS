@@ -22,7 +22,23 @@
     var buttonIcon = currentScript.getAttribute("data-icon") || "";
     var showEmail = currentScript.getAttribute("data-show-email") !== "false";
     var showPhone = currentScript.getAttribute("data-show-phone") !== "false";
-    var showMessage = currentScript.getAttribute("data-show-message") !== "false";
+
+    // Lista parametrizável de perguntas (substitui o antigo campo único "Mensagem") —
+    // JSON codificado no atributo pela tela de configuração. Formato:
+    // [{"key":"o_que_procura","label":"O que você procura?"}, ...]. Se vier ausente,
+    // malformado ou vazio, o widget simplesmente não mostra nenhum campo de mensagem.
+    var messageFields = [];
+    try {
+        var rawMessageFields = currentScript.getAttribute("data-message-fields");
+        if (rawMessageFields) {
+            var parsedMessageFields = JSON.parse(rawMessageFields);
+            if (Array.isArray(parsedMessageFields)) {
+                messageFields = parsedMessageFields;
+            }
+        }
+    } catch (e) {
+        messageFields = [];
+    }
 
     // Conjunto fixo de ícones embutido aqui — não é upload nem URL livre (mesmo espírito
     // de "sem bundler, arquivo único", ver CLAUDE.md). currentColor herda a cor do texto
@@ -69,6 +85,17 @@
 
     var utm = captureUtm();
 
+    // Labels dos campos de mensagem são texto livre configurado pelo Tenant
+    // Admin/Analista — escapar antes de injetar via innerHTML (o widget roda no site do
+    // cliente, então isso é superfície real de XSS se alguém digitar algo malicioso ali).
+    var escapeHtml = function (value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    };
+
     // Shadow DOM (mode "open") isola o widget do CSS do site do cliente nos dois
     // sentidos — sem isso, qualquer regra global do site (ex.: "button { background:
     // red; padding: 20px 40px; border-radius: 50px }", comum em templates prontos)
@@ -102,6 +129,7 @@
         ".crm-widget-panel input,.crm-widget-panel textarea{width:100%;box-sizing:border-box;" +
         "margin:0 0 10px;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:14px;" +
         "font-family:sans-serif;color:#111;background:#fff;}" +
+        ".crm-widget-field-label{display:block;font-size:13px;color:#333;margin:0 0 4px;}" +
         ".crm-widget-panel button[type=submit]{width:100%;background:" + buttonColor + ";color:#fff;" +
         "border:none;border-radius:4px;padding:10px;font-size:14px;cursor:pointer;margin:0;}" +
         ".crm-widget-close{float:right;background:none;border:none;font-size:18px;line-height:1;" +
@@ -122,11 +150,23 @@
         button.textContent = buttonLabel;
     }
 
+    var messageFieldsHtml = messageFields
+        .map(function (field) {
+            if (!field || !field.key || !field.label) {
+                return "";
+            }
+            return (
+                '<label class="crm-widget-field-label">' + escapeHtml(field.label) + "</label>" +
+                '<textarea name="message_' + escapeHtml(field.key) + '" rows="2"></textarea>'
+            );
+        })
+        .join("");
+
     var fieldsHtml =
         '<input type="text" name="name" placeholder="Nome" required />' +
         (showEmail ? '<input type="email" name="email" placeholder="E-mail" />' : "") +
         (showPhone ? '<input type="tel" name="phone" placeholder="Telefone" />' : "") +
-        (showMessage ? '<textarea name="message" placeholder="Mensagem" rows="3"></textarea>' : "");
+        messageFieldsHtml;
 
     var overlay = document.createElement("div");
     overlay.className = "crm-widget-overlay";
@@ -165,12 +205,26 @@
         event.preventDefault();
 
         var formData = new FormData(form);
+
+        var messageAnswers = {};
+        var hasMessageAnswers = false;
+        messageFields.forEach(function (field) {
+            if (!field || !field.key) {
+                return;
+            }
+            var answer = formData.get("message_" + field.key);
+            if (answer) {
+                messageAnswers[field.key] = answer;
+                hasMessageAnswers = true;
+            }
+        });
+
         var payload = {
             publicKey: publicKey,
             name: formData.get("name"),
             email: formData.get("email") || undefined,
             phone: formData.get("phone") || undefined,
-            message: formData.get("message") || undefined,
+            messageAnswers: hasMessageAnswers ? messageAnswers : undefined,
             website: formData.get("website") || undefined,
             utmSource: utm.utm_source || undefined,
             utmMedium: utm.utm_medium || undefined,

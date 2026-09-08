@@ -1,7 +1,33 @@
 import { leadRepository } from "../../../leads/repositories/lead.repository";
 import { webWidgetIntegrationRepository } from "../repositories/web-widget-integration.repository";
 import { webWidgetLogRepository } from "../repositories/web-widget-log.repository";
-import type { WebWidgetSubmissionPayload } from "../types/web-widget-integration.types";
+import type {
+    WebWidgetIntegration,
+    WebWidgetSubmissionPayload,
+} from "../types/web-widget-integration.types";
+
+// Junta as respostas dos campos de mensagem parametrizados num texto único, pra manter o
+// log num só campo de texto (WebWidgetLog.message) — usa o label configurado quando
+// encontra a config do tenant (widget habilitado com essa publicKey); cai pra chave crua
+// como fallback (ex.: publicKey desabilitada/inválida, integration null aqui).
+const formatMessageAnswers = (
+    answers: Record<string, string> | undefined,
+    integration: WebWidgetIntegration | null,
+): string | null => {
+    if (!answers) {
+        return null;
+    }
+
+    const entries = Object.entries(answers).filter(([, value]) => value.trim().length > 0);
+
+    if (entries.length === 0) {
+        return null;
+    }
+
+    const labelByKey = new Map(integration?.messageFields.map((field) => [field.key, field.label]) ?? []);
+
+    return entries.map(([key, value]) => `${labelByKey.get(key) ?? key}: ${value}`).join(" | ");
+};
 
 // Processa uma submissão do widget público. Nunca lança — toda falha vira um WebWidgetLog
 // com status FAILED em vez de derrubar a requisição, mesmo princípio de
@@ -19,7 +45,7 @@ const processSubmission = async (payload: WebWidgetSubmissionPayload): Promise<v
         utmCampaign: payload.utmCampaign ?? null,
         utmTerm: payload.utmTerm ?? null,
         utmContent: payload.utmContent ?? null,
-        message: payload.message ?? null,
+        message: formatMessageAnswers(payload.messageAnswers, integration),
         rawPayload: payload,
     });
 

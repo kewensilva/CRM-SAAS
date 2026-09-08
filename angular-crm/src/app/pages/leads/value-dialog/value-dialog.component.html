@@ -11,6 +11,30 @@
       }
     </mat-form-field>
 
+    @if (showPaymentTypeField) {
+      <div class="value-dialog-form__payment-type">
+        <label class="value-dialog-form__payment-type-label">Forma de pagamento</label>
+        <mat-radio-group formControlName="paymentType">
+          <mat-radio-button value="UNICO">Único</mat-radio-button>
+          <mat-radio-button value="RECORRENTE">Recorrência</mat-radio-button>
+        </mat-radio-group>
+      </div>
+
+      @if (showInstallmentsField) {
+        <mat-form-field appearance="fill" floatLabel="always" class="value-dialog-form__field">
+          <mat-label>Parcelas</mat-label>
+          <mat-select formControlName="installments">
+            @for (option of installmentOptions; track option) {
+              <mat-option [value]="option">{{ option }}x</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.installments.touched && !form.controls.installments.value) {
+            <mat-error>Selecione o número de parcelas.</mat-error>
+          }
+        </mat-form-field>
+      }
+    }
+
     @if (showReasonField) {
       <mat-form-field appearance="fill" floatLabel="always" class="value-dialog-form__field">
         <mat-label>Motivo da perda</mat-label>

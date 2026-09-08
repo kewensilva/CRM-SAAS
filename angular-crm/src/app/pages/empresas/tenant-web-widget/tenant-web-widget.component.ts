@@ -1,7 +1,14 @@
 import { Clipboard, ClipboardModule } from '@angular/cdk/clipboard';
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -21,11 +28,23 @@ import { TenantsService } from '../../../core/tenants/tenants.service';
 import { WebWidgetService } from '../../../core/web-widget/web-widget.service';
 import { TenantUser } from '../../../models/tenant.model';
 import {
+  MAX_WIDGET_MESSAGE_FIELDS,
   WebWidgetIntegration,
   WebWidgetLog,
+  WebWidgetMessageField,
   WIDGET_BUTTON_ICONS,
   WidgetButtonIcon,
 } from '../../../models/web-widget.model';
+
+type MessageFieldGroup = FormGroup<{
+  key: FormControl<string>;
+  label: FormControl<string>;
+}>;
+
+// Chave interna do campo (liga a resposta enviada pelo widget.js à pergunta configurada,
+// nunca exibida ao visitante) — gerada uma vez ao criar o campo, nunca editada pelo
+// usuário nem reaproveitada entre campos.
+const generateFieldKey = (): string => `campo_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 const LOG_DISPLAYED_COLUMNS = ['createdAt', 'status', 'utmSource', 'message'];
 
@@ -97,7 +116,9 @@ export class TenantWebWidgetComponent implements OnInit {
       widget.buttonIcon ? `data-icon="${widget.buttonIcon}"` : null,
       `data-show-email="${widget.showEmailField}"`,
       `data-show-phone="${widget.showPhoneField}"`,
-      `data-show-message="${widget.showMessageField}"`,
+      widget.messageFields.length > 0
+        ? `data-message-fields="${escapeHtmlAttr(JSON.stringify(widget.messageFields))}"`
+        : null,
     ]
       .filter((attr): attr is string => attr !== null)
       .join(' ');
@@ -106,6 +127,7 @@ export class TenantWebWidgetComponent implements OnInit {
   });
 
   readonly form;
+  readonly maxMessageFields = MAX_WIDGET_MESSAGE_FIELDS;
 
   private tenantId = '';
 
@@ -123,11 +145,44 @@ export class TenantWebWidgetComponent implements OnInit {
       duplicateStrategy: this.formBuilder.nonNullable.control<'IGNORE' | 'UPDATE'>('IGNORE'),
       showEmailField: this.formBuilder.nonNullable.control(true),
       showPhoneField: this.formBuilder.nonNullable.control(true),
-      showMessageField: this.formBuilder.nonNullable.control(true),
+      messageFields: this.formBuilder.array<MessageFieldGroup>([]),
       buttonLabel: this.formBuilder.nonNullable.control('Fale conosco'),
       buttonContentType: this.formBuilder.nonNullable.control<'TEXT' | 'ICON'>('TEXT'),
       buttonIcon: this.formBuilder.control<WidgetButtonIcon | null>(null),
       buttonColor: this.formBuilder.nonNullable.control('#FF9521'),
+    });
+  }
+
+  get messageFields(): FormArray<MessageFieldGroup> {
+    return this.form.controls.messageFields;
+  }
+
+  addMessageField(): void {
+    if (this.messageFields.length >= MAX_WIDGET_MESSAGE_FIELDS) {
+      return;
+    }
+
+    this.messageFields.push(
+      this.formBuilder.group({
+        key: this.formBuilder.nonNullable.control(generateFieldKey()),
+        label: this.formBuilder.nonNullable.control('', Validators.required),
+      }),
+    );
+  }
+
+  removeMessageField(index: number): void {
+    this.messageFields.removeAt(index);
+  }
+
+  private setMessageFields(fields: WebWidgetMessageField[]): void {
+    this.messageFields.clear();
+    fields.forEach((field) => {
+      this.messageFields.push(
+        this.formBuilder.group({
+          key: this.formBuilder.nonNullable.control(field.key),
+          label: this.formBuilder.nonNullable.control(field.label, Validators.required),
+        }),
+      );
     });
   }
 
@@ -165,12 +220,12 @@ export class TenantWebWidgetComponent implements OnInit {
             duplicateStrategy: widget.duplicateStrategy,
             showEmailField: widget.showEmailField,
             showPhoneField: widget.showPhoneField,
-            showMessageField: widget.showMessageField,
             buttonLabel: widget.buttonLabel,
             buttonContentType: widget.buttonContentType,
             buttonIcon: widget.buttonIcon,
             buttonColor: widget.buttonColor,
           });
+          this.setMessageFields(widget.messageFields);
         }
 
         this.loading.set(false);
@@ -203,7 +258,7 @@ export class TenantWebWidgetComponent implements OnInit {
         duplicateStrategy: value.duplicateStrategy,
         showEmailField: value.showEmailField,
         showPhoneField: value.showPhoneField,
-        showMessageField: value.showMessageField,
+        messageFields: value.messageFields.filter((field) => field.label.trim().length > 0),
         buttonLabel: value.buttonLabel || undefined,
         buttonContentType: value.buttonContentType,
         buttonIcon: value.buttonContentType === 'ICON' ? (value.buttonIcon ?? undefined) : undefined,

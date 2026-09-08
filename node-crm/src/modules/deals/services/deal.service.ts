@@ -216,6 +216,8 @@ const moveLeadStatus = async (
             status: data.status === "VENDIDO" ? "WON" : "LOST",
             value: data.value ?? null,
             lostReason: data.lostReason ?? null,
+            paymentType: data.paymentType,
+            installments: data.installments,
         },
         requestingUserId,
     );
