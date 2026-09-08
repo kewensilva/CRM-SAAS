@@ -83,6 +83,13 @@
         <span class="lead-details__label">Forma de pagamento</span>
         <span class="lead-details__value">{{ paymentTypeLabel }}</span>
       </div>
+
+      @if (productLabel; as label) {
+        <div class="lead-details__row">
+          <span class="lead-details__label">Produto</span>
+          <span class="lead-details__value">{{ label }}</span>
+        </div>
+      }
     }
   }
 

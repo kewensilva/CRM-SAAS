@@ -1,3 +1,4 @@
+import { leadAssignmentRepository } from "../../../leads/repositories/lead-assignment.repository";
 import { leadRepository } from "../../../leads/repositories/lead.repository";
 import { webWidgetIntegrationRepository } from "../repositories/web-widget-integration.repository";
 import { webWidgetLogRepository } from "../repositories/web-widget-log.repository";
@@ -93,11 +94,19 @@ const processSubmission = async (payload: WebWidgetSubmissionPayload): Promise<v
         return;
     }
 
+    // Distribuição rotativa entre os Vendedores ativos do tenant (feature "parâmetros" do
+    // Analista) — cai em defaultResponsibleUserId só se não houver nenhum vendedor
+    // cadastrado ainda, ver lead-assignment.repository.ts.
+    const responsibleUserId = await leadAssignmentRepository.getNextResponsibleUserId(
+        integration.tenantId,
+        integration.defaultResponsibleUserId,
+    );
+
     // changedByUserId nulo: lead criado pela integração, sem usuário autenticado por trás.
     const lead = await leadRepository.create(
         {
             tenantId: integration.tenantId,
-            responsibleUserId: integration.defaultResponsibleUserId,
+            responsibleUserId,
             name: payload.name,
             email: payload.email,
             phone: payload.phone,

@@ -125,6 +125,8 @@ model Tenant {
     webWidgetLogs        WebWidgetLog[]
     lostReasons          LostReason[]
     analystAccess        AnalystTenantAccess[]
+    products             Product[]
+    leadRoundRobinState  LeadRoundRobinState?
 
     @@map("tenants")
 }
@@ -179,6 +181,7 @@ model User {
     metaIntegrationsAsDefaultResponsible MetaIntegration[]
     webWidgetIntegrationsAsDefaultResponsible WebWidgetIntegration[]
     tenantAccess          AnalystTenantAccess[]
+    roundRobinAssignments LeadRoundRobinState[]
 
     @@unique([tenantId, email])
     @@index([tenantId])
@@ -392,6 +395,9 @@ model Deal {
     // fechadas antes desta feature), installments só existe quando paymentType RECORRENTE.
     paymentType       DealPaymentType @default(UNICO) @map("payment_type")
     installments      Int?            @map("installments")
+    // Opcional: só tenants que cadastraram produtos em Parâmetros (feature Analista)
+    // pedem essa escolha ao fechar Vendido — ver moveLeadStatus em deal.service.ts.
+    productId         String?    @map("product_id") @db.Uuid
     createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
     updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz
     deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz
@@ -402,6 +408,7 @@ model Deal {
     responsible  User               @relation(fields: [responsibleUserId], references: [id])
     pipeline     Pipeline           @relation(fields: [pipelineId], references: [id])
     stage        PipelineStage      @relation(fields: [stageId], references: [id])
+    product      Product?           @relation(fields: [productId], references: [id])
     stageHistory DealStageHistory[]
     activities   Activity[]
 
@@ -569,6 +576,49 @@ model LostReason {
 
     @@index([tenantId])
     @@map("lost_reasons")
+}
+
+enum ProductStatus {
+    ACTIVE
+    INACTIVE
+}
+
+// Catálogo de produtos por tenant (feature "Parâmetros" — cadastrado pelo Analista, ver
+// products module). Selecionado opcionalmente ao fechar um Deal como Vendido
+// (Deal.productId) — tenant sem nenhum produto ativo simplesmente não mostra o seletor,
+// não é um passo obrigatório do fluxo.
+model Product {
+    id        String        @id @default(uuid()) @db.Uuid
+    tenantId  String        @map("tenant_id") @db.Uuid
+    name      String
+    price     Decimal?      @db.Decimal(14, 2)
+    status    ProductStatus @default(ACTIVE)
+    createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt DateTime?     @map("deleted_at") @db.Timestamptz
+
+    tenant Tenant @relation(fields: [tenantId], references: [id])
+    deals  Deal[]
+
+    @@index([tenantId])
+    @@map("products")
+}
+
+// Estado da distribuição rotativa de Leads recebidos por integração (Web Widget / Meta
+// Lead Ads) entre os Vendedores (profile USER) ativos do tenant — um registro por tenant,
+// guarda só quem foi o último a receber, pra saber quem é o próximo na fila. Ver
+// lead-assignment.repository.ts > getNextResponsibleUserId. Não se aplica a leads criados
+// manualmente (o próprio usuário autenticado já é o responsável, ver lead.controller.ts).
+model LeadRoundRobinState {
+    id                 String   @id @default(uuid()) @db.Uuid
+    tenantId           String   @unique @map("tenant_id") @db.Uuid
+    lastAssignedUserId String?  @map("last_assigned_user_id") @db.Uuid
+    updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+    tenant           Tenant @relation(fields: [tenantId], references: [id])
+    lastAssignedUser User?  @relation(fields: [lastAssignedUserId], references: [id])
+
+    @@map("lead_round_robin_state")
 }
 
 // "Nenhum Lead deverá ser descartado sem registro" (mesmo princípio do MetaIntegrationLog,

@@ -35,6 +35,18 @@
       }
     }
 
+    @if (showProductField) {
+      <mat-form-field appearance="fill" floatLabel="always" class="value-dialog-form__field">
+        <mat-label>Produto</mat-label>
+        <mat-select formControlName="productId">
+          <mat-option [value]="null">Nenhum</mat-option>
+          @for (product of productOptions(); track product.id) {
+            <mat-option [value]="product.id">{{ product.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
     @if (showReasonField) {
       <mat-form-field appearance="fill" floatLabel="always" class="value-dialog-form__field">
         <mat-label>Motivo da perda</mat-label>

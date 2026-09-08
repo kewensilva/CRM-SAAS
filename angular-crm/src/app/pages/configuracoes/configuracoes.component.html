@@ -325,6 +325,72 @@
       </div>
     </section>
 
+    @if (canManageProducts()) {
+      <section class="products-section">
+        <h2 class="section-title">Produtos</h2>
+        <p class="section-hint">
+          Cadastre os produtos deste cliente — eles ficam disponíveis pra escolher ao
+          fechar um Lead como Vendido.
+        </p>
+
+        <form [formGroup]="productForm" (ngSubmit)="addProduct()" novalidate class="products-form">
+          <mat-form-field appearance="fill" floatLabel="always" class="products-form__field">
+            <mat-label>Nome do produto</mat-label>
+            <input matInput formControlName="name" maxlength="140" />
+            @if (productForm.controls.name.touched && productForm.controls.name.hasError('required')) {
+              <mat-error>Campo obrigatório.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="products-form__field products-form__field--price">
+            <mat-label>Preço (opcional)</mat-label>
+            <span matPrefix>R$&nbsp;</span>
+            <input matInput type="number" step="0.01" min="0" formControlName="price" />
+          </mat-form-field>
+
+          <button type="submit" mat-flat-button color="primary" [disabled]="productsSaving()">
+            @if (productsSaving()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Adicionar
+            }
+          </button>
+        </form>
+
+        @if (productsError()) {
+          <p class="configuracoes-page__error" role="alert">{{ productsError() }}</p>
+        }
+
+        <div class="products-list">
+          @for (product of products(); track product.id) {
+            <div class="products-list__row">
+              <span class="products-list__name">{{ product.name }}</span>
+              <span class="products-list__price">{{ product.price ? ('R$ ' + product.price) : '—' }}</span>
+              <span
+                class="status-badge"
+                [class.status-badge--inactive]="product.status === 'INACTIVE'"
+              >
+                {{ product.status === 'ACTIVE' ? 'Ativo' : 'Inativo' }}
+              </span>
+              <button
+                type="button"
+                mat-icon-button
+                [matTooltip]="product.status === 'ACTIVE' ? 'Desativar produto' : 'Ativar produto'"
+                (click)="toggleProductStatus(product)"
+              >
+                <mat-icon>{{ product.status === 'ACTIVE' ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+              </button>
+              <button type="button" mat-icon-button matTooltip="Remover produto" (click)="removeProduct(product)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          } @empty {
+            <p class="products-list__empty">Nenhum produto cadastrado ainda.</p>
+          }
+        </div>
+      </section>
+    }
+
     <section class="meta-form-section">
       <h2 class="section-title">Integração Meta Lead Ads</h2>
       <p class="section-hint">

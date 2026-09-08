@@ -61,6 +61,7 @@ const createFinal = (
         lostReason: string | null;
         paymentType?: "UNICO" | "RECORRENTE" | undefined;
         installments?: number | undefined;
+        productId?: string | undefined;
     },
     changedByUserId: string,
 ): Promise<Deal> => {

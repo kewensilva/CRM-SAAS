@@ -44,6 +44,9 @@ export const moveLeadStatusSchema = z
                 error: "Número de parcelas inválido.",
             })
             .optional(),
+        // Existência/pertencimento ao tenant é checado no service (validator não fala
+        // com o banco) — ver deal.service.ts > moveLeadStatus.
+        productId: z.string().trim().uuid("Produto inválido.").optional(),
     })
     .refine(
         (data) => {
@@ -52,7 +55,8 @@ export const moveLeadStatusSchema = z
                     data.value !== undefined &&
                     data.lostReason !== undefined &&
                     data.paymentType === undefined &&
-                    data.installments === undefined
+                    data.installments === undefined &&
+                    data.productId === undefined
                 );
             }
 
@@ -64,7 +68,8 @@ export const moveLeadStatusSchema = z
                 return (
                     data.lostReason === undefined &&
                     data.paymentType === undefined &&
-                    data.installments === undefined
+                    data.installments === undefined &&
+                    data.productId === undefined
                 );
             }
 
@@ -72,12 +77,13 @@ export const moveLeadStatusSchema = z
                 data.value === undefined &&
                 data.lostReason === undefined &&
                 data.paymentType === undefined &&
-                data.installments === undefined
+                data.installments === undefined &&
+                data.productId === undefined
             );
         },
         {
             message:
-                "Perdido exige motivo e valor; Vendido aceita valor e forma de pagamento opcionais; Em andamento aceita valor opcional; os demais status não usam nenhum desses campos.",
+                "Perdido exige motivo e valor; Vendido aceita valor, forma de pagamento e produto opcionais; Em andamento aceita valor opcional; os demais status não usam nenhum desses campos.",
             path: ["status"],
         },
     )

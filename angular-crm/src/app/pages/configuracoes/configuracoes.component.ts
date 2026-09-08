@@ -25,9 +25,11 @@ import { forkJoin } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SessionService } from '../../core/auth/session.service';
 import { MetaService } from '../../core/meta/meta.service';
+import { ProductsService } from '../../core/products/products.service';
 import { UsersService } from '../../core/users/users.service';
 import { WebWidgetService } from '../../core/web-widget/web-widget.service';
 import { MetaIntegration, MetaIntegrationLog } from '../../models/meta-integration.model';
+import { Product } from '../../models/product.model';
 import { TenantUser } from '../../models/tenant.model';
 import {
   MAX_WIDGET_MESSAGE_FIELDS,
@@ -149,6 +151,9 @@ export class ConfiguracoesComponent implements OnInit {
   // continua só consultando, mesma regra "gerenciado pelo administrador da plataforma"
   // já documentada no hint acima. Ver CLAUDE.md > gap de permissões de Integrações.
   readonly canEditWidget = computed(() => this.session.isAnalystSession());
+  // Mesma regra do widget acima — cadastro de produtos também é parametrização do
+  // Analista (ver products module no backend).
+  readonly canManageProducts = computed(() => this.session.isAnalystSession());
 
   readonly widgetForm;
   readonly widgetSaving = signal(false);
@@ -171,14 +176,25 @@ export class ConfiguracoesComponent implements OnInit {
 
   readonly metaForm;
 
+  readonly products = signal<Product[]>([]);
+  readonly productsSaving = signal(false);
+  readonly productsError = signal<string | null>(null);
+  readonly productForm;
+
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly usersService: UsersService,
     private readonly webWidgetService: WebWidgetService,
     private readonly metaService: MetaService,
+    private readonly productsService: ProductsService,
     private readonly clipboard: Clipboard,
     readonly session: SessionService,
   ) {
+    this.productForm = this.formBuilder.group({
+      name: this.formBuilder.nonNullable.control('', Validators.required),
+      price: this.formBuilder.control<number | null>(null),
+    });
+
     this.metaForm = this.formBuilder.group({
       enabled: this.formBuilder.nonNullable.control(false),
       pageId: this.formBuilder.nonNullable.control(''),
@@ -286,12 +302,14 @@ export class ConfiguracoesComponent implements OnInit {
       widgetLogs: this.webWidgetService.listLogs(),
       meta: this.metaService.get(),
       metaLogs: this.metaService.listLogs(),
+      products: this.productsService.list(),
     }).subscribe({
-      next: ({ users, widget, widgetLogs, meta, metaLogs }) => {
+      next: ({ users, widget, widgetLogs, meta, metaLogs, products }) => {
         this.users.set(users);
         this.widget.set(widget);
         this.widgetLogs.set(widgetLogs);
         this.metaLogs.set(metaLogs);
+        this.products.set(products);
 
         if (widget) {
           this.widgetForm.patchValue({
@@ -368,5 +386,57 @@ export class ConfiguracoesComponent implements OnInit {
           this.metaErrorMessage.set('Não foi possível salvar a configuração da integração Meta Lead Ads.');
         },
       });
+  }
+
+  addProduct(): void {
+    if (this.productForm.invalid) {
+      this.productForm.markAllAsTouched();
+      return;
+    }
+
+    const { name, price } = this.productForm.getRawValue();
+
+    this.productsSaving.set(true);
+    this.productsError.set(null);
+
+    this.productsService
+      .create({ name: name.trim(), price: price ?? undefined })
+      .subscribe({
+        next: (product) => {
+          this.products.update((current) => [...current, product]);
+          this.productForm.reset({ name: '', price: null });
+          this.productsSaving.set(false);
+        },
+        error: () => {
+          this.productsSaving.set(false);
+          this.productsError.set('Não foi possível cadastrar o produto.');
+        },
+      });
+  }
+
+  toggleProductStatus(product: Product): void {
+    const nextStatus = product.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+
+    this.productsService.update(product.id, { status: nextStatus }).subscribe({
+      next: (updated) => {
+        this.products.update((current) =>
+          current.map((item) => (item.id === updated.id ? updated : item)),
+        );
+      },
+      error: () => {
+        this.productsError.set('Não foi possível alterar o status do produto.');
+      },
+    });
+  }
+
+  removeProduct(product: Product): void {
+    this.productsService.remove(product.id).subscribe({
+      next: () => {
+        this.products.update((current) => current.filter((item) => item.id !== product.id));
+      },
+      error: () => {
+        this.productsError.set('Não foi possível remover o produto.');
+      },
+    });
   }
 }

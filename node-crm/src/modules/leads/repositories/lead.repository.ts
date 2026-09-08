@@ -14,6 +14,7 @@ export type LeadRawWithLogs = Lead & {
         lostReason: string | null;
         paymentType: "UNICO" | "RECORRENTE";
         installments: number | null;
+        productId: string | null;
     } | null;
     webWidgetLogs: { id: string }[];
     metaLogs: { id: string }[];
@@ -179,6 +180,7 @@ const listByTenantWithLogs = (tenantId: string): Promise<LeadRawWithLogs[]> => {
                     lostReason: true,
                     paymentType: true,
                     installments: true,
+                    productId: true,
                 },
             },
             webWidgetLogs: { take: 1, select: { id: true } },

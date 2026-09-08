@@ -32,6 +32,7 @@ export type LeadDeal = {
     lostReason: string | null;
     paymentType: "UNICO" | "RECORRENTE";
     installments: number | null;
+    productId: string | null;
 };
 
 // Shape usado pelo Kanban de Leads (GET /leads) — Lead + Deal associado (se já

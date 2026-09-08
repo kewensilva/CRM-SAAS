@@ -18,6 +18,7 @@ export type Deal = {
     lostReason: string | null;
     paymentType: DealPaymentType;
     installments: number | null;
+    productId: string | null;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;

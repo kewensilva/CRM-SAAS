@@ -219,6 +219,9 @@ export class LeadsComponent implements OnInit {
     if (result.installments !== undefined) {
       payload.installments = result.installments;
     }
+    if (result.productId !== undefined) {
+      payload.productId = result.productId;
+    }
 
     this.leadsService.moveStatus(lead.id, payload).subscribe({
       next: ({ deal, budgetValue }) => {

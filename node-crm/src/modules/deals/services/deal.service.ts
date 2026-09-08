@@ -7,6 +7,7 @@ import { pipelineRepository } from "../../pipelines/repositories/pipeline.reposi
 import { stageRepository } from "../../pipelines/repositories/stage.repository";
 import { pipelineService } from "../../pipelines/services/pipeline.service";
 import { stageService } from "../../pipelines/services/stage.service";
+import { productRepository } from "../../products/repositories/product.repository";
 import { userRepository } from "../../users/repositories/user.repository";
 import type {
     ChangeStageDTO,
@@ -205,6 +206,14 @@ const moveLeadStatus = async (
         throw new BusinessRuleError("Configure ao menos uma Etapa no Pipeline antes de finalizar Leads.");
     }
 
+    if (data.productId) {
+        const product = await productRepository.findByIdAndTenant(data.productId, tenantId);
+
+        if (!product) {
+            throw new NotFoundError("Produto não encontrado.");
+        }
+    }
+
     const deal = await dealRepository.createFinal(
         {
             tenantId,
@@ -218,6 +227,7 @@ const moveLeadStatus = async (
             lostReason: data.lostReason ?? null,
             paymentType: data.paymentType,
             installments: data.installments,
+            productId: data.productId,
         },
         requestingUserId,
     );

@@ -1,3 +1,4 @@
+import { leadAssignmentRepository } from "../../../leads/repositories/lead-assignment.repository";
 import { leadRepository } from "../../../leads/repositories/lead.repository";
 import { webWidgetIntegrationRepository } from "../repositories/web-widget-integration.repository";
 import { webWidgetLogRepository } from "../repositories/web-widget-log.repository";
@@ -5,10 +6,12 @@ import { webWidgetLeadService } from "./web-widget-lead.service";
 import type { WebWidgetIntegration, WebWidgetSubmissionPayload } from "../types/web-widget-integration.types";
 
 jest.mock("../../../leads/repositories/lead.repository");
+jest.mock("../../../leads/repositories/lead-assignment.repository");
 jest.mock("../repositories/web-widget-integration.repository");
 jest.mock("../repositories/web-widget-log.repository");
 
 const mockedLeadRepository = jest.mocked(leadRepository);
+const mockedLeadAssignmentRepository = jest.mocked(leadAssignmentRepository);
 const mockedIntegrationRepository = jest.mocked(webWidgetIntegrationRepository);
 const mockedLogRepository = jest.mocked(webWidgetLogRepository);
 
@@ -56,6 +59,10 @@ describe("webWidgetLeadService.processSubmission", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
         });
+        // Round-robin entre vendedores (feature "parâmetros") — nos testes que não mexem
+        // nisso, devolve o próprio defaultResponsibleUserId (equivalente a "nenhum
+        // vendedor cadastrado ainda", ver lead-assignment.repository.ts).
+        mockedLeadAssignmentRepository.getNextResponsibleUserId.mockResolvedValue("user-1");
     });
 
     it("cria o Lead e marca o log como PROCESSED em uma submissão válida", async () => {
@@ -65,6 +72,10 @@ describe("webWidgetLeadService.processSubmission", () => {
 
         await webWidgetLeadService.processSubmission(basePayload);
 
+        expect(mockedLeadAssignmentRepository.getNextResponsibleUserId).toHaveBeenCalledWith(
+            "tenant-1",
+            "user-1",
+        );
         expect(mockedLeadRepository.create).toHaveBeenCalledWith(
             {
                 tenantId: "tenant-1",

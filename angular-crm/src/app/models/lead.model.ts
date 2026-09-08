@@ -17,6 +17,7 @@ export interface LeadDeal {
   lostReason: string | null;
   paymentType: DealPaymentType;
   installments: number | null;
+  productId: string | null;
 }
 
 export interface Lead {
@@ -49,6 +50,7 @@ export interface MoveLeadStatusPayload {
   lostReason?: string;
   paymentType?: DealPaymentType;
   installments?: number;
+  productId?: string;
 }
 
 export interface MoveLeadStatusResult {

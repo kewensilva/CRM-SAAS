@@ -9,7 +9,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { DealsService } from '../../../core/deals/deals.service';
 import { LeadsService } from '../../../core/leads/leads.service';
+import { ProductsService } from '../../../core/products/products.service';
 import { Lead, LeadHistoryEntry } from '../../../models/lead.model';
+import { Product } from '../../../models/product.model';
 
 export interface LeadDetailsDialogData {
   lead: Lead;
@@ -46,6 +48,7 @@ export class LeadDetailsDialogComponent implements OnInit {
 
   readonly history = signal<LeadHistoryEntry[]>([]);
   readonly historyLoading = signal(true);
+  readonly products = signal<Product[]>([]);
 
   readonly form;
   readonly valueForm;
@@ -55,6 +58,7 @@ export class LeadDetailsDialogComponent implements OnInit {
     private readonly formBuilder: FormBuilder,
     private readonly leadsService: LeadsService,
     private readonly dealsService: DealsService,
+    private readonly productsService: ProductsService,
   ) {
     this.lead = data.lead;
 
@@ -79,6 +83,14 @@ export class LeadDetailsDialogComponent implements OnInit {
       },
       error: () => this.historyLoading.set(false),
     });
+
+    // Só pra resolver o nome do produto vinculado ao Deal (se algum) — ver productLabel.
+    if (this.lead.deal?.productId) {
+      this.productsService.list().subscribe({
+        next: (products) => this.products.set(products),
+        error: () => this.products.set([]),
+      });
+    }
   }
 
   statusLabelFor(status: Lead['status'] | null): string {
@@ -98,6 +110,16 @@ export class LeadDetailsDialogComponent implements OnInit {
       return 'Único';
     }
     return `Recorrência em ${this.lead.deal.installments}x`;
+  }
+
+  get productLabel(): string | null {
+    const productId = this.lead.deal?.productId;
+
+    if (!productId) {
+      return null;
+    }
+
+    return this.products().find((product) => product.id === productId)?.name ?? '—';
   }
 
   // UTM só existe pra leads do Web Widget — nunca editável (ver models/lead.model.ts).
