@@ -32,8 +32,7 @@ const buildMetricCards = (summary: PlatformDashboardSummary): MetricCard[] => [
     value: summary.leadsCount,
     chartImage: 'assets/images/chart-ganhos.svg',
     chartTint: 'orange',
-  },
-
+  }
 ];
 
 @Component({
