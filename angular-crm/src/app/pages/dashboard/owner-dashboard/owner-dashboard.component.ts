@@ -33,12 +33,7 @@ const buildMetricCards = (summary: PlatformDashboardSummary): MetricCard[] => [
     chartImage: 'assets/images/chart-ganhos.svg',
     chartTint: 'orange',
   },
-  {
-    title: 'Leads Qualificados',
-    value: summary.qualifiedLeadsCount,
-    chartImage: 'assets/images/chart-perdas.svg',
-    chartTint: 'red',
-  },
+
 ];
 
 @Component({
