@@ -23,6 +23,10 @@ export const metaConfig = {
     // Deve ser IDÊNTICA à URI cadastrada em "URIs de redirecionamento OAuth válidos" no app
     // da Meta. É a tela de Configurações do front (ex.: https://www.crm-cmb.com.br/configuracoes).
     oauthRedirectUri: process.env.META_OAUTH_REDIRECT_URI,
+        // Facebook Login for Business: as permissões vêm de uma "Configuração" criada no painel da
+    // Meta (identificada por config_id), e não do parâmetro scope. Opcional: sem ele, usa o
+    // login clássico com scope.
+    loginConfigId: process.env.META_LOGIN_CONFIG_ID,
     oauthDialogUrl: `https://www.facebook.com/${graphVersion}/dialog/oauth`,
     // Somente o que o CRM usa — a Meta reprova pedido de permissões "para o futuro".
     oauthScopes: [

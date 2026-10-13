@@ -47,14 +47,21 @@ const requireOAuthConfig = (): { appId: string; redirectUri: string } => {
 const buildAuthorizationUrl = (tenantId: string, userId: string): string => {
     const { appId, redirectUri } = requireOAuthConfig();
 
-    const params = new URLSearchParams({
+        const params = new URLSearchParams({
         client_id: appId,
         redirect_uri: redirectUri,
         state: createOAuthState(tenantId, userId, metaConfig.appSecret),
-        scope: metaConfig.oauthScopes.join(","),
         response_type: "code",
     });
 
+    if (metaConfig.loginConfigId) {
+        // Facebook Login for Business: permissões definidas na Configuração do painel.
+        params.set("config_id", metaConfig.loginConfigId);
+        params.set("override_default_response_type", "true");
+    } else {
+        // Login clássico: permissões pedidas por scope.
+        params.set("scope", metaConfig.oauthScopes.join(","));
+    }
     return `${metaConfig.oauthDialogUrl}?${params.toString()}`;
 };
 
