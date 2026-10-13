@@ -11,3 +11,11 @@ export type UpdateBudgetEntryDTO = {
     budget?: number | undefined;
     investment?: number | undefined;
 };
+
+export type CreateBudgetPeriodDTO = {
+    tenantId: string;
+    channelName: string;
+    startMonth: Date;
+    months: number;
+    budget: number;
+};

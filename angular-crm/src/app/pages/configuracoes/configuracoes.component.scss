@@ -333,3 +333,32 @@ $color-primary: #ff9521;
     color: #c62828;
   }
 }
+
+// "Conectar com o Facebook"
+.meta-connect {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.meta-connect__status {
+  margin: 0;
+}
+
+.meta-connect__actions,
+.meta-connect__pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.meta-manual {
+  margin: 4px 0 8px;
+
+  summary {
+    cursor: pointer;
+    margin-bottom: 12px;
+  }
+}

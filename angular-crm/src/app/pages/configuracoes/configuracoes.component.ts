@@ -20,6 +20,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
@@ -30,7 +31,11 @@ import { ProductsService } from '../../core/products/products.service';
 import { UsersService } from '../../core/users/users.service';
 import { WebWidgetService } from '../../core/web-widget/web-widget.service';
 import { BudgetEntry } from '../../models/budget-entry.model';
-import { MetaIntegration, MetaIntegrationLog } from '../../models/meta-integration.model';
+import {
+  MetaIntegration,
+  MetaIntegrationLog,
+  MetaOAuthPage,
+} from '../../models/meta-integration.model';
 import { Product } from '../../models/product.model';
 import { TenantUser } from '../../models/tenant.model';
 import {
@@ -69,15 +74,16 @@ const currentMonthValue = (): string => {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 };
 
-function maskToken(token: string): string {
-  const visibleChars = 4;
+// "2026-07" + 2 -> "2026-09" (Date.UTC normaliza a virada de ano).
+const addMonthsToValue = (value: string, offset: number): string => {
+  const [year, month] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + offset, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+};
 
-  if (token.length <= visibleChars) {
-    return '•'.repeat(8);
-  }
+// "2026-07" -> "07/2026"
+const monthLabel = (value: string): string => `${value.slice(5, 7)}/${value.slice(0, 4)}`;
 
-  return `${'•'.repeat(8)}${token.slice(-visibleChars)}`;
-}
 
 @Component({
   selector: 'app-configuracoes',
@@ -180,11 +186,16 @@ export class ConfiguracoesComponent implements OnInit {
   readonly meta = signal<MetaIntegration | null>(null);
   readonly metaLogs = signal<MetaIntegrationLog[]>([]);
 
-  readonly metaTokenPlaceholder = computed(() => {
-    const token = this.meta()?.pageAccessToken;
+  // "Conectar com o Facebook"
+  readonly metaConnecting = signal(false);
+  readonly metaPages = signal<MetaOAuthPage[]>([]);
+  readonly metaOAuthSessionId = signal<string | null>(null);
+  readonly metaSelectedPageId = signal<string | null>(null);
 
-    return token ? maskToken(token) : 'Nenhum token configurado';
-  });
+  // O token nunca chega ao navegador: só sabemos se existe um configurado.
+  readonly metaTokenPlaceholder = computed(() =>
+    this.meta()?.hasPageToken ? '••••••••••••' : 'Nenhum token configurado',
+  );
 
   readonly metaForm;
 
@@ -199,6 +210,10 @@ export class ConfiguracoesComponent implements OnInit {
   readonly budgetForm;
   readonly budgetMonthControl;
 
+  readonly budgetPeriodForm;
+  readonly budgetPeriodSaving = signal(false);
+  readonly budgetPeriodMessage = signal<string | null>(null);
+
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly usersService: UsersService,
@@ -207,6 +222,8 @@ export class ConfiguracoesComponent implements OnInit {
     private readonly productsService: ProductsService,
     private readonly budgetEntriesService: BudgetEntriesService,
     private readonly clipboard: Clipboard,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
     readonly session: SessionService,
   ) {
     this.productForm = this.formBuilder.group({
@@ -220,6 +237,19 @@ export class ConfiguracoesComponent implements OnInit {
       channelName: this.formBuilder.nonNullable.control('', Validators.required),
       budget: this.formBuilder.control<number | null>(null),
       investment: this.formBuilder.control<number | null>(null),
+    });
+
+    // Analista informa o budget mensal de um canal uma única vez e por quantos meses vale
+    // (ex.: R$ 10.000/mês, julho a setembro = mês inicial 2026-07 + 3 meses).
+    this.budgetPeriodForm = this.formBuilder.group({
+      channelName: this.formBuilder.nonNullable.control('', Validators.required),
+      startMonth: this.formBuilder.nonNullable.control(currentMonthValue(), Validators.required),
+      months: this.formBuilder.control<number | null>(3, [
+        Validators.required,
+        Validators.min(1),
+        Validators.max(36),
+      ]),
+      budget: this.formBuilder.control<number | null>(null, [Validators.required, Validators.min(0)]),
     });
 
     this.metaForm = this.formBuilder.group({
@@ -317,7 +347,7 @@ export class ConfiguracoesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAll();
-
+    this.handleFacebookCallback();
     this.budgetMonthControl.valueChanges.subscribe((month) => {
       this.loadBudgetEntries(month);
     });
@@ -382,6 +412,128 @@ export class ConfiguracoesComponent implements OnInit {
     if (snippet) {
       this.clipboard.copy(snippet);
     }
+  }
+
+    // Passo 1: leva o usuário para a tela de autorização da Meta.
+  startFacebookConnect(): void {
+    this.metaConnecting.set(true);
+    this.metaErrorMessage.set(null);
+    this.metaSuccessMessage.set(null);
+
+    this.metaService.getAuthorizationUrl().subscribe({
+      next: (url) => {
+        window.location.href = url;
+      },
+      error: () => {
+        this.metaConnecting.set(false);
+        this.metaErrorMessage.set(
+          'Não foi possível iniciar a conexão com o Facebook. Verifique se o login com Facebook está configurado no servidor.',
+        );
+      },
+    });
+  }
+
+  // Passo 2: a Meta devolve o usuário para esta tela com ?code=...&state=... (ou ?error=...
+  // se ele recusou). O code é de uso único, então a URL é limpa antes de qualquer coisa.
+  private handleFacebookCallback(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const code = params.get('code');
+    const state = params.get('state');
+    const facebookError = params.get('error');
+
+    if (!code && !facebookError) {
+      return;
+    }
+
+    void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+
+    if (facebookError || !code || !state) {
+      this.metaErrorMessage.set('A autorização com o Facebook foi cancelada ou negada.');
+      return;
+    }
+
+    this.metaConnecting.set(true);
+
+    this.metaService.exchangeCode(code, state).subscribe({
+      next: (result) => {
+        this.metaConnecting.set(false);
+
+        if (result.pages.length === 0) {
+          this.metaErrorMessage.set(
+            'Nenhuma Página encontrada. Confirme que você administra a Página e autorizou o acesso a ela.',
+          );
+          return;
+        }
+
+        this.metaOAuthSessionId.set(result.sessionId);
+        this.metaPages.set(result.pages);
+        this.metaSelectedPageId.set(result.pages.length === 1 ? result.pages[0].id : null);
+      },
+      error: () => {
+        this.metaConnecting.set(false);
+        this.metaErrorMessage.set(
+          'Não foi possível concluir a conexão com o Facebook. Tente novamente.',
+        );
+      },
+    });
+  }
+
+  // Passo 3: conecta a Página escolhida (o servidor a assina no webhook e salva o token).
+  confirmFacebookPage(): void {
+    const sessionId = this.metaOAuthSessionId();
+    const pageId = this.metaSelectedPageId();
+
+    if (!sessionId || !pageId) {
+      return;
+    }
+
+    this.metaConnecting.set(true);
+    this.metaErrorMessage.set(null);
+
+    this.metaService.connectPage(sessionId, pageId).subscribe({
+      next: (meta) => {
+        this.meta.set(meta);
+        this.metaForm.patchValue({ enabled: meta.enabled, pageId: meta.pageId ?? '' });
+        this.metaPages.set([]);
+        this.metaOAuthSessionId.set(null);
+        this.metaSelectedPageId.set(null);
+        this.metaConnecting.set(false);
+        this.metaSuccessMessage.set(
+          meta.enabled
+            ? `Página "${meta.pageName}" conectada. Novos leads de anúncios chegarão automaticamente ao CRM.`
+            : `Página "${meta.pageName}" conectada. Escolha o responsável padrão e ative a integração para começar a receber leads.`,
+        );
+      },
+      error: () => {
+        this.metaConnecting.set(false);
+        this.metaErrorMessage.set(
+          'Não foi possível conectar a Página. Tente novamente; se persistir, confirme as permissões concedidas.',
+        );
+      },
+    });
+  }
+
+  disconnectFacebook(): void {
+    if (!window.confirm('Desconectar a Página? O CRM deixará de receber leads dela.')) {
+      return;
+    }
+
+    this.metaConnecting.set(true);
+    this.metaErrorMessage.set(null);
+    this.metaSuccessMessage.set(null);
+
+    this.metaService.disconnect().subscribe({
+      next: (meta) => {
+        this.meta.set(meta);
+        this.metaForm.patchValue({ enabled: false, pageId: '' });
+        this.metaConnecting.set(false);
+        this.metaSuccessMessage.set('Página desconectada.');
+      },
+      error: () => {
+        this.metaConnecting.set(false);
+        this.metaErrorMessage.set('Não foi possível desconectar a Página.');
+      },
+    });
   }
 
   saveMeta(): void {
@@ -510,6 +662,45 @@ export class ConfiguracoesComponent implements OnInit {
         error: () => {
           this.budgetSaving.set(false);
           this.budgetError.set('Não foi possível salvar o lançamento de budget.');
+        },
+      });
+  }
+
+  saveBudgetPeriod(): void {
+    if (this.budgetPeriodForm.invalid) {
+      this.budgetPeriodForm.markAllAsTouched();
+      return;
+    }
+
+    const { channelName, startMonth, months, budget } = this.budgetPeriodForm.getRawValue();
+
+    this.budgetPeriodSaving.set(true);
+    this.budgetPeriodMessage.set(null);
+    this.budgetError.set(null);
+
+    this.budgetEntriesService
+      .upsertPeriod({
+        channelName: channelName.trim(),
+        startMonth,
+        months: months as number,
+        budget: budget as number,
+      })
+      .subscribe({
+        next: () => {
+          const endMonth = addMonthsToValue(startMonth, (months as number) - 1);
+          const amount = (budget as number).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+          this.budgetPeriodMessage.set(
+            `Budget de R$ ${amount} por mês definido para ${channelName.trim()} de ${monthLabel(startMonth)} a ${monthLabel(endMonth)}.`,
+          );
+          this.budgetPeriodForm.patchValue({ channelName: '', budget: null });
+          this.budgetPeriodForm.markAsUntouched();
+          this.budgetPeriodSaving.set(false);
+          this.loadBudgetEntries(this.budgetMonthControl.value);
+        },
+        error: () => {
+          this.budgetPeriodSaving.set(false);
+          this.budgetError.set('Não foi possível salvar o budget do período.');
         },
       });
   }

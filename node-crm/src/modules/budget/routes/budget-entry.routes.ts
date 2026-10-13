@@ -16,5 +16,7 @@ const writeAccess = authorize("TENANT_ADMIN");
 
 budgetEntryRoutes.get("/budget-entries", authenticate, viewAccess, budgetEntryController.list);
 budgetEntryRoutes.post("/budget-entries", authenticate, writeAccess, budgetEntryController.upsert);
+// Define o budget mensal de um canal para um período (mês inicial + N meses) de uma vez.
+budgetEntryRoutes.post("/budget-entries/period", authenticate, writeAccess, budgetEntryController.upsertPeriod);
 budgetEntryRoutes.put("/budget-entries/:id", authenticate, writeAccess, budgetEntryController.update);
 budgetEntryRoutes.delete("/budget-entries/:id", authenticate, writeAccess, budgetEntryController.remove);

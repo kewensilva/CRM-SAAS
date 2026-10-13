@@ -6,12 +6,18 @@ export type MetaIntegration = {
     tenantId: string;
     enabled: boolean;
     pageId: string | null;
+    pageName: string | null;
     pageAccessToken: string | null;
     defaultResponsibleUserId: string | null;
     duplicateStrategy: DuplicateLeadStrategy;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;
+};
+
+// O que a API devolve ao navegador: NUNCA o token da Página, só a informação de que existe.
+export type MetaIntegrationPublic = Omit<MetaIntegration, "pageAccessToken"> & {
+    hasPageToken: boolean;
 };
 
 export type MetaIntegrationLog = {

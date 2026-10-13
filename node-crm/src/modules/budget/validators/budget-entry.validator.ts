@@ -27,3 +27,19 @@ export const updateBudgetEntrySchema = z.object({
 export const monthQuerySchema = z.object({
     month: monthSchema.optional(),
 });
+
+// Máximo de 36 meses: evita que uma digitação errada (ex.: 120) gere centenas de linhas.
+export const createBudgetPeriodSchema = z.object({
+    channelName: z
+        .string({ error: "Campo obrigatório." })
+        .trim()
+        .min(1, "Campo obrigatório.")
+        .max(80, "Máximo de 80 caracteres."),
+    startMonth: monthSchema,
+    months: z
+        .number({ error: "Campo obrigatório." })
+        .int("Informe um número inteiro de meses.")
+        .min(1, "Mínimo de 1 mês.")
+        .max(36, "Máximo de 36 meses."),
+    budget: z.number({ error: "Campo obrigatório." }).min(0, "Valor inválido."),
+});

@@ -4,6 +4,7 @@ import type { Router as RouterType } from "express";
 import { authenticate } from "../../../../shared/middleware/authenticate";
 import { authorize } from "../../../../shared/middleware/authorize";
 import { metaIntegrationController } from "../controllers/meta-integration.controller";
+import { metaOAuthController } from "../controllers/meta-oauth.controller";
 import { metaWebhookController } from "../controllers/meta-webhook.controller";
 
 export const metaRoutes: RouterType = Router();
@@ -23,7 +24,12 @@ metaRoutes.get(
     adminAccess,
     metaIntegrationController.listLogs,
 );
-
+// "Conectar com o Facebook" (OAuth): url -> exchange (code vira lista de Páginas) ->
+// connect (Página escolhida é assinada no webhook e salva). disconnect desfaz tudo.
+metaRoutes.get("/integrations/meta/oauth/url", authenticate, adminAccess, metaOAuthController.getAuthorizationUrl);
+metaRoutes.post("/integrations/meta/oauth/exchange", authenticate, adminAccess, metaOAuthController.exchange);
+metaRoutes.post("/integrations/meta/oauth/connect", authenticate, adminAccess, metaOAuthController.connect);
+metaRoutes.post("/integrations/meta/disconnect", authenticate, adminAccess, metaOAuthController.disconnect);
 // Rotas do webhook: públicas por natureza — é a Meta chamando, não um usuário logado.
 // Autenticidade é garantida pela assinatura HMAC (X-Hub-Signature-256), não por JWT.
 metaRoutes.get("/webhooks/meta", metaWebhookController.verify);

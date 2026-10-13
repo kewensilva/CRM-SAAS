@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="index, follow">
+  <title>Política de Privacidade — Content Marketing Brasil CRM</title>
+  <meta name="description"
+    content="Como o CRM da Content Marketing Brasil coleta, usa, compartilha e protege dados pessoais, em conformidade com a LGPD.">
+  <style>
+    :root {
+      --bg: #fbfaf8;
+      --paper: #ffffff;
+      --ink: #1c1b19;
+      --muted: #5f5b55;
+      --line: #e4e0d9;
+      --accent: #e8500a;
+      --band: #111010;
+      --band-ink: #f4f1ec;
+      --mark: #fff0a8;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #121110;
+        --paper: #1a1918;
+        --ink: #ece8e1;
+        --muted: #a29d94;
+        --line: #2e2c29;
+        --mark: #5a4d0a;
+      }
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 1rem
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 1.0625rem/1.7 Georgia, "Times New Roman", serif;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    header {
+      background: var(--band);
+      color: var(--band-ink);
+      padding: calc(2.5rem + env(safe-area-inset-top, 0px)) 1.25rem 2.25rem;
+      border-bottom: 4px solid var(--accent);
+    }
+
+    .wrap {
+      max-width: 46rem;
+      margin: 0 auto
+    }
+
+    header .brand {
+      font: 600 .8rem/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 .9rem;
+    }
+
+    header h1 {
+      font-size: clamp(1.9rem, 5vw, 2.7rem);
+      line-height: 1.12;
+      margin: 0 0 .6rem;
+      font-weight: 700
+    }
+
+    header p {
+      margin: 0;
+      color: #c9c4bb;
+      font: .95rem/1.5 system-ui, -apple-system, "Segoe UI", sans-serif
+    }
+
+    main {
+      padding: 2rem 1.25rem 3rem
+    }
+
+    article {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: clamp(1.25rem, 4vw, 2.5rem);
+    }
+
+    nav.toc {
+      font: .92rem/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+      border-left: 3px solid var(--accent);
+      padding: .25rem 0 .25rem 1rem;
+      margin: 0 0 2rem;
+    }
+
+    nav.toc strong {
+      display: block;
+      margin-bottom: .4rem
+    }
+
+    nav.toc ol {
+      margin: 0;
+      padding-left: 1.1rem;
+      columns: 2;
+      column-gap: 2rem
+    }
+
+    nav.toc a {
+      color: var(--ink);
+      text-decoration: none
+    }
+
+    nav.toc a:hover {
+      color: var(--accent);
+      text-decoration: underline
+    }
+
+    @media (max-width:34rem) {
+      nav.toc ol {
+        columns: 1
+      }
+    }
+
+    h2 {
+      font: 700 1.3rem/1.3 system-ui, -apple-system, "Segoe UI", sans-serif;
+      margin: 2.2rem 0 .6rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--line);
+    }
+
+    h2:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+      margin-top: 0
+    }
+
+    h3 {
+      font: 600 1.02rem/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+      margin: 1.3rem 0 .3rem
+    }
+
+    p {
+      margin: .6rem 0
+    }
+
+    ul {
+      margin: .5rem 0 .8rem;
+      padding-left: 1.3rem
+    }
+
+    li {
+      margin: .3rem 0
+    }
+
+    a {
+      color: var(--accent)
+    }
+
+    mark {
+      background: var(--mark);
+      color: inherit;
+      padding: 0 .2em;
+      border-radius: 2px
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      margin: .8rem 0
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 30rem;
+      font: .92rem/1.5 system-ui, -apple-system, "Segoe UI", sans-serif
+    }
+
+    th,
+    td {
+      text-align: left;
+      vertical-align: top;
+      padding: .55rem .7rem;
+      border-bottom: 1px solid var(--line)
+    }
+
+    th {
+      background: rgba(232, 80, 10, .09);
+      font-weight: 600
+    }
+
+    .note {
+      font: .92rem/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: rgba(232, 80, 10, .07);
+      border: 1px solid rgba(232, 80, 10, .3);
+      border-radius: 4px;
+      padding: .8rem 1rem;
+      margin: 1rem 0;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      padding: 0 1.25rem 2.5rem;
+      font: .85rem/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="wrap">
+      <p class="brand">Content Marketing Brasil · CRM</p>
+      <h1>Política de Privacidade</h1>
+      <p>Última atualização: 9 de outubro de 2026</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <article>
+
+        <nav class="toc" aria-label="Sumário">
+          <strong>Sumário</strong>
+          <ol>
+            <li><a href="#quem-somos">Quem somos e nosso papel</a></li>
+            <li><a href="#dados">Dados que tratamos</a></li>
+            <li><a href="#meta">Integração com a Meta</a></li>
+            <li><a href="#finalidades">Finalidades e bases legais</a></li>
+            <li><a href="#compartilhamento">Compartilhamento</a></li>
+            <li><a href="#internacional">Transferência internacional</a></li>
+            <li><a href="#retencao">Retenção e segurança</a></li>
+            <li><a href="#direitos">Seus direitos</a></li>
+            <li><a href="#exclusao">Exclusão de dados</a></li>
+            <li><a href="#cookies">Cookies e armazenamento local</a></li>
+            <li><a href="#criancas">Menores de idade</a></li>
+            <li><a href="#alteracoes">Alterações desta política</a></li>
+            <li><a href="#contato">Contato</a></li>
+          </ol>
+        </nav>
+
+        <p>Esta Política explica como o CRM da Content Marketing Brasil (“<strong>Plataforma</strong>”), disponível em
+          <strong>crm-cmb.com.br</strong>, trata dados pessoais, em conformidade com a Lei Geral de Proteção de Dados
+          (Lei nº 13.709/2018 — LGPD).</p>
+
+        <h2 id="quem-somos">1. Quem somos e nosso papel</h2>
+        <p>A Plataforma é operada por <mark>38.949.579 FERNANDA FRANCIELLY DIAS PAULO - ME</mark>, CNPJ <mark>38.949.579/0001-06</mark>, com sede
+          em <mark>Avenida Paulista, 1636 – Cerqueira César São Paulo – SP Cep: 01310-200</mark>.</p>
+        <p>Nosso papel varia conforme o dado:</p>
+        <ul>
+          <li><strong>Controlador</strong>, em relação aos dados dos usuários que acessam a Plataforma (nome, e-mail e
+            credenciais de acesso).</li>
+          <li><strong>Operador</strong>, em relação aos dados de leads, contatos e oportunidades cadastrados por cada
+            empresa cliente. Nesse caso, a empresa cliente é a controladora e decide as finalidades do tratamento; nós
+            tratamos os dados apenas para prestar o serviço contratado, seguindo suas instruções.</li>
+        </ul>
+
+        <h2 id="dados">2. Dados que tratamos</h2>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Categoria</th>
+                <th>Exemplos</th>
+                <th>Origem</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Dados de usuários da Plataforma</td>
+                <td>Nome, e-mail, perfil de acesso, senha (armazenada de forma criptografada)</td>
+                <td>Cadastro feito pela empresa cliente ou pelo próprio usuário</td>
+              </tr>
+              <tr>
+                <td>Dados de leads e contatos</td>
+                <td>Nome, e-mail, telefone, origem do lead, histórico de contato, oportunidades e valores</td>
+                <td>Cadastro manual, widget de captação em sites e integração com a Meta</td>
+              </tr>
+              <tr>
+                <td>Dados de integração</td>
+                <td>ID da Página do Facebook, token de acesso da Página, registros de eventos recebidos</td>
+                <td>Configurados pela empresa cliente</td>
+              </tr>
+              <tr>
+                <td>Dados técnicos</td>
+                <td>Endereço IP, data e hora de acesso, navegador, registros de erro e de auditoria</td>
+                <td>Coletados automaticamente</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Não solicitamos dados pessoais sensíveis (como saúde, origem racial ou convicção religiosa). Pedimos às
+          empresas clientes que não os cadastrem na Plataforma.</p>
+
+        <h2 id="meta">3. Integração com a Meta (Facebook e Instagram)</h2>
+        <p>Empresas clientes podem conectar a Página do Facebook (vinculada ao Instagram) para receber, de forma
+          automática no CRM, os leads de formulários de anúncios (Lead Ads).</p>
+        <ul>
+          <li><strong>O que recebemos:</strong> quando uma pessoa preenche um formulário de anúncio, a Meta nos avisa e
+            buscamos os campos preenchidos (por exemplo, nome, e-mail e telefone) usando o token de acesso da Página,
+            fornecido pela empresa cliente.</li>
+          <li><strong>Para que usamos:</strong> exclusivamente para criar o lead no CRM da empresa responsável pelo
+            anúncio e permitir o seu atendimento comercial.</li>
+          <li><strong>O que não fazemos:</strong> não vendemos esses dados, não os usamos para criar perfis
+            publicitários próprios e não os compartilhamos com terceiros para fins de marketing.</li>
+          <li><strong>Revogação:</strong> a empresa cliente pode desativar a integração a qualquer momento na tela de
+            Configurações, ou remover o app nas configurações da Página/conta Meta. Os dados já gravados no CRM seguem a
+            regra de retenção da seção 7.</li>
+        </ul>
+        <p>O tratamento feito pela própria Meta é regido pelas políticas dela.</p>
+
+        <h2 id="finalidades">4. Finalidades e bases legais</h2>
+        <ul>
+          <li><strong>Prestar o serviço do CRM</strong> (autenticação, gestão de leads, relatórios) — execução de
+            contrato (LGPD, art. 7º, V).</li>
+          <li><strong>Segurança, prevenção a fraudes e auditoria</strong> — legítimo interesse (art. 7º, IX) e proteção
+            do crédito/segurança.</li>
+          <li><strong>Cumprimento de obrigações legais e regulatórias</strong> — art. 7º, II.</li>
+          <li><strong>Atendimento de solicitações e suporte</strong> — execução de contrato e legítimo interesse.</li>
+          <li><strong>Dados de leads</strong> — a base legal é definida pela empresa cliente (controladora), por exemplo
+            consentimento ou legítimo interesse, conforme a sua relação com o titular.</li>
+        </ul>
+
+        <h2 id="compartilhamento">5. Compartilhamento</h2>
+        <p>Não vendemos dados pessoais. Compartilhamos apenas o necessário com:</p>
+        <ul>
+          <li><strong>Provedores de infraestrutura</strong> que hospedam e operam a Plataforma, como hospedagem de
+            aplicação e de interface, banco de dados e envio de e-mails transacionais (atualmente, por exemplo, Render,
+            Vercel e Resend).</li>
+          <li><strong>Meta Platforms</strong>, quando a integração é ativada pela empresa cliente, para receber os
+            leads.</li>
+          <li><strong>Autoridades públicas</strong>, quando houver obrigação legal ou ordem judicial.</li>
+        </ul>
+        <p>Todos os fornecedores são contratados para tratar dados apenas conforme as nossas instruções e com medidas de
+          segurança adequadas.</p>
+
+        <h2 id="internacional">6. Transferência internacional</h2>
+        <p>Alguns provedores mantêm servidores fora do Brasil (por exemplo, nos Estados Unidos). Nesses casos, a
+          transferência ocorre com base na LGPD (art. 33), adotando salvaguardas contratuais e técnicas compatíveis com
+          o nível de proteção exigido.</p>
+
+        <h2 id="retencao">7. Retenção e segurança</h2>
+        <p><strong>Retenção.</strong> Mantemos os dados enquanto o contrato com a empresa cliente estiver ativo e,
+          depois, pelo prazo necessário para cumprir obrigações legais ou exercer direitos em processos. Registros
+          excluídos na Plataforma podem permanecer por um período em backups e logs antes da eliminação definitiva.</p>
+        <p><strong>Segurança.</strong> Adotamos, entre outras medidas: tráfego protegido por HTTPS, senhas armazenadas
+          com hash, controle de acesso por perfil e por empresa (isolamento entre clientes), registro de acessos e
+          validação da assinatura dos eventos recebidos da Meta. Nenhum sistema é totalmente imune a incidentes; em caso
+          de incidente relevante, comunicaremos os afetados e a ANPD conforme a LGPD.</p>
+
+        <h2 id="direitos">8. Seus direitos como titular</h2>
+        <p>Nos termos do art. 18 da LGPD, você pode solicitar: confirmação da existência de tratamento; acesso; correção
+          de dados incompletos ou desatualizados; anonimização, bloqueio ou eliminação de dados desnecessários;
+          portabilidade; informação sobre compartilhamento; e revogação do consentimento, quando aplicável.</p>
+        <div class="note">Se os seus dados foram cadastrados em um CRM por uma empresa (por exemplo, ao preencher um
+          formulário de anúncio), essa empresa é a controladora. Você pode pedir diretamente a ela; se preferir, nos
+          escreva e encaminharemos o pedido.</div>
+        <p>Para exercer seus direitos, use o contato da seção 13. Responderemos no prazo legal.</p>
+
+        <h2 id="exclusao">9. Exclusão de dados</h2>
+        <p>Para solicitar a exclusão dos seus dados pessoais:</p>
+        <ul>
+          <li>Envie um e-mail para <mark>atendimento@contentmarketingbrasil.com</mark> com o assunto “<strong>Exclusão de
+              dados</strong>”, informando o nome e o e-mail ou telefone usados no cadastro (e, se souber, a empresa ou o
+            anúncio de origem).</li>
+          <li>Podemos pedir informações adicionais para confirmar a sua identidade e evitar exclusões indevidas.</li>
+          <li>Após a confirmação, eliminaremos ou anonimizaremos os dados, ressalvadas as hipóteses de guarda
+            obrigatória previstas em lei, e avisaremos quando concluir.</li>
+        </ul>
+        <p>Se você preencheu um formulário no Facebook ou Instagram, também pode gerenciar os dados compartilhados com
+          anunciantes nas configurações da sua conta Meta.</p>
+
+        <h2 id="cookies">10. Cookies e armazenamento local</h2>
+        <p>A Plataforma usa o armazenamento do navegador apenas para funções essenciais, como manter a sua sessão
+          autenticada e lembrar preferências de uso. Não utilizamos cookies de publicidade nem rastreamento de terceiros
+          na área logada. Você pode limpar esses dados nas configurações do navegador, o que encerrará a sua sessão.</p>
+
+        <h2 id="criancas">11. Menores de idade</h2>
+        <p>A Plataforma é destinada a profissionais e empresas e não se dirige a menores de 18 anos. Se identificarmos
+          dados de menores cadastrados indevidamente, tomaremos as providências para a sua eliminação.</p>
+
+        <h2 id="alteracoes">12. Alterações desta política</h2>
+        <p>Podemos atualizar esta Política para refletir mudanças legais ou no serviço. A data de “última atualização”
+          fica no topo da página; mudanças relevantes serão comunicadas pelos canais da Plataforma.</p>
+
+        <h2 id="contato">13. Contato</h2>
+        <p>Dúvidas, solicitações de titulares e comunicações sobre privacidade:</p>
+        <ul>
+          <li>Encarregado pelo tratamento de dados (DPO): <mark>Kewen Macedo silva</mark></li>
+          <li>E-mail: <mark>kewen.dev.code@gmail.com</mark></li>
+          <li>Endereço: <mark>RUA DAS JABITUCABEIRAS, GUARAPUAVA - PR</mark></li>
+        </ul>
+        <p>Você também pode registrar reclamação junto à Autoridade Nacional de Proteção de Dados (ANPD), em <a
+            href="https://www.gov.br/anpd" rel="noopener">gov.br/anpd</a>.</p>
+
+      </article>
+    </div>
+  </main>
+
+  <footer>© 2026 Content Marketing Brasil. Todos os direitos reservados.</footer>
+
+</body>
+
+</html>

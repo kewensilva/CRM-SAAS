@@ -6,7 +6,9 @@ export interface MetaIntegration {
   tenantId: string;
   enabled: boolean;
   pageId: string | null;
-  pageAccessToken: string | null;
+    pageName: string | null;
+  // A API nunca devolve o token da Página — só informa se ele existe.
+  hasPageToken: boolean;
   defaultResponsibleUserId: string | null;
   duplicateStrategy: DuplicateLeadStrategy;
   createdAt: string;
@@ -27,4 +29,15 @@ export interface MetaIntegrationLog {
   rawPayload: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// Página do Facebook que o usuário autorizou no "Conectar com o Facebook".
+export interface MetaOAuthPage {
+  id: string;
+  name: string;
+}
+
+export interface MetaOAuthExchangeResult {
+  sessionId: string;
+  pages: MetaOAuthPage[];
 }

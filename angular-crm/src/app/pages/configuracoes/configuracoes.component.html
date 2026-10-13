@@ -394,9 +394,59 @@
     @if (canManageBudget()) {
       <section class="products-section">
         <h2 class="section-title">Budget &amp; Investimento</h2>
+                <p class="section-hint">
+          Defina o budget de cada canal uma única vez, informando o mês inicial e por quantos meses
+          ele vale. O valor é aplicado a cada mês do período e alimenta o relatório de Budget x
+          Investimento em Relatórios. O investimento realizado é lançado mês a mês, mais abaixo.
+        </p>
+
+        <form [formGroup]="budgetPeriodForm" (ngSubmit)="saveBudgetPeriod()" novalidate class="products-form">
+          <mat-form-field appearance="fill" floatLabel="always" class="products-form__field">
+            <mat-label>Canal</mat-label>
+            <input matInput formControlName="channelName" maxlength="80" placeholder="Ex.: Google Ads" />
+            @if (budgetPeriodForm.controls.channelName.touched && budgetPeriodForm.controls.channelName.hasError('required')) {
+              <mat-error>Campo obrigatório.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="products-form__field products-form__field--price">
+            <mat-label>Mês inicial</mat-label>
+            <input matInput type="month" formControlName="startMonth" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="products-form__field products-form__field--price">
+            <mat-label>Duração (meses)</mat-label>
+            <input matInput type="number" step="1" min="1" max="36" formControlName="months" />
+            @if (budgetPeriodForm.controls.months.touched && budgetPeriodForm.controls.months.invalid) {
+              <mat-error>Informe de 1 a 36 meses.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="products-form__field products-form__field--price">
+            <mat-label>Budget por mês</mat-label>
+            <span matPrefix>R$&nbsp;</span>
+            <input matInput type="number" step="0.01" min="0" formControlName="budget" />
+            @if (budgetPeriodForm.controls.budget.touched && budgetPeriodForm.controls.budget.invalid) {
+              <mat-error>Informe o valor do budget.</mat-error>
+            }
+          </mat-form-field>
+
+          <button type="submit" mat-flat-button color="primary" [disabled]="budgetPeriodSaving()">
+            @if (budgetPeriodSaving()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Definir período
+            }
+          </button>
+        </form>
+
+        @if (budgetPeriodMessage()) {
+          <p class="section-hint" role="status">{{ budgetPeriodMessage() }}</p>
+        }
+
         <p class="section-hint">
-          Parametrize, mês a mês, o budget e o investimento de cada canal — os valores
-          alimentam o relatório de Budget x Investimento em Relatórios.
+          Lançamentos do mês selecionado (ajuste o budget de um mês específico ou lance o
+          investimento realizado):
         </p>
 
         <mat-form-field appearance="fill" floatLabel="always" class="products-form__field products-form__field--price">
@@ -461,25 +511,95 @@
         Conecte a Página do Facebook/Instagram para receber leads de anúncios diretamente no CRM.
       </p>
 
+            <div class="meta-connect">
+        @if (meta()?.pageId && meta()?.hasPageToken) {
+          <p class="meta-connect__status" role="status">
+            Página conectada: <strong>{{ meta()?.pageName || meta()?.pageId }}</strong>
+            (ID {{ meta()?.pageId }})
+          </p>
+        } @else {
+          <p class="meta-connect__status">Nenhuma Página conectada.</p>
+        }
+
+        <div class="meta-connect__actions">
+          <button
+            type="button"
+            mat-flat-button
+            color="primary"
+            (click)="startFacebookConnect()"
+            [disabled]="metaConnecting()"
+          >
+            @if (metaConnecting()) {
+              <mat-spinner diameter="20" />
+            } @else if (meta()?.hasPageToken) {
+              Reconectar com o Facebook
+            } @else {
+              Conectar com o Facebook
+            }
+          </button>
+
+          @if (meta()?.hasPageToken) {
+            <button
+              type="button"
+              mat-stroked-button
+              (click)="disconnectFacebook()"
+              [disabled]="metaConnecting()"
+            >
+              Desconectar
+            </button>
+          }
+        </div>
+
+        @if (metaPages().length > 0) {
+          <div class="meta-connect__pages">
+            <mat-form-field appearance="fill" floatLabel="always" class="meta-form__field">
+              <mat-label>Escolha a Página</mat-label>
+              <mat-select
+                [value]="metaSelectedPageId()"
+                (selectionChange)="metaSelectedPageId.set($event.value)"
+              >
+                @for (page of metaPages(); track page.id) {
+                  <mat-option [value]="page.id">{{ page.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <button
+              type="button"
+              mat-flat-button
+              color="primary"
+              (click)="confirmFacebookPage()"
+              [disabled]="!metaSelectedPageId() || metaConnecting()"
+            >
+              Conectar esta Página
+            </button>
+          </div>
+        }
+      </div>
+
       <form [formGroup]="metaForm" (ngSubmit)="saveMeta()" novalidate class="meta-form">
         <mat-slide-toggle formControlName="enabled">Integração ativa</mat-slide-toggle>
 
-        <mat-form-field appearance="fill" floatLabel="always" class="meta-form__field">
-          <mat-label>ID da Página</mat-label>
-          <input matInput formControlName="pageId" />
-        </mat-form-field>
+        <details class="meta-manual">
+          <summary>Configuração manual (avançado)</summary>
 
-        <mat-form-field appearance="fill" floatLabel="always" class="meta-form__field">
-          <mat-label>Token de acesso da Página</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="pageAccessToken"
-            [placeholder]="metaTokenPlaceholder()"
-            autocomplete="new-password"
-          />
-          <mat-hint>Deixe em branco para manter o token atual.</mat-hint>
-        </mat-form-field>
+          <mat-form-field appearance="fill" floatLabel="always" class="meta-form__field">
+            <mat-label>ID da Página</mat-label>
+            <input matInput formControlName="pageId" />
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="meta-form__field">
+            <mat-label>Token de acesso da Página</mat-label>
+            <input
+              matInput
+              type="password"
+              formControlName="pageAccessToken"
+              [placeholder]="metaTokenPlaceholder()"
+              autocomplete="new-password"
+            />
+            <mat-hint>Deixe em branco para manter o token atual.</mat-hint>
+          </mat-form-field>
+        </details>
 
         <mat-form-field appearance="fill" floatLabel="always" class="meta-form__field">
           <mat-label>Responsável padrão</mat-label>

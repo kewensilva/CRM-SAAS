@@ -482,6 +482,7 @@ model MetaIntegration {
     tenantId                 String                @unique @map("tenant_id") @db.Uuid
     enabled                  Boolean               @default(false)
     pageId                   String?               @map("page_id")
+    pageName                 String?               @map("page_name")
     pageAccessToken          String?               @map("page_access_token")
     defaultResponsibleUserId String?               @map("default_responsible_user_id") @db.Uuid
     duplicateStrategy        DuplicateLeadStrategy @default(IGNORE) @map("duplicate_strategy")

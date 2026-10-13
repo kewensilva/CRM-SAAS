@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 
 import { ValidationError } from "../../../../shared/errors";
+import { toPublicIntegration } from "../services/meta-integration.mapper";
 import { metaIntegrationService } from "../services/meta-integration.service";
 import { metaLogRepository } from "../repositories/meta-log.repository";
 import { updateMetaIntegrationSchema } from "../validators/meta-integration.validator";
@@ -8,7 +9,7 @@ import { updateMetaIntegrationSchema } from "../validators/meta-integration.vali
 const get = async (req: Request, res: Response) => {
     const integration = await metaIntegrationService.getByTenant(req.auth.tenantId as string);
 
-    return res.status(200).json({ success: true, data: integration });
+        return res.status(200).json({ success: true, data: toPublicIntegration(integration) });
 };
 
 const update = async (req: Request, res: Response) => {
@@ -28,7 +29,7 @@ const update = async (req: Request, res: Response) => {
         parsed.data,
     );
 
-    return res.status(200).json({ success: true, data: integration });
+        return res.status(200).json({ success: true, data: toPublicIntegration(integration) });
 };
 
 const listLogs = async (req: Request, res: Response) => {

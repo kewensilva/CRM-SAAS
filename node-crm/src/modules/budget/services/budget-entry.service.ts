@@ -1,5 +1,9 @@
 import { NotFoundError } from "../../../shared/errors";
-import type { CreateBudgetEntryDTO, UpdateBudgetEntryDTO } from "../dto/create-budget-entry.dto";
+import type {
+    CreateBudgetEntryDTO,
+    CreateBudgetPeriodDTO,
+    UpdateBudgetEntryDTO,
+} from "../dto/create-budget-entry.dto";
 import { budgetEntryRepository } from "../repositories/budget-entry.repository";
 import type { BudgetEntry } from "../types/budget-entry.types";
 
@@ -9,6 +13,10 @@ const list = (tenantId: string, month?: Date): Promise<BudgetEntry[]> => {
 
 const upsert = (data: CreateBudgetEntryDTO): Promise<BudgetEntry> => {
     return budgetEntryRepository.upsertEntry(data);
+};
+
+const upsertPeriod = (data: CreateBudgetPeriodDTO): Promise<BudgetEntry[]> => {
+    return budgetEntryRepository.upsertPeriod(data);
 };
 
 const update = async (id: string, tenantId: string, data: UpdateBudgetEntryDTO): Promise<BudgetEntry> => {
@@ -34,6 +42,7 @@ const remove = async (id: string, tenantId: string): Promise<void> => {
 export const budgetEntryService = {
     list,
     upsert,
+    upsertPeriod,
     update,
     remove,
 };

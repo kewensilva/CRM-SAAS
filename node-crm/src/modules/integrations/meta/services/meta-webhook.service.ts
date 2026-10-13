@@ -8,11 +8,17 @@ import { metaGraphApiClient } from "./meta-graph-api.client";
 type LeadgenChange = MetaWebhookPayload["entry"][number]["changes"][number]["value"];
 
 const mapFieldData = (fieldData: { name: string; values: string[] }[]) => {
+    // Valor vazio ("" ou só espaços) vira undefined, para cair no próximo fallback.
     const get = (fieldName: string) =>
-        fieldData.find((field) => field.name === fieldName)?.values[0];
+        fieldData.find((field) => field.name === fieldName)?.values?.[0]?.trim() || undefined;
+        
+
+    // Formulários da Meta podem trazer o nome inteiro (full_name) ou separado em
+    // first_name + last_name — junta os dois quando não há nome completo.
+    const composedName = [get("first_name"), get("last_name")].filter(Boolean).join(" ");
 
     return {
-        name: get("full_name") ?? get("name") ?? "Lead sem nome",
+        name: get("full_name") ?? get("name") ?? (composedName || "Lead sem nome"),
         email: get("email"),
         phone: get("phone_number") ?? get("phone"),
     };

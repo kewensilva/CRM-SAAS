@@ -22,3 +22,10 @@ export interface UpdateBudgetEntryPayload {
   budget?: number;
   investment?: number;
 }
+// Budget mensal repetido em N meses consecutivos a partir de startMonth ("AAAA-MM").
+export interface UpsertBudgetPeriodPayload {
+  channelName: string;
+  startMonth: string;
+  months: number;
+  budget: number;
+}

@@ -8,6 +8,7 @@ import {
   BudgetEntry,
   UpdateBudgetEntryPayload,
   UpsertBudgetEntryPayload,
+  UpsertBudgetPeriodPayload,
 } from '../../models/budget-entry.model';
 
 @Injectable({ providedIn: 'root' })
@@ -25,6 +26,12 @@ export class BudgetEntriesService {
   upsert(payload: UpsertBudgetEntryPayload): Observable<BudgetEntry> {
     return this.http
       .post<ApiSuccessResponse<BudgetEntry>>(`${environment.apiUrl}/budget-entries`, payload)
+      .pipe(map((response) => response.data));
+  }
+
+    upsertPeriod(payload: UpsertBudgetPeriodPayload): Observable<BudgetEntry[]> {
+    return this.http
+      .post<ApiSuccessResponse<BudgetEntry[]>>(`${environment.apiUrl}/budget-entries/period`, payload)
       .pipe(map((response) => response.data));
   }
 

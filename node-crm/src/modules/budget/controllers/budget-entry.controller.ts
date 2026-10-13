@@ -4,6 +4,7 @@ import { ValidationError } from "../../../shared/errors";
 import { budgetEntryService } from "../services/budget-entry.service";
 import {
     createBudgetEntrySchema,
+    createBudgetPeriodSchema,
     monthQuerySchema,
     updateBudgetEntrySchema,
 } from "../validators/budget-entry.validator";
@@ -45,6 +46,26 @@ const upsert = async (req: Request, res: Response) => {
     return res.status(201).json({ success: true, data: entry });
 };
 
+const upsertPeriod = async (req: Request, res: Response) => {
+    const parsed = createBudgetPeriodSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+        const details = parsed.error.issues.map((issue) => ({
+            field: String(issue.path[0] ?? "body"),
+            message: issue.message,
+        }));
+
+        throw new ValidationError("Dados inválidos.", details);
+    }
+
+    const entries = await budgetEntryService.upsertPeriod({
+        tenantId: req.auth.tenantId as string,
+        ...parsed.data,
+    });
+
+    return res.status(201).json({ success: true, data: entries });
+};
+
 const update = async (req: Request, res: Response) => {
     const parsed = updateBudgetEntrySchema.safeParse(req.body);
 
@@ -75,6 +96,7 @@ const remove = async (req: Request, res: Response) => {
 export const budgetEntryController = {
     list,
     upsert,
+    upsertPeriod,
     update,
     remove,
 };
