@@ -19,6 +19,9 @@ const TENANT_BASE_MENU_ITEMS: MenuItem[] = [
   { label: 'Leads', route: '/leads', icon: 'assets/icons/icon-filter-alt.svg' },
   { label: 'Oportunidades', route: '/oportunidades', icon: 'assets/icons/icon-send.svg' },
   { label: 'Relatórios', route: '/relatorios', icon: 'assets/icons/icon-trophy.svg' },
+  // Todos os perfis do cliente (Tenant Admin, Manager, Vendedor) abrem chamados para o
+  // atendimento da CMB — mesmo escopo do authorize() de /support-tickets.
+  { label: 'Chamados', route: '/chamados', icon: 'assets/icons/icon-chat.svg' },
 ];
 
 // Motivos e Cadastros são administrativos — só o Tenant Admin gerencia (Manager/User

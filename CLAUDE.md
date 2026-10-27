@@ -459,6 +459,30 @@ eventos como `LeadCreated`/`DealWon`/`UserCreated` que a esta altura já têm or
   assinatura do JWT verificada com chave RSA gerada no teste e aceita como bem-formada pelo
   endpoint real do Google) — a leitura de uma propriedade real ainda não foi validada.
 
+- **Relatórios por período de dias** (branch `config-parametrizacao`): `GET /reports/summary` e
+  `GET /reports/google-analytics` aceitam `startDate`/`endDate` (`AAAA-MM-DD`, inclusive, até 366
+  dias; `?month=` continua aceito). Dias em horário de Brasília (UTC−3 fixo, `report-period.ts`) —
+  antes o mês era cortado em UTC. Leads/CPA/SQL/CPV seguem os dias; **budget/investimento entram
+  com o mês cheio** de cada mês tocado pelo período (decisão de produto: o cadastro é mensal, não é
+  rateado), e a comparação usa o mesmo número de meses imediatamente anterior
+  (`investment.previousPeriodTotal`, `budgetMonths` na resposta).
+- **Origem x Fonte do Lead**: Origem (`source`: Site/Meta/Manual) = por onde o Lead entrou,
+  calculada por `leads/utils/lead-source.ts` só a partir do log que o **criou** (status
+  `PROCESSED`) — antes, um envio posterior marcado `DUPLICATE` (que também aponta `leadId`) fazia
+  um Lead manual virar "Site". Fonte = `utmSource/utmMedium`: UTM da URL nos leads do site e, agora,
+  `platform`/`is_organic` da Graph API nos leads do Meta (`instagram|facebook` / `anuncio|organico`,
+  `meta-lead-source.ts`; se a Meta recusar esses campos, a busca repete sem eles). Com isso leads do
+  Meta passam a contar na atribuição de conversões por canal dos Relatórios. Leads do Meta antigos
+  continuam sem Fonte (a Meta só devolve o dado na hora da busca).
+- **Chamados** (`modules/support-tickets/`, rota `/chamados`, menu visível a
+  `TENANT_ADMIN`/`MANAGER`/`USER`): título + mensagem; a data é a de abertura (`createdAt`). O
+  chamado é **gravado antes** do envio do e-mail para `atendimento@contentmarketingbrasil.com`
+  (`SUPPORT_TICKET_EMAIL`, via Resend, Reply-To = quem abriu, texto escapado); falha no envio fica
+  em `emailError` e a tela oferece "Reenviar". Vendedor vê só os próprios chamados; Admin/Manager,
+  todos do tenant. Rate limit de 20/h. Envio real depende de `RESEND_API_KEY` e de um `EMAIL_FROM`
+  em domínio verificado no Resend — com o remetente de teste `onboarding@resend.dev` o Resend só
+  entrega para o e-mail dono da conta.
+
 `angular-crm/` já tem várias páginas construídas (login, dashboard Owner/Tenant, CRM, Leads,
 Oportunidades, Relatórios, Empresas, Configurações, Motivos, Cadastros, Acessos) — a nota
 anterior de "frontend ainda não iniciado" ficou desatualizada e foi removida.

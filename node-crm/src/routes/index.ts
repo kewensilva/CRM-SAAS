@@ -19,6 +19,7 @@ import { pipelineRoutes } from "../modules/pipelines";
 import { productRoutes } from "../modules/products";
 import { reportRoutes } from "../modules/reports";
 import { settingsRoutes } from "../modules/settings";
+import { supportTicketRoutes } from "../modules/support-tickets";
 import { tenantRoutes } from "../modules/tenants";
 import { userRoutes } from "../modules/users";
 
@@ -44,3 +45,4 @@ apiRouter.use(dashboardRoutes);
 apiRouter.use(metaRoutes);
 apiRouter.use(webWidgetRoutes);
 apiRouter.use(googleAnalyticsRoutes);
+apiRouter.use(supportTicketRoutes);

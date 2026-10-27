@@ -131,6 +131,7 @@ model Tenant {
     metaLogs         MetaIntegrationLog[]
     webWidgetIntegration WebWidgetIntegration?
     googleAnalyticsIntegration GoogleAnalyticsIntegration?
+    supportTickets       SupportTicket[]
     webWidgetLogs        WebWidgetLog[]
     lostReasons          LostReason[]
     analystAccess        AnalystTenantAccess[]
@@ -194,6 +195,7 @@ model User {
     tenantAccess          AnalystTenantAccess[]
     roundRobinAssignments LeadRoundRobinState[]
     accessLogs            UserAccessLog[]
+    supportTickets        SupportTicket[]
 
     @@unique([tenantId, email])
     @@index([tenantId])
@@ -236,10 +238,11 @@ model Lead {
     // Vendido/Perdido. Ver moveLeadStatus em deal.service.ts.
     budgetValue       Decimal?   @map("budget_value") @db.Decimal(14, 2)
     notes             String?    @db.Text
-    // Capturados só na criação, a partir da URL de onde o Lead preencheu o formulário
-    // (ex.: veio de um post do Instagram → utmSource "instagram") — nunca editáveis via
-    // API (fora de updateLeadSchema de propósito, ver lead.validator.ts). Só o Web
-    // Widget alimenta isso hoje; Meta Lead Ads é formulário nativo, sem UTM de site.
+    // Fonte do Lead (diferente da Origem Site/Meta/Manual, calculada pelos logs de
+    // integração). Capturada só na criação — nunca editável via API (fora de
+    // updateLeadSchema de propósito, ver lead.validator.ts). Web Widget: UTM da URL de onde
+    // o Lead preencheu o formulário. Meta Lead Ads: utmSource = plataforma (instagram /
+    // facebook) e utmMedium = anuncio / organico, ver meta-lead-source.ts.
     utmSource         String?    @map("utm_source")
     utmMedium         String?    @map("utm_medium")
     utmCampaign       String?    @map("utm_campaign")
@@ -723,4 +726,28 @@ model GoogleAnalyticsIntegration {
     tenant Tenant @relation(fields: [tenantId], references: [id])
 
     @@map("google_analytics_integrations")
+}
+
+// Chamado aberto por um usuário do cliente (Tenant Admin ou Vendedor) para o atendimento da
+// CMB. É gravado ANTES do envio do e-mail para atendimento@contentmarketingbrasil.com, para
+// não se perder se o envio falhar: emailSentAt marca o envio confirmado e emailError guarda
+// o motivo da última falha (o chamado pode ser reenviado). A data do chamado é createdAt.
+model SupportTicket {
+    id              String    @id @default(uuid()) @db.Uuid
+    tenantId        String    @map("tenant_id") @db.Uuid
+    createdByUserId String    @map("created_by_user_id") @db.Uuid
+    title           String
+    message         String    @db.Text
+    emailSentAt     DateTime? @map("email_sent_at") @db.Timestamptz
+    emailError      String?   @map("email_error")
+    createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt       DateTime? @map("deleted_at") @db.Timestamptz
+
+    tenant    Tenant @relation(fields: [tenantId], references: [id])
+    createdBy User   @relation(fields: [createdByUserId], references: [id])
+
+    @@index([tenantId, createdAt])
+    @@index([createdByUserId])
+    @@map("support_tickets")
 }

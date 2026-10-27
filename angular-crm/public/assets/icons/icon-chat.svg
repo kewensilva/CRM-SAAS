@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Chat">
+<path id="Bubble" d="M7 9.5C7 8.11929 8.11929 7 9.5 7H22.5C23.8807 7 25 8.11929 25 9.5V18.5C25 19.8807 23.8807 21 22.5 21H14L9 25V21H9.5C8.11929 21 7 19.8807 7 18.5V9.5Z" stroke="var(--fill-0, #33363F)" stroke-width="2" stroke-linejoin="round"/>
+<path id="Lines" d="M11.5 12.5H20.5M11.5 16H17.5" stroke="var(--fill-0, #33363F)" stroke-width="2" stroke-linecap="round"/>
+</g>
+</svg>

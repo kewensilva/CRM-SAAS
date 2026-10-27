@@ -1,0 +1,107 @@
+<div class="chamados">
+  <h1 class="chamados__title">Chamados</h1>
+
+  <section class="chamados-card">
+    <h2 class="chamados-card__title">Abrir chamado</h2>
+    <p class="chamados-card__hint">
+      Fale com o atendimento da CMB. O chamado é enviado para atendimento&#64;contentmarketingbrasil.com com a data de
+      abertura, e a resposta chega no seu e-mail.
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="chamados-form">
+      <mat-form-field appearance="fill" floatLabel="always" class="chamados-form__field">
+        <mat-label>Título</mat-label>
+        <input matInput formControlName="title" [maxlength]="titleMaxLength" placeholder="Ex.: Erro ao exportar leads" />
+        @if (form.controls.title.touched && form.controls.title.invalid) {
+          <mat-error>Informe um título com pelo menos 3 caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always" class="chamados-form__field">
+        <mat-label>Mensagem</mat-label>
+        <textarea
+          matInput
+          formControlName="message"
+          rows="6"
+          [maxlength]="messageMaxLength"
+          placeholder="Descreva o que aconteceu, em qual tela e, se possível, como reproduzir."
+        ></textarea>
+        <mat-hint align="end">{{ form.controls.message.value.length }} / {{ messageMaxLength }}</mat-hint>
+        @if (form.controls.message.touched && form.controls.message.invalid) {
+          <mat-error>Descreva o chamado com pelo menos 10 caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      @if (formError()) {
+        <p class="chamados__error" role="alert">{{ formError() }}</p>
+      }
+
+      @if (formSuccess()) {
+        <p class="chamados__success" role="status">{{ formSuccess() }}</p>
+      }
+
+      <div class="chamados-form__actions">
+        <button type="submit" mat-flat-button color="primary" [disabled]="submitting()">
+          {{ submitting() ? 'Enviando...' : 'Enviar chamado' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="chamados-card">
+    <h2 class="chamados-card__title">{{ showAuthor() ? 'Chamados da empresa' : 'Meus chamados' }}</h2>
+
+    @if (listError()) {
+      <p class="chamados__error" role="alert">{{ listError() }}</p>
+    }
+
+    @if (loading()) {
+      <p class="chamados-card__hint">Carregando...</p>
+    } @else {
+      <ul class="ticket-list">
+        @for (ticket of tickets(); track ticket.id) {
+          <li class="ticket">
+            <div class="ticket__header">
+              <span class="ticket__title">{{ ticket.title }}</span>
+              @if (ticket.emailSentAt) {
+                <span class="ticket__status ticket__status--sent">Enviado</span>
+              } @else {
+                <span class="ticket__status ticket__status--pending" [title]="ticket.emailError ?? ''">
+                  Envio pendente
+                </span>
+              }
+            </div>
+
+            <span class="ticket__meta">
+              {{ ticket.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+              @if (showAuthor()) {
+                · {{ ticket.createdBy.name }}
+              }
+            </span>
+
+            <details class="ticket__details">
+              <summary>Ver mensagem</summary>
+              <p class="ticket__message">{{ ticket.message }}</p>
+            </details>
+
+            @if (!ticket.emailSentAt) {
+              <div class="ticket__actions">
+                <button
+                  type="button"
+                  mat-stroked-button
+                  [disabled]="resendingId() === ticket.id"
+                  (click)="resend(ticket)"
+                >
+                  <mat-icon>send</mat-icon>
+                  {{ resendingId() === ticket.id ? 'Reenviando...' : 'Reenviar' }}
+                </button>
+              </div>
+            }
+          </li>
+        } @empty {
+          <p class="chamados-card__hint">Nenhum chamado aberto ainda.</p>
+        }
+      </ul>
+    }
+  </section>
+</div>

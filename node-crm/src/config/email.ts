@@ -6,4 +6,6 @@ export const emailConfig = {
     resendApiKey: process.env["RESEND_API_KEY"],
     emailFrom: process.env["EMAIL_FROM"] ?? "CRM CMB <onboarding@resend.dev>",
     frontendUrl: process.env["FRONTEND_URL"] ?? "https://crm-cmb.com.br",
+    // Destino dos chamados abertos pelos clientes (aba Chamados).
+    supportTicketEmail: process.env["SUPPORT_TICKET_EMAIL"] ?? "atendimento@contentmarketingbrasil.com",
 };

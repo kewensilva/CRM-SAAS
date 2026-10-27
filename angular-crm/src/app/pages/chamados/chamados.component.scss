@@ -1,0 +1,142 @@
+// Mesmo visual dos cards de Configurações/Relatórios.
+.chamados {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: Roboto, sans-serif;
+}
+
+.chamados__title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 20px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.chamados-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    padding: 20px 16px;
+  }
+}
+
+.chamados-card__title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.chamados-card__hint {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.6);
+  overflow-wrap: anywhere;
+}
+
+.chamados-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chamados-form__field {
+  width: 100%;
+  max-width: 720px;
+}
+
+.chamados-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 720px;
+}
+
+.chamados__error {
+  margin: 0;
+  color: #c62828;
+}
+
+.chamados__success {
+  margin: 0;
+  color: #2e7d32;
+}
+
+.ticket-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.ticket {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.ticket__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ticket__title {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+  overflow-wrap: anywhere;
+}
+
+.ticket__status {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+.ticket__status--sent {
+  color: #2e7d32;
+  background-color: rgba(46, 125, 50, 0.1);
+}
+
+.ticket__status--pending {
+  color: #ef6c00;
+  background-color: rgba(239, 108, 0, 0.1);
+}
+
+.ticket__meta {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.ticket__details summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: #1565c0;
+}
+
+.ticket__message {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.ticket__actions {
+  display: flex;
+  justify-content: flex-end;
+}
