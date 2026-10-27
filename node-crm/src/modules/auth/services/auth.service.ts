@@ -3,6 +3,7 @@ import { randomBytes, createHash } from "crypto";
 import { emailConfig } from "../../../config/email";
 import { comparePassword, hashPassword } from "../../../shared/auth/password";
 import { jwtService } from "../../../shared/auth/jwt";
+import type { JwtPayload } from "../../../shared/auth/jwt";
 import { AuthenticationError, AuthorizationError, ValidationError } from "../../../shared/errors";
 import { emailService } from "../../../shared/email/email.service";
 import { accessLogService } from "../../access-logs/services/access-log.service";
@@ -93,6 +94,47 @@ const login = (data: LoginDTO): Promise<LoginResult> => {
     return loginByEmailOnly(data);
 };
 
+// Renovação mantém o contexto delegado (Analista via switch-tenant, Owner via enter-tenant):
+// sem isso, o refresh devolveria o token "puro" do usuário e o tiraria da base do cliente no
+// meio do uso. O acesso e o status do tenant são conferidos de novo a cada renovação —
+// tenant inativado ou acesso revogado encerram a sessão (multi-tenant.md: tenant inativo
+// bloqueia o acesso de todos os seus usuários).
+const resolveRefreshedPayload = async (
+    payload: JwtPayload,
+    user: { id: string; tenantId: string | null; profile: string },
+): Promise<JwtPayload> => {
+    const isDelegated = Boolean(payload.analystId || payload.ownerId) && payload.tenantId !== null;
+    const tenantId = isDelegated ? payload.tenantId : user.tenantId;
+
+    if (isDelegated && payload.analystId) {
+        const accessibleTenantIds = await analystRepository.listAccessibleTenantIds(payload.analystId);
+
+        if (!accessibleTenantIds.includes(tenantId as string)) {
+            throw new AuthenticationError("Refresh token inválido ou expirado.");
+        }
+    }
+
+    if (tenantId) {
+        const tenant = await tenantRepository.findById(tenantId);
+
+        if (!tenant || tenant.status !== "ACTIVE") {
+            throw new AuthenticationError("Refresh token inválido ou expirado.");
+        }
+    }
+
+    if (!isDelegated) {
+        return { sub: user.id, tenantId: user.tenantId, profile: user.profile };
+    }
+
+    return {
+        sub: user.id,
+        tenantId,
+        profile: payload.profile,
+        ...(payload.analystId ? { analystId: payload.analystId } : {}),
+        ...(payload.ownerId ? { ownerId: payload.ownerId } : {}),
+    };
+};
+
 const refresh = async (refreshToken: string): Promise<LoginResult> => {
     let payload;
 
@@ -108,7 +150,7 @@ const refresh = async (refreshToken: string): Promise<LoginResult> => {
         throw new AuthenticationError("Refresh token inválido ou expirado.");
     }
 
-    const newPayload = { sub: user.id, tenantId: user.tenantId, profile: user.profile };
+    const newPayload = await resolveRefreshedPayload(payload, user);
 
     return {
         accessToken: jwtService.signAccessToken(newPayload),

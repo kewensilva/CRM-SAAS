@@ -85,6 +85,10 @@ const addMonthsToValue = (value: string, offset: number): string => {
 const monthLabel = (value: string): string => `${value.slice(5, 7)}/${value.slice(0, 4)}`;
 
 
+// Mensagem que a API devolveu (ex.: o motivo informado pela Meta), ou o texto padrão.
+const apiErrorMessage = (error: unknown, fallback: string): string =>
+  (error as { error?: { message?: string } })?.error?.message ?? fallback;
+
 @Component({
   selector: 'app-configuracoes',
   standalone: true,
@@ -414,7 +418,7 @@ export class ConfiguracoesComponent implements OnInit {
     }
   }
 
-    // Passo 1: leva o usuário para a tela de autorização da Meta.
+  // Passo 1: leva o usuário para a tela de autorização da Meta.
   startFacebookConnect(): void {
     this.metaConnecting.set(true);
     this.metaErrorMessage.set(null);
@@ -424,10 +428,13 @@ export class ConfiguracoesComponent implements OnInit {
       next: (url) => {
         window.location.href = url;
       },
-      error: () => {
+      error: (error: unknown) => {
         this.metaConnecting.set(false);
         this.metaErrorMessage.set(
-          'Não foi possível iniciar a conexão com o Facebook. Verifique se o login com Facebook está configurado no servidor.',
+          apiErrorMessage(
+            error,
+            'Não foi possível iniciar a conexão com o Facebook. Verifique se o login com Facebook está configurado no servidor.',
+          ),
         );
       },
     });
@@ -469,10 +476,10 @@ export class ConfiguracoesComponent implements OnInit {
         this.metaPages.set(result.pages);
         this.metaSelectedPageId.set(result.pages.length === 1 ? result.pages[0].id : null);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.metaConnecting.set(false);
         this.metaErrorMessage.set(
-          'Não foi possível concluir a conexão com o Facebook. Tente novamente.',
+          apiErrorMessage(error, 'Não foi possível concluir a conexão com o Facebook. Tente novamente.'),
         );
       },
     });
@@ -504,10 +511,13 @@ export class ConfiguracoesComponent implements OnInit {
             : `Página "${meta.pageName}" conectada. Escolha o responsável padrão e ative a integração para começar a receber leads.`,
         );
       },
-      error: () => {
+      error: (error: unknown) => {
         this.metaConnecting.set(false);
         this.metaErrorMessage.set(
-          'Não foi possível conectar a Página. Tente novamente; se persistir, confirme as permissões concedidas.',
+          apiErrorMessage(
+            error,
+            'Não foi possível conectar a Página. Tente novamente; se persistir, confirme as permissões concedidas.',
+          ),
         );
       },
     });
@@ -529,9 +539,9 @@ export class ConfiguracoesComponent implements OnInit {
         this.metaConnecting.set(false);
         this.metaSuccessMessage.set('Página desconectada.');
       },
-      error: () => {
+      error: (error: unknown) => {
         this.metaConnecting.set(false);
-        this.metaErrorMessage.set('Não foi possível desconectar a Página.');
+        this.metaErrorMessage.set(apiErrorMessage(error, 'Não foi possível desconectar a Página.'));
       },
     });
   }

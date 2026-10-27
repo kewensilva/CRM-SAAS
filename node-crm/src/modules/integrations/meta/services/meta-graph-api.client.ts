@@ -1,6 +1,35 @@
 import { metaConfig } from "../../../../config/meta";
 import { IntegrationError } from "../../../../shared/errors";
+import { logger } from "../../../../shared/logger/logger";
 import type { MetaLeadFieldData } from "../types/meta-integration.types";
+
+type GraphErrorBody = { error?: { message?: string; code?: number; error_subcode?: number } };
+
+// Resposta de erro da Graph API: corpo completo só no log; para quem chamou, a mensagem da
+// própria Meta + código, que é o que permite diagnosticar (permissão faltando, token
+// expirado, app em modo desenvolvimento...). Mensagens da Meta não contêm tokens.
+const toGraphError = async (response: Response, path: string): Promise<IntegrationError> => {
+    const body = await response.text();
+
+    logger.warn({ path, status: response.status, body }, "[meta] Graph API retornou erro.");
+
+    let parsed: GraphErrorBody = {};
+
+    try {
+        parsed = JSON.parse(body) as GraphErrorBody;
+    } catch {
+        // corpo não-JSON: fica só o status
+    }
+
+    const { message, code, error_subcode: subcode } = parsed.error ?? {};
+    const codes = [code, subcode].filter((value) => value !== undefined).join("/");
+
+    return new IntegrationError(
+        message
+            ? `Meta recusou a requisição: ${message}${codes ? ` (código ${codes})` : ""}`
+            : `Graph API da Meta retornou ${response.status}.`,
+    );
+};
 
 // Busca os dados completos do lead na Graph API — o webhook só avisa que um lead chegou
 // (leadgen_id), os campos do formulário (nome, e-mail, telefone) vêm daqui.
@@ -22,9 +51,7 @@ const fetchLeadFieldData = async (
     }
 
     if (!response.ok) {
-        const body = await response.text();
-
-        throw new IntegrationError(`Graph API retornou ${response.status}: ${body}`);
+        throw await toGraphError(response, "leadgen");
     }
 
     return response.json() as Promise<MetaLeadFieldData>;
@@ -58,9 +85,7 @@ const callGraph = async <T>(
     }
 
     if (!response.ok) {
-        const body = await response.text();
-
-        throw new IntegrationError(`Graph API retornou ${response.status}: ${body}`);
+        throw await toGraphError(response, path);
     }
 
     return response.json() as Promise<T>;

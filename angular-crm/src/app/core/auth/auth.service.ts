@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, finalize, map, shareReplay, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
@@ -19,6 +19,9 @@ export const MUST_CHANGE_PASSWORD_KEY = 'crm_must_change_password';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  // Uma única renovação por vez: várias requisições que tomam 401 juntas esperam a mesma.
+  private refreshInFlight$: Observable<string> | null = null;
+
   constructor(
     private readonly http: HttpClient,
     private readonly session: SessionService,
@@ -43,6 +46,31 @@ export class AuthService {
     localStorage.setItem(MUST_CHANGE_PASSWORD_KEY, String(tokens.mustChangePassword));
     this.session.loadFromAccessToken(tokens.accessToken);
     this.session.setMustChangePassword(tokens.mustChangePassword);
+  }
+
+  // Troca o refresh token por um novo par de tokens e devolve o novo access token. Usado pelo
+  // interceptor quando o access token (curto, ~15 min) expira no meio do uso.
+  refreshAccessToken(): Observable<string> {
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+
+    if (!refreshToken) {
+      return throwError(() => new Error('Sem refresh token.'));
+    }
+
+    if (!this.refreshInFlight$) {
+      this.refreshInFlight$ = this.http
+        .post<ApiSuccessResponse<LoginResponseData>>(`${environment.apiUrl}/auth/refresh-token`, { refreshToken })
+        .pipe(
+          tap((response) => this.storeTokens(response.data)),
+          map((response) => response.data.accessToken),
+          finalize(() => {
+            this.refreshInFlight$ = null;
+          }),
+          shareReplay(1),
+        );
+    }
+
+    return this.refreshInFlight$;
   }
 
   // Primeiro acesso (qualquer perfil) ou depois de um reset de senha feito por um Tenant
