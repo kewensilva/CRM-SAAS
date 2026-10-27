@@ -25,30 +25,115 @@
     </div>
   </div>
 
-  <div class="dashboard__section" *ngIf="!loading() && !errorMessage()">
+  <section class="dashboard__section">
     <div class="dashboard__section-header">
-      <h2>Lista de Empresas</h2>
+      <h2>Empresas</h2>
+      <p class="dashboard__hint">
+        Leads de cada empresa. Qualificados incluem os que já foram vendidos ou perdidos. Os valores
+        de ganhos e perdas são os definidos na negociação ou, na falta deles, o valor orçado no
+        lead.
+      </p>
     </div>
 
-    <div class="dashboard__section-content" *ngIf="tenants().length === 0">
+    <p *ngIf="tenantCardsLoading()">Carregando...</p>
+    <p class="dashboard__error" *ngIf="tenantCardsError()">{{ tenantCardsError() }}</p>
+
+    <div class="dashboard__section-content"
+      *ngIf="!tenantCardsLoading() && !tenantCardsError() && tenantCards().length === 0">
       <p>Nenhuma empresa cadastrada ainda.</p>
     </div>
 
-    <table class="tenants-table" *ngIf="tenants().length > 0">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Domínio</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let tenant of tenants()">
-          <td>{{ tenant.name }}</td>
-          <td>{{ tenant.domain }}</td>
-          <td>{{ tenant.status === 'ACTIVE' ? 'Ativo' : 'Inativo' }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <div class="tenant-cards" *ngIf="!tenantCardsLoading() && tenantCards().length > 0">
+      <article class="tenant-card" *ngFor="let card of tenantCards(); trackBy: trackByTenant">
+        <header class="tenant-card__header">
+          <div class="tenant-card__identity">
+            <h3 class="tenant-card__name">{{ card.name }}</h3>
+            <span class="tenant-card__domain">{{ card.domain }}</span>
+          </div>
+          <span class="tenant-card__status" [class.tenant-card__status--inactive]="card.status !== 'ACTIVE'">
+            {{ card.status === 'ACTIVE' ? 'Ativa' : 'Inativa' }}
+          </span>
+        </header>
+
+        <dl class="tenant-card__stats">
+          <div class="tenant-stat">
+            <dt>Total de leads</dt>
+            <dd>{{ card.leadsCount }}</dd>
+          </div>
+          <div class="tenant-stat tenant-stat--qualified" title="Inclui leads em andamento, vendidos e perdidos">
+            <dt>Qualificados</dt>
+            <dd>{{ card.qualifiedLeadsCount }}</dd>
+          </div>
+          <div class="tenant-stat tenant-stat--lost">
+            <dt>Perdidos</dt>
+            <dd>{{ card.lostLeadsCount }}</dd>
+            <dd class="tenant-stat__money">{{ formatCurrency(card.lostValue) }}</dd>
+          </div>
+          <div class="tenant-stat tenant-stat--won">
+            <dt>Ganhos</dt>
+            <dd>{{ card.wonLeadsCount }}</dd>
+            <dd class="tenant-stat__money">{{ formatCurrency(card.wonValue) }}</dd>
+          </div>
+        </dl>
+      </article>
+    </div>
+  </section>
+
+  <section class="dashboard__section">
+    <div class="dashboard__section-header dashboard__section-header--row">
+      <div>
+        <h2>Frequência de analistas</h2>
+        <p class="dashboard__hint">
+          Acessos = logins + entradas na base de um cliente. Movimentações = mudanças de status de
+          leads feitas pelo analista. A contagem de acessos começa a partir da atualização que
+          ativou este recurso.
+        </p>
+      </div>
+
+      <div class="period-toggle" role="group" aria-label="Período">
+        <button type="button" class="period-toggle__button" *ngFor="let option of periodOptions"
+          [class.period-toggle__button--active]="option === periodDays()" [attr.aria-pressed]="option === periodDays()"
+          (click)="changePeriod(option)">
+          {{ option }} dias
+        </button>
+      </div>
+    </div>
+
+    <p *ngIf="analystsLoading()">Carregando...</p>
+    <p class="dashboard__error" *ngIf="analystsError()">{{ analystsError() }}</p>
+
+    <div class="dashboard__section-content" *ngIf="!analystsLoading() && !analystsError() && analysts().length === 0">
+      <p>Nenhum analista cadastrado ainda.</p>
+    </div>
+
+    <ol class="analyst-list" *ngIf="!analystsLoading() && analysts().length > 0">
+      <li class="analyst-row" *ngFor="let analyst of analysts(); let index = index; trackBy: trackByAnalyst">
+        <span class="analyst-row__rank">{{ index + 1 }}º</span>
+
+        <div class="analyst-row__identity">
+          <span class="analyst-row__name">
+            {{ analyst.name }}
+            <span class="analyst-row__badge" *ngIf="analyst.status !== 'ACTIVE'">Inativo</span>
+          </span>
+          <span class="analyst-row__email">{{ analyst.email }}</span>
+        </div>
+
+        <div class="analyst-row__bar" [attr.aria-label]="analyst.accessCount + ' acessos'">
+          <div class="analyst-row__bar-track">
+            <div class="analyst-row__bar-fill" [style.width.%]="barWidth(analyst)"></div>
+          </div>
+          <span class="analyst-row__bar-value">{{ analyst.accessCount }} acessos</span>
+        </div>
+
+        <span class="analyst-row__actions">{{ analyst.leadActionsCount }} movimentações</span>
+
+        <span class="analyst-row__last">
+          <ng-container *ngIf="analyst.lastActivityAt; else noActivity">
+            Última atividade: {{ analyst.lastActivityAt | date: 'dd/MM/yyyy HH:mm' }}
+          </ng-container>
+          <ng-template #noActivity>Sem atividade registrada</ng-template>
+        </span>
+      </li>
+    </ol>
+  </section>
 </div>

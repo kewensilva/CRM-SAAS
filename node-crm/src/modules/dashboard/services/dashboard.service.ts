@@ -1,14 +1,19 @@
+import { accessLogRepository } from "../../access-logs/repositories/access-log.repository";
 import { activityRepository } from "../../activities/repositories/activity.repository";
 import { dealRepository } from "../../deals/repositories/deal.repository";
+import { isQualifiedLeadStatus } from "../../leads/constants/lead-qualification";
 import { leadRepository } from "../../leads/repositories/lead.repository";
 import { tenantRepository } from "../../tenants/repositories/tenant.repository";
 import { userRepository } from "../../users/repositories/user.repository";
 import type {
+    AnalystActivitySummary,
     DashboardSummary,
     DashboardTrendPoint,
+    OwnerTenantCard,
     PlatformDashboardSummary,
     PlatformTrendPoint,
 } from "../types/dashboard.types";
+import { buildTenantCards, sortAnalystsByActivity } from "./owner-dashboard.helpers";
 
 const TREND_DAYS = 14;
 
@@ -106,7 +111,8 @@ const getPlatformSummary = async (): Promise<PlatformDashboardSummary> => {
     const tenantsCount = tenants.length;
     const usersCount = userDates.length;
     const leadsCount = leadRows.length;
-    const qualifiedLeadRows = leadRows.filter((lead) => lead.status === "EM_ANDAMENTO");
+    // Qualificado = Em andamento, Vendido ou Perdido (ver lead-qualification.ts).
+    const qualifiedLeadRows = leadRows.filter((lead) => isQualifiedLeadStatus(lead.status));
 
     const tenantCreatedAtDates = tenants.map((tenant) => tenant.createdAt);
     const { current: newTenantsLast30Days, percentChange: newTenantsPercentChange } =
@@ -132,7 +138,30 @@ const getPlatformSummary = async (): Promise<PlatformDashboardSummary> => {
     };
 };
 
+// Um card por empresa (Dashboard do Owner): total, qualificados, perdidos e ganhos.
+const getOwnerTenantCards = async (): Promise<OwnerTenantCard[]> => {
+    const [tenants, counts, closedLeads] = await Promise.all([
+        tenantRepository.list(),
+        leadRepository.countGroupedByTenantAndStatus(),
+        leadRepository.listClosedWithValues(),
+    ]);
+
+    return buildTenantCards(tenants, counts, closedLeads);
+};
+
+// Frequência dos analistas nos últimos "days" dias (Dashboard do Owner).
+const getAnalystActivity = async (days: number): Promise<AnalystActivitySummary> => {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    const rows = await accessLogRepository.listAnalystActivity(since);
+
+    return { periodDays: days, analysts: sortAnalystsByActivity(rows) };
+};
+
 export const dashboardService = {
     getSummary,
     getPlatformSummary,
+    getOwnerTenantCards,
+    getAnalystActivity,
 };

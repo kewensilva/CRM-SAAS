@@ -43,3 +43,36 @@ export type PlatformDashboardSummary = {
     qualifiedLeadsTrend: PlatformTrendPoint[];
     tenantStatusBreakdown: { active: number; inactive: number };
 };
+
+// Um card por empresa no Dashboard do Owner. Contagens por STATUS ATUAL do lead (mesma regra
+// do card "Leads Qualificados" da plataforma): qualificado = EM_ANDAMENTO + VENDIDO + PERDIDO
+// (quem foi vendido ou perdido continua qualificado), perdido = PERDIDO, ganho = VENDIDO.
+export type OwnerTenantCard = {
+    tenantId: string;
+    name: string;
+    domain: string;
+    status: "ACTIVE" | "INACTIVE";
+    leadsCount: number;
+    qualifiedLeadsCount: number;
+    lostLeadsCount: number;
+    wonLeadsCount: number;
+    // Soma dos valores (R$) dos leads ganhos e perdidos. Por lead vale o valor da negociação
+    // (definido ao fechar) e, se não houver, o valor orçado no lead.
+    wonValue: number;
+    lostValue: number;
+};
+
+export type AnalystActivityItem = {
+    analystId: string;
+    name: string;
+    email: string;
+    status: "ACTIVE" | "INACTIVE";
+    accessCount: number;
+    leadActionsCount: number;
+    lastActivityAt: Date | null;
+};
+
+export type AnalystActivitySummary = {
+    periodDays: number;
+    analysts: AnalystActivityItem[];
+};

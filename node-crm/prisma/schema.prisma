@@ -43,6 +43,14 @@ enum LeadStatus {
     PERDIDO
 }
 
+// Como o usuário entrou no CRM — alimenta o ranking de frequência de analistas do Dashboard do
+// Owner. LOGIN: autenticou com e-mail/senha. SWITCH_TENANT: o Analista entrou na base de um
+// cliente (POST /auth/switch-tenant).
+enum UserAccessType {
+    LOGIN
+    SWITCH_TENANT
+}
+
 enum CompanyStatus {
     ACTIVE
     INACTIVE
@@ -128,6 +136,7 @@ model Tenant {
     products             Product[]
     leadRoundRobinState  LeadRoundRobinState?
     budgetEntries        BudgetEntry[]
+    accessLogs           UserAccessLog[]
 
     @@map("tenants")
 }
@@ -183,6 +192,7 @@ model User {
     webWidgetIntegrationsAsDefaultResponsible WebWidgetIntegration[]
     tenantAccess          AnalystTenantAccess[]
     roundRobinAssignments LeadRoundRobinState[]
+    accessLogs            UserAccessLog[]
 
     @@unique([tenantId, email])
     @@index([tenantId])
@@ -677,4 +687,22 @@ model WebWidgetLog {
     @@index([tenantId])
     @@index([status])
     @@map("web_widget_logs")
+}
+
+// Um registro por acesso (login ou entrada na base de um cliente). Imutável: nunca editado
+// nem apagado. tenantId é a empresa acessada — nulo no login de usuários de plataforma
+// (Owner/Analista), que ainda não escolheram uma base.
+model UserAccessLog {
+    id        String         @id @default(uuid()) @db.Uuid
+    userId    String         @map("user_id") @db.Uuid
+    tenantId  String?        @map("tenant_id") @db.Uuid
+    type      UserAccessType
+    createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+    user   User    @relation(fields: [userId], references: [id])
+    tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+    @@index([userId, createdAt])
+    @@index([tenantId])
+    @@map("user_access_logs")
 }

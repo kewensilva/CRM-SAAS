@@ -20,3 +20,18 @@ dashboardRoutes.get(
     authorize("OWNER"),
     dashboardController.getPlatform,
 );
+
+// Cards por empresa e ranking de frequência dos analistas — só o Owner vê.
+dashboardRoutes.get(
+    "/dashboard/owner/tenants",
+    authenticate,
+    authorize("OWNER"),
+    dashboardController.getOwnerTenantCards,
+);
+
+dashboardRoutes.get(
+    "/dashboard/owner/analysts",
+    authenticate,
+    authorize("OWNER"),
+    dashboardController.getAnalystActivity,
+);

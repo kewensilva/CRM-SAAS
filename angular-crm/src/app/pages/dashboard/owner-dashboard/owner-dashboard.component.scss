@@ -122,24 +122,247 @@
   }
 }
 
-.tenants-table {
-  width: 100%;
-  border-collapse: collapse;
 
-  th,
-  td {
-    text-align: left;
-    padding: 12px 8px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+.dashboard__section-header {
+  &--row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+.dashboard__hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+// ---- Cards por empresa ----
+.tenant-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.tenant-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+.tenant-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tenant-card__identity {
+  min-width: 0;
+}
+
+.tenant-card__name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
+  overflow-wrap: anywhere;
+}
+
+.tenant-card__domain {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.6);
+  overflow-wrap: anywhere;
+}
+
+.tenant-card__status {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1b5e20;
+  background-color: rgba(46, 125, 50, 0.12);
+
+  &--inactive {
+    color: #b71c1c;
+    background-color: rgba(198, 40, 40, 0.12);
+  }
+}
+
+.tenant-card__stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 0;
+}
+
+.tenant-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-left: 4px solid rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.03);
+
+  dt {
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.6);
   }
 
-  th {
-    font-weight: 600;
-    color: rgba(0, 0, 0, 0.87);
-  }
-
-  td {
+  dd {
+    margin: 0;
+    font-size: 22px;
     font-weight: 300;
     color: rgba(0, 0, 0, 0.87);
   }
+
+  &--qualified {
+    border-left-color: #1976d2;
+  }
+
+  &--lost {
+    border-left-color: #c62828;
+  }
+
+  &--won {
+    border-left-color: #2e7d32;
+  }
+}
+// Valor (R$) abaixo da contagem de ganhos e perdidos.
+.tenant-stat dd.tenant-stat__money {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tenant-stat--lost dd.tenant-stat__money {
+  color: #b71c1c;
+}
+
+.tenant-stat--won dd.tenant-stat__money {
+  color: #1b5e20;
+}
+
+// ---- Frequência de analistas ----
+.period-toggle {
+  display: inline-flex;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.period-toggle__button {
+  padding: 6px 14px;
+  border: 0;
+  background: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+
+  & + & {
+    border-left: 1px solid rgba(0, 0, 0, 0.2);
+  }
+
+  &--active {
+    background-color: #1976d2;
+    color: #ffffff;
+  }
+}
+
+.analyst-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  // A largura útil depende do menu lateral, não só da janela — por isso container query.
+  container-type: inline-size;
+}
+
+.analyst-row {
+  display: grid;
+  grid-template-columns: 36px minmax(160px, 1.2fr) minmax(180px, 1.6fr) 130px minmax(170px, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+  @container (max-width: 760px) {
+    grid-template-columns: 36px 1fr;
+
+    & > :nth-child(n + 3) {
+      grid-column: 2;
+    }
+  }
+}
+
+.analyst-row__rank {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.analyst-row__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.analyst-row__name {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.analyst-row__badge {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #b71c1c;
+  background-color: rgba(198, 40, 40, 0.12);
+}
+
+.analyst-row__email {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.6);
+  overflow-wrap: anywhere;
+}
+
+.analyst-row__bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.analyst-row__bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background-color: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.analyst-row__bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background-color: #1976d2;
+}
+
+.analyst-row__bar-value,
+.analyst-row__actions,
+.analyst-row__last {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.75);
 }

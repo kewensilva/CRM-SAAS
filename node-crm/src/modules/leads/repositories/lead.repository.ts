@@ -109,6 +109,49 @@ const listCreatedAtAndStatusAll = (): Promise<{ createdAt: Date; status: LeadSta
     });
 };
 
+// Contagem de leads ativos agrupada por empresa e status, numa única consulta — alimenta os
+// cards por empresa do Dashboard do Owner.
+const countGroupedByTenantAndStatus = async (): Promise<
+    { tenantId: string; status: LeadStatus; count: number }[]
+> => {
+    const rows = await prisma.lead.groupBy({
+        by: ["tenantId", "status"],
+        where: { deletedAt: null },
+        _count: { _all: true },
+    });
+
+    return rows.map((row) => ({
+        tenantId: row.tenantId,
+        status: row.status,
+        count: row._count._all,
+    }));
+};
+
+// Leads fechados (Vendido/Perdido) com os dois valores que podem existir: o da negociação
+// (Deal.value, definido ao fechar) e o orçado no próprio lead (budgetValue, definido ao mover
+// para Em andamento). Só entram leads ativos; negociação excluída é ignorada. Alimenta o valor
+// de ganhos/perdas nos cards por empresa do Dashboard do Owner.
+const listClosedWithValues = async (): Promise<
+    { tenantId: string; status: LeadStatus; dealValue: number | null; budgetValue: number | null }[]
+> => {
+    const rows = await prisma.lead.findMany({
+        where: { deletedAt: null, status: { in: ["VENDIDO", "PERDIDO"] } },
+        select: {
+            tenantId: true,
+            status: true,
+            budgetValue: true,
+            deal: { select: { value: true, deletedAt: true } },
+        },
+    });
+
+    return rows.map((row) => ({
+        tenantId: row.tenantId,
+        status: row.status,
+        budgetValue: row.budgetValue?.toNumber() ?? null,
+        dealValue: row.deal && row.deal.deletedAt === null ? (row.deal.value?.toNumber() ?? null) : null,
+    }));
+};
+
 const findByTenantAndEmail = (tenantId: string, email: string): Promise<Lead | null> => {
     return prisma.lead.findFirst({
         where: { tenantId, email, deletedAt: null },
@@ -224,6 +267,8 @@ export const leadRepository = {
     countAll,
     countAllByStatus,
     listCreatedAtAndStatusAll,
+    countGroupedByTenantAndStatus,
+    listClosedWithValues,
     findByTenantAndEmail,
     update,
     updateContactInfo,

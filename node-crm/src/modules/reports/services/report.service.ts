@@ -1,9 +1,8 @@
 import { budgetEntryRepository } from "../../budget/repositories/budget-entry.repository";
 import { leadRepository } from "../../leads/repositories/lead.repository";
-import type { Lead, LeadStatus } from "../../leads/types/lead.types";
+import { QUALIFIED_LEAD_STATUSES } from "../../leads/constants/lead-qualification";
+import type { Lead } from "../../leads/types/lead.types";
 import type { BudgetChannelBreakdown, ChannelConversion, ReportFunnel, ReportSummary } from "../types/report.types";
-
-const QUALIFIED_STATUSES: LeadStatus[] = ["EM_ANDAMENTO", "VENDIDO", "PERDIDO"];
 
 const toNumber = (value: unknown): number => Number(value ?? 0);
 
@@ -75,7 +74,7 @@ const getSummary = async (tenantId: string, requestedMonth?: Date): Promise<Repo
                 : 0
             : round2(((totalInvestment - previousMonthTotal) / previousMonthTotal) * 100);
 
-    const qualifiedLeads = leadsInMonth.filter((lead) => QUALIFIED_STATUSES.includes(lead.status));
+    const qualifiedLeads = leadsInMonth.filter((lead) => QUALIFIED_LEAD_STATUSES.includes(lead.status));
     const wonLeads = leadsInMonth.filter((lead) => lead.status === "VENDIDO");
 
     const totalLeads = leadsInMonth.length;

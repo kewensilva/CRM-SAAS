@@ -5,6 +5,7 @@ import { comparePassword, hashPassword } from "../../../shared/auth/password";
 import { jwtService } from "../../../shared/auth/jwt";
 import { AuthenticationError, AuthorizationError, ValidationError } from "../../../shared/errors";
 import { emailService } from "../../../shared/email/email.service";
+import { accessLogService } from "../../access-logs/services/access-log.service";
 import { analystRepository } from "../../analysts/repositories/analyst.repository";
 import { ownerRepository } from "../../owners/repositories/owner.repository";
 import { tenantRepository } from "../../tenants/repositories/tenant.repository";
@@ -44,6 +45,8 @@ const loginWithTenantSlug = async (data: LoginDTO & { tenantSlug: string }): Pro
         throw new AuthenticationError(INVALID_CREDENTIALS_MESSAGE);
     }
 
+    accessLogService.record({ userId: user.id, tenantId: user.tenantId, type: "LOGIN" });
+
     return issueTokens(user);
 };
 
@@ -60,6 +63,12 @@ const loginByEmailOnly = async (data: LoginDTO): Promise<LoginResult> => {
         platformCandidate.status === "ACTIVE" &&
         (await comparePassword(data.password, platformCandidate.passwordHash))
     ) {
+        accessLogService.record({
+            userId: platformCandidate.id,
+            tenantId: platformCandidate.tenantId,
+            type: "LOGIN",
+        });
+
         return issueTokens(platformCandidate);
     }
 
@@ -67,6 +76,8 @@ const loginByEmailOnly = async (data: LoginDTO): Promise<LoginResult> => {
 
     for (const candidate of tenantCandidates) {
         if (await comparePassword(data.password, candidate.passwordHash)) {
+            accessLogService.record({ userId: candidate.id, tenantId: candidate.tenantId, type: "LOGIN" });
+
             return issueTokens(candidate);
         }
     }
@@ -152,6 +163,8 @@ const switchTenant = async (
     }
 
     const payload = { sub: analystId, tenantId: tenant.id, profile: "TENANT_ADMIN", analystId };
+
+    accessLogService.record({ userId: analystId, tenantId: tenant.id, type: "SWITCH_TENANT" });
 
     return {
         accessToken: jwtService.signAccessToken(payload),

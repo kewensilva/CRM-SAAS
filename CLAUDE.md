@@ -428,6 +428,18 @@ eventos como `LeadCreated`/`DealWon`/`UserCreated` que a esta altura já têm or
     teste), CRUD completo de `BudgetEntry` (criar/listar/remover) validado ponta a ponta, seção
     de cadastro corretamente ausente para o Tenant Admin.
 
+- **Dashboard do Owner — cards por empresa + frequência de analistas** (branch
+  `config-parametrizacao`): `GET /api/v1/dashboard/owner/tenants` (um card por tenant: total,
+  qualificados, perdidos, ganhos e valores R$ de ganho/perda — valor do Deal ou, na falta,
+  `Lead.budgetValue`, somado em centavos) e `GET /api/v1/dashboard/owner/analysts?days=` (1–365,
+  padrão 30; ranking de Analistas por acessos + movimentações em `LeadHistory`), ambos só `OWNER`.
+  Acessos vêm do novo model imutável `UserAccessLog` (`LOGIN` / `SWITCH_TENANT`), gravado em
+  `auth.service.ts` via `accessLogService.record`, que é fire-and-forget: falha ao gravar só loga
+  warning, nunca bloqueia o login. A regra de "lead qualificado" (Em andamento + Vendido + Perdido)
+  foi centralizada em `leads/constants/lead-qualification.ts` e agora é a mesma no Dashboard da
+  plataforma, nos cards e em Relatórios (antes o Dashboard contava só `EM_ANDAMENTO`). Acessos só
+  contam a partir do deploy da migration `20261020120000_user_access_logs` — não há histórico.
+
 `angular-crm/` já tem várias páginas construídas (login, dashboard Owner/Tenant, CRM, Leads,
 Oportunidades, Relatórios, Empresas, Configurações, Motivos, Cadastros, Acessos) — a nota
 anterior de "frontend ainda não iniciado" ficou desatualizada e foi removida.
