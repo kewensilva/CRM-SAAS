@@ -12,11 +12,40 @@ export const updateGoogleAnalyticsIntegrationSchema = z.object({
         .optional(),
 });
 
-// Mesmo formato de mês dos demais Relatórios (dia 1, UTC); sem "month", usa o mês corrente.
-export const googleAnalyticsReportQuerySchema = z.object({
-    month: z
-        .string()
-        .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Mês inválido — use o formato AAAA-MM.")
-        .transform((value) => new Date(`${value}-01T00:00:00.000Z`))
-        .optional(),
-});
+// No Zod 4 o refine roda mesmo quando o regex já falhou — sem o teste do padrão, o
+// toISOString de uma data inválida lançaria RangeError (500 em vez de 422).
+const ISO_DATE_PATTERN = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
+// Formato errado já é reportado pelo regex — aqui só o dia inexistente, sem erro duplicado.
+const isRealDate = (value: string): boolean => {
+    if (!ISO_DATE_PATTERN.test(value)) {
+        return true;
+    }
+
+    return new Date(`${value}T00:00:00.000Z`).toISOString().slice(0, 10) === value;
+};
+
+const isoDate = z
+    .string()
+    .regex(ISO_DATE_PATTERN, "Data inválida — use o formato AAAA-MM-DD.")
+    .refine(isRealDate, "Data inexistente.");
+
+// Mesmo período dos demais Relatórios: dias (startDate/endDate, inclusive) ou um mês inteiro
+// (?month=AAAA-MM); sem nada, o mês corrente até hoje.
+export const googleAnalyticsReportQuerySchema = z
+    .object({
+        startDate: isoDate.optional(),
+        endDate: isoDate.optional(),
+        month: z
+            .string()
+            .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Mês inválido — use o formato AAAA-MM.")
+            .optional(),
+    })
+    .refine((query) => Boolean(query.startDate) === Boolean(query.endDate), {
+        message: "Informe a data inicial e a final.",
+        path: ["startDate"],
+    })
+    .refine((query) => !query.startDate || !query.endDate || query.startDate <= query.endDate, {
+        message: "A data inicial deve ser anterior ou igual à final.",
+        path: ["endDate"],
+    });

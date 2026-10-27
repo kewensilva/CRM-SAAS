@@ -28,5 +28,5 @@ googleAnalyticsRoutes.get(
     "/reports/google-analytics",
     authenticate,
     authorize("TENANT_ADMIN", "MANAGER", "USER"),
-    googleAnalyticsController.getMonthlyReport,
+    googleAnalyticsController.getReport,
 );

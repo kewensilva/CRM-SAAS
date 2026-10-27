@@ -29,14 +29,14 @@ export type GoogleAnalyticsTotals = {
 };
 
 // Sem integração ativa o Relatório não é erro: a página só mostra como configurar.
-export type GoogleAnalyticsMonthlyReport =
+// startDate/endDate nulos: período ainda não começou (nada a consultar).
+export type GoogleAnalyticsReport =
     | { configured: false }
     | {
           configured: true;
           propertyId: string;
-          month: string;
-          startDate: string;
-          endDate: string;
+          startDate: string | null;
+          endDate: string | null;
           totals: GoogleAnalyticsTotals;
           byCity: GoogleAnalyticsCityRow[];
       };

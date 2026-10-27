@@ -2,7 +2,7 @@
   <div class="ga-report__header">
     <h2 class="ga-report__title">Google Analytics</h2>
     @if (report(); as data) {
-      @if (data.configured) {
+      @if (data.configured && data.startDate && data.endDate) {
         <span class="ga-report__period">{{ formatDay(data.startDate) }} a {{ formatDay(data.endDate) }}</span>
       }
     }
@@ -45,7 +45,7 @@
               <span class="ga-city__value">{{ formatNumber(row.activeUsers) }}</span>
             </div>
           } @empty {
-            <p class="ga-report__hint">Nenhuma visita registrada neste mês.</p>
+            <p class="ga-report__hint">Nenhuma visita registrada neste período.</p>
           }
         </div>
       }

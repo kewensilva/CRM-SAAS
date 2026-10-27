@@ -3,12 +3,13 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { EMPTY, catchError, switchMap, tap } from 'rxjs';
 
 import { GoogleAnalyticsService } from '../../../core/google-analytics/google-analytics.service';
-import { GoogleAnalyticsMonthlyReport } from '../../../models/google-analytics.model';
+import { GoogleAnalyticsReport } from '../../../models/google-analytics.model';
+import { ReportPeriod } from '../../../models/report.model';
 
 const apiErrorMessage = (error: unknown, fallback: string): string =>
   (error as { error?: { message?: string } })?.error?.message ?? fallback;
 
-// Bloco "Google Analytics" da página Relatórios. Recebe o mesmo mês do seletor da página e
+// Bloco "Google Analytics" da página Relatórios. Recebe o mesmo período do filtro da página e
 // carrega por conta própria — falha no Google não esconde o resto do relatório.
 @Component({
   selector: 'app-google-analytics-report',
@@ -17,13 +18,13 @@ const apiErrorMessage = (error: unknown, fallback: string): string =>
   styleUrl: './google-analytics-report.component.scss',
 })
 export class GoogleAnalyticsReportComponent {
-  readonly month = input.required<string>();
+  readonly period = input.required<ReportPeriod>();
 
-  readonly report = signal<GoogleAnalyticsMonthlyReport | null>(null);
+  readonly report = signal<GoogleAnalyticsReport | null>(null);
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
 
-  // Barra de cada cidade relativa à maior do mês.
+  // Barra de cada cidade relativa à maior do período.
   readonly maxCityUsers = computed(() => {
     const report = this.report();
 
@@ -31,16 +32,16 @@ export class GoogleAnalyticsReportComponent {
   });
 
   constructor(private readonly googleAnalyticsService: GoogleAnalyticsService) {
-    // switchMap descarta a resposta de um mês anterior ainda em voo; o erro é tratado por
-    // dentro para não encerrar o fluxo nas próximas trocas de mês.
-    toObservable(this.month)
+    // switchMap descarta a resposta de um período anterior ainda em voo; o erro é tratado por
+    // dentro para não encerrar o fluxo nas próximas trocas de período.
+    toObservable(this.period)
       .pipe(
         tap(() => {
           this.loading.set(true);
           this.errorMessage.set(null);
         }),
-        switchMap((month) =>
-          this.googleAnalyticsService.getMonthlyReport(month).pipe(
+        switchMap((period) =>
+          this.googleAnalyticsService.getReport(period).pipe(
             catchError((error: unknown) => {
               this.report.set(null);
               this.errorMessage.set(apiErrorMessage(error, 'Não foi possível carregar os dados do Google Analytics.'));

@@ -70,6 +70,15 @@ const listByTenant = (tenantId: string, month?: Date): Promise<BudgetEntry[]> =>
     }) as unknown as Promise<BudgetEntry[]>;
 };
 
+// Relatórios por período: entradas de todos os meses entre firstMonth e lastMonth
+// (inclusive, ambos dia 1 UTC) — o budget é mensal, então o período usa os meses cheios.
+const listByTenantBetweenMonths = (tenantId: string, firstMonth: Date, lastMonth: Date): Promise<BudgetEntry[]> => {
+    return prisma.budgetEntry.findMany({
+        where: { tenantId, deletedAt: null, month: { gte: firstMonth, lte: lastMonth } },
+        orderBy: [{ month: "asc" }, { channelName: "asc" }],
+    }) as unknown as Promise<BudgetEntry[]>;
+};
+
 const findByIdAndTenant = (id: string, tenantId: string): Promise<BudgetEntry | null> => {
     return prisma.budgetEntry.findFirst({
         where: { id, tenantId, deletedAt: null },
@@ -93,6 +102,7 @@ export const budgetEntryRepository = {
     upsertEntry,
     upsertPeriod,
     listByTenant,
+    listByTenantBetweenMonths,
     findByIdAndTenant,
     update,
     softDelete,

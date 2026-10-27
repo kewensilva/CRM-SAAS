@@ -18,14 +18,14 @@ export interface GoogleAnalyticsTotals {
 }
 
 // Sem integração ativa a API responde { configured: false } — a página só orienta a configurar.
-export type GoogleAnalyticsMonthlyReport =
+// startDate/endDate nulos: o período ainda não começou (nada a consultar).
+export type GoogleAnalyticsReport =
   | { configured: false }
   | {
       configured: true;
       propertyId: string;
-      month: string;
-      startDate: string;
-      endDate: string;
+      startDate: string | null;
+      endDate: string | null;
       totals: GoogleAnalyticsTotals;
       byCity: GoogleAnalyticsCityRow[];
     };

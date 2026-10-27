@@ -1,11 +1,21 @@
 <div class="reports">
   <div class="reports__toolbar">
     <h1 class="reports__title">Relatórios</h1>
-    <label class="reports__month">
-      <span>Mês</span>
-      <input type="month" [formControl]="monthControl" />
-    </label>
+    <form class="reports__period" [formGroup]="periodForm" (submit)="$event.preventDefault()">
+      <label class="reports__date">
+        <span>De</span>
+        <input type="date" formControlName="startDate" [max]="periodForm.controls.endDate.value" />
+      </label>
+      <label class="reports__date">
+        <span>Até</span>
+        <input type="date" formControlName="endDate" [min]="periodForm.controls.startDate.value" />
+      </label>
+    </form>
   </div>
+
+  @if (periodError()) {
+    <p class="reports__error" role="alert">{{ periodError() }}</p>
+  }
 
   <p *ngIf="loading()">Carregando...</p>
   <p class="reports__error" *ngIf="errorMessage()" role="alert">{{ errorMessage() }}</p>
@@ -13,7 +23,11 @@
   @if (!loading() && !errorMessage() && summary(); as data) {
     <div class="reports__grid">
       <div class="report-card">
-        <h2 class="report-card__title">Budget x Investimento ({{ data.month }})</h2>
+        <h2 class="report-card__title">Budget x Investimento ({{ budgetMonthsLabel(data.budgetMonths) }})</h2>
+        <span class="report-card__hint">
+          Budget e investimento são mensais: o período {{ formatDay(data.startDate) }} a
+          {{ formatDay(data.endDate) }} usa o valor cheio de cada mês. Leads, CPA, SQL e CPV seguem os dias do período.
+        </span>
         <div class="report-card__budget-row">
           <div class="report-card__budget-col">
             <span class="report-card__big-label">Budget</span>
@@ -32,7 +46,8 @@
             <span class="report-card__big-label">Investimento</span>
             <span class="report-card__big-value">{{ formatCurrency(data.investment.total) }}</span>
             <span class="report-card__hint">
-              Mês anterior: {{ formatCurrency(data.investment.previousMonthTotal) }}
+              {{ data.budgetMonths.length > 1 ? 'Meses anteriores' : 'Mês anterior' }}:
+              {{ formatCurrency(data.investment.previousPeriodTotal) }}
             </span>
             <span
               class="report-card__hint"
@@ -65,7 +80,7 @@
               <span class="conversion-row__value">{{ channel.percentage }}%</span>
             </div>
           } @empty {
-            <p class="reports__hint">Nenhum canal com budget cadastrado neste mês.</p>
+            <p class="reports__hint">Nenhum canal com budget cadastrado nos meses do período.</p>
           }
         </div>
       </div>
@@ -79,7 +94,7 @@
         <div class="metric-tile">
           <span class="metric-tile__label">SQL</span>
           <span class="metric-tile__value">{{ data.sql }}</span>
-          <span class="metric-tile__hint">Leads qualificados no mês</span>
+          <span class="metric-tile__hint">Leads qualificados no período</span>
         </div>
         <div class="metric-tile">
           <span class="metric-tile__label">CPV</span>
@@ -110,5 +125,5 @@
     </div>
   }
 
-  <app-google-analytics-report [month]="month()" />
+  <app-google-analytics-report [period]="period()" />
 </div>

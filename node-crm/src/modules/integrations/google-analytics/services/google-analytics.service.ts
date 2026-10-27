@@ -4,17 +4,11 @@ import type { UpdateGoogleAnalyticsIntegrationDTO } from "../dto/update-google-a
 import { googleAnalyticsIntegrationRepository } from "../repositories/google-analytics-integration.repository";
 import type {
     GoogleAnalyticsIntegration,
-    GoogleAnalyticsMonthlyReport,
+    GoogleAnalyticsReport,
     GoogleAnalyticsSettings,
 } from "../types/google-analytics.types";
 import { gaDataApiClient } from "./ga-data-api.client";
-import {
-    EMPTY_TOTALS,
-    buildMonthlyRequests,
-    monthDateRange,
-    parseCities,
-    parseTotals,
-} from "./ga-report.helpers";
+import { EMPTY_TOTALS, buildReportRequests, parseCities, parseTotals, resolveDateRange } from "./ga-report.helpers";
 import { hasServiceAccountCredentials } from "./google-service-account-auth";
 
 const toSettings = (integration: GoogleAnalyticsIntegration | null): GoogleAnalyticsSettings => ({
@@ -55,24 +49,24 @@ const updateSettings = async (
     return toSettings(await googleAnalyticsIntegrationRepository.upsertByTenant(tenantId, data));
 };
 
-const getMonthlyReport = async (tenantId: string, month?: Date): Promise<GoogleAnalyticsMonthlyReport> => {
+const getReport = async (
+    tenantId: string,
+    query: { startDate?: string | undefined; endDate?: string | undefined; month?: string | undefined },
+): Promise<GoogleAnalyticsReport> => {
     const integration = await googleAnalyticsIntegrationRepository.findByTenant(tenantId);
 
     if (!integration?.enabled || !integration.propertyId) {
         return { configured: false };
     }
 
-    const requestedMonth = month ?? new Date();
-    const monthLabel = requestedMonth.toISOString().slice(0, 7);
-    const range = monthDateRange(requestedMonth);
+    const range = resolveDateRange(query);
 
     if (!range) {
         return {
             configured: true,
             propertyId: integration.propertyId,
-            month: monthLabel,
-            startDate: `${monthLabel}-01`,
-            endDate: `${monthLabel}-01`,
+            startDate: null,
+            endDate: null,
             totals: EMPTY_TOTALS,
             byCity: [],
         };
@@ -80,13 +74,12 @@ const getMonthlyReport = async (tenantId: string, month?: Date): Promise<GoogleA
 
     const [totalsReport, citiesReport] = await gaDataApiClient.batchRunReports(
         integration.propertyId,
-        buildMonthlyRequests(range),
+        buildReportRequests(range),
     );
 
     return {
         configured: true,
         propertyId: integration.propertyId,
-        month: monthLabel,
         ...range,
         totals: parseTotals(totalsReport),
         byCity: parseCities(citiesReport),
@@ -96,5 +89,5 @@ const getMonthlyReport = async (tenantId: string, month?: Date): Promise<GoogleA
 export const googleAnalyticsService = {
     getSettings,
     updateSettings,
-    getMonthlyReport,
+    getReport,
 };

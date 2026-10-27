@@ -11,29 +11,40 @@ export const TOP_CITIES_LIMIT = 10;
 const UNKNOWN_CITY = "(not set)";
 const UNKNOWN_CITY_LABEL = "Não identificada";
 
+const BRAZIL_UTC_OFFSET_HOURS = 3;
+
 const isoDay = (date: Date): string => date.toISOString().slice(0, 10);
 
-// Período do mês pedido (month = dia 1, UTC) até o último dia — ou até hoje, no mês corrente
-// (o GA4 aceita datas futuras, mas devolveria o mês "incompleto" de forma silenciosa). Mês
-// ainda não começado devolve null: não há o que consultar. As datas são interpretadas pelo
-// GA4 no fuso da propriedade, não em UTC.
-export const monthDateRange = (
-    month: Date,
-    today: Date = new Date(),
-): { startDate: string; endDate: string } | null => {
-    const start = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth(), 1));
-    const lastDay = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 0));
-    const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+// "Hoje" em Brasília — mesma referência de dia dos demais Relatórios.
+export const todayInBrazil = (now: Date = new Date()): string =>
+    isoDay(new Date(now.getTime() - BRAZIL_UTC_OFFSET_HOURS * 60 * 60 * 1000));
 
-    if (start > todayUtc) {
+const lastDayOfMonth = (isoMonthStart: string): string => {
+    const date = new Date(`${isoMonthStart}T00:00:00.000Z`);
+
+    return isoDay(new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)));
+};
+
+// Período pedido (dias informados > mês informado > mês corrente), cortado em hoje: o GA4
+// aceita datas futuras, mas devolveria o período "incompleto" de forma silenciosa. Período
+// que ainda não começou devolve null — não há o que consultar. As datas são interpretadas
+// pelo GA4 no fuso da propriedade.
+export const resolveDateRange = (
+    query: { startDate?: string | undefined; endDate?: string | undefined; month?: string | undefined },
+    today: string = todayInBrazil(),
+): { startDate: string; endDate: string } | null => {
+    const startDate = query.startDate ?? (query.month ? `${query.month}-01` : `${today.slice(0, 7)}-01`);
+    const requestedEnd = query.endDate ?? (query.month ? lastDayOfMonth(`${query.month}-01`) : today);
+
+    if (startDate > today) {
         return null;
     }
 
-    return { startDate: isoDay(start), endDate: isoDay(lastDay < todayUtc ? lastDay : todayUtc) };
+    return { startDate, endDate: requestedEnd < today ? requestedEnd : today };
 };
 
-// 1) totais do mês sem dimensão; 2) usuários ativos por cidade, maiores primeiro.
-export const buildMonthlyRequests = (range: { startDate: string; endDate: string }): GaReportRequest[] => [
+// 1) totais do período sem dimensão; 2) usuários ativos por cidade, maiores primeiro.
+export const buildReportRequests = (range: { startDate: string; endDate: string }): GaReportRequest[] => [
     {
         dateRanges: [range],
         metrics: [{ name: "activeUsers" }, { name: "newUsers" }, { name: "sessions" }],

@@ -4,7 +4,8 @@ import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiSuccessResponse } from '../../models/auth.model';
-import { GoogleAnalyticsMonthlyReport, GoogleAnalyticsSettings } from '../../models/google-analytics.model';
+import { GoogleAnalyticsReport, GoogleAnalyticsSettings } from '../../models/google-analytics.model';
+import { ReportPeriod } from '../../models/report.model';
 
 @Injectable({ providedIn: 'root' })
 export class GoogleAnalyticsService {
@@ -22,10 +23,10 @@ export class GoogleAnalyticsService {
       .pipe(map((response) => response.data));
   }
 
-  getMonthlyReport(month: string): Observable<GoogleAnalyticsMonthlyReport> {
+  getReport(period: ReportPeriod): Observable<GoogleAnalyticsReport> {
     return this.http
-      .get<ApiSuccessResponse<GoogleAnalyticsMonthlyReport>>(`${environment.apiUrl}/reports/google-analytics`, {
-        params: new HttpParams().set('month', month),
+      .get<ApiSuccessResponse<GoogleAnalyticsReport>>(`${environment.apiUrl}/reports/google-analytics`, {
+        params: new HttpParams().set('startDate', period.startDate).set('endDate', period.endDate),
       })
       .pipe(map((response) => response.data));
   }

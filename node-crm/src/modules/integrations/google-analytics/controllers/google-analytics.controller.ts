@@ -36,9 +36,9 @@ const updateSettings = async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, data: settings });
 };
 
-const getMonthlyReport = async (req: Request, res: Response) => {
-    const { month } = parse(googleAnalyticsReportQuerySchema, req.query);
-    const report = await googleAnalyticsService.getMonthlyReport(req.auth.tenantId as string, month);
+const getReport = async (req: Request, res: Response) => {
+    const query = parse(googleAnalyticsReportQuerySchema, req.query);
+    const report = await googleAnalyticsService.getReport(req.auth.tenantId as string, query);
 
     return res.status(200).json({ success: true, data: report });
 };
@@ -46,5 +46,5 @@ const getMonthlyReport = async (req: Request, res: Response) => {
 export const googleAnalyticsController = {
     getSettings,
     updateSettings,
-    getMonthlyReport,
+    getReport,
 };

@@ -1,30 +1,44 @@
-import { buildMonthlyRequests, monthDateRange, parseCities, parseTotals, TOP_CITIES_LIMIT } from "./ga-report.helpers";
+import { buildReportRequests, parseCities, parseTotals, resolveDateRange, todayInBrazil, TOP_CITIES_LIMIT } from "./ga-report.helpers";
 
-const month = (value: string) => new Date(`${value}-01T00:00:00.000Z`);
+const TODAY = "2026-10-27";
 
-describe("monthDateRange", () => {
-    it("usa o mês inteiro quando o mês já terminou", () => {
-        expect(monthDateRange(month("2026-02"), new Date("2026-10-27T15:00:00Z"))).toEqual({
-            startDate: "2026-02-01",
-            endDate: "2026-02-28",
+describe("resolveDateRange", () => {
+    it("usa os dias informados", () => {
+        expect(resolveDateRange({ startDate: "2026-10-05", endDate: "2026-10-12" }, TODAY)).toEqual({
+            startDate: "2026-10-05",
+            endDate: "2026-10-12",
         });
     });
 
-    it("para em hoje no mês corrente", () => {
-        expect(monthDateRange(month("2026-10"), new Date("2026-10-27T15:00:00Z"))).toEqual({
-            startDate: "2026-10-01",
-            endDate: "2026-10-27",
+    it("corta o fim do período em hoje", () => {
+        expect(resolveDateRange({ startDate: "2026-10-20", endDate: "2026-11-10" }, TODAY)).toEqual({
+            startDate: "2026-10-20",
+            endDate: TODAY,
         });
     });
 
-    it("devolve null para mês que ainda não começou", () => {
-        expect(monthDateRange(month("2026-11"), new Date("2026-10-27T15:00:00Z"))).toBeNull();
+    it("mês informado vira o mês inteiro (fevereiro com 28 dias)", () => {
+        expect(resolveDateRange({ month: "2026-02" }, TODAY)).toEqual({ startDate: "2026-02-01", endDate: "2026-02-28" });
+    });
+
+    it("sem nada, usa o mês corrente até hoje", () => {
+        expect(resolveDateRange({}, TODAY)).toEqual({ startDate: "2026-10-01", endDate: TODAY });
+    });
+
+    it("período que ainda não começou devolve null", () => {
+        expect(resolveDateRange({ startDate: "2026-11-01", endDate: "2026-11-30" }, TODAY)).toBeNull();
     });
 });
 
-describe("buildMonthlyRequests", () => {
+describe("todayInBrazil", () => {
+    it("às 01h UTC ainda é o dia anterior em Brasília", () => {
+        expect(todayInBrazil(new Date("2026-10-28T01:00:00Z"))).toBe("2026-10-27");
+    });
+});
+
+describe("buildReportRequests", () => {
     it("pede totais e o top de cidades por usuários ativos", () => {
-        const [totals, cities] = buildMonthlyRequests({ startDate: "2026-10-01", endDate: "2026-10-27" });
+        const [totals, cities] = buildReportRequests({ startDate: "2026-10-01", endDate: "2026-10-27" });
 
         expect(totals.metrics.map((metric) => metric.name)).toEqual(["activeUsers", "newUsers", "sessions"]);
         expect(totals.dimensions).toBeUndefined();

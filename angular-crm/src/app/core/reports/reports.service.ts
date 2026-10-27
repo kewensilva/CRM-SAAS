@@ -4,14 +4,14 @@ import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiSuccessResponse } from '../../models/auth.model';
-import { ReportSummary } from '../../models/report.model';
+import { ReportPeriod, ReportSummary } from '../../models/report.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
   constructor(private readonly http: HttpClient) {}
 
-  getSummary(month?: string): Observable<ReportSummary> {
-    const params = month ? new HttpParams().set('month', month) : undefined;
+  getSummary(period: ReportPeriod): Observable<ReportSummary> {
+    const params = new HttpParams().set('startDate', period.startDate).set('endDate', period.endDate);
 
     return this.http
       .get<ApiSuccessResponse<ReportSummary>>(`${environment.apiUrl}/reports/summary`, { params })
