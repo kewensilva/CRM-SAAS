@@ -50,15 +50,15 @@
               Criado em {{ formatDate(lead.createdAt) }}
             </p>
 
-            <p class="opportunity-card__field">
+            <p class="opportunity-card__field" title="Origem: por onde o lead entrou no CRM">
               <mat-icon>source</mat-icon>
-              {{ lead.source }}
+              Origem: {{ lead.source }}
             </p>
 
             @if (utmSummary(lead); as utm) {
-              <p class="opportunity-card__field" title="Campanha de origem (não editável)">
+              <p class="opportunity-card__field" title="Fonte: plataforma/campanha de onde o lead veio (não editável)">
                 <mat-icon>campaign</mat-icon>
-                {{ utm }}
+                Fonte: {{ utm }}
               </p>
             }
 

@@ -5,7 +5,7 @@ import type { CreateLeadDTO, UpdateLeadDTO } from "../dto/create-lead.dto";
 import type { Lead, LeadHistoryEntry, LeadStatus } from "../types/lead.types";
 
 // Shape bruto retornado por listByTenantWithDetails — leadService.listWithDetails
-// converte isso em LeadWithDetails (calcula "source" a partir de webWidgetLogs/metaLogs).
+// converte isso em LeadWithDetails (calcula "source" com resolveLeadSource).
 export type LeadRawWithLogs = Lead & {
     deal: {
         id: string;
@@ -235,8 +235,9 @@ const listByTenantWithLogs = (tenantId: string): Promise<LeadRawWithLogs[]> => {
                     productId: true,
                 },
             },
-            webWidgetLogs: { take: 1, select: { id: true } },
-            metaLogs: { take: 1, select: { id: true } },
+            // Só o log que criou o Lead define a origem — ver leads/utils/lead-source.ts.
+            webWidgetLogs: { where: { status: "PROCESSED" }, take: 1, select: { id: true } },
+            metaLogs: { where: { status: "PROCESSED" }, take: 1, select: { id: true } },
         },
     }) as unknown as Promise<LeadRawWithLogs[]>;
 };
@@ -249,8 +250,9 @@ const listByIdsAndTenantForExport = (tenantId: string, ids: string[]): Promise<L
         orderBy: { createdAt: "desc" },
         include: {
             deal: { select: { value: true, createdAt: true } },
-            webWidgetLogs: { take: 1, select: { id: true } },
-            metaLogs: { take: 1, select: { id: true } },
+            // Só o log que criou o Lead define a origem — ver leads/utils/lead-source.ts.
+            webWidgetLogs: { where: { status: "PROCESSED" }, take: 1, select: { id: true } },
+            metaLogs: { where: { status: "PROCESSED" }, take: 1, select: { id: true } },
             responsible: { select: { name: true } },
         },
     }) as unknown as Promise<LeadRawForExport[]>;

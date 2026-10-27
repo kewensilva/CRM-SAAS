@@ -12,6 +12,7 @@ import { LeadsService } from '../../../core/leads/leads.service';
 import { ProductsService } from '../../../core/products/products.service';
 import { Lead, LeadHistoryEntry } from '../../../models/lead.model';
 import { Product } from '../../../models/product.model';
+import { formatLeadFonte } from '../../utils/lead-source.util';
 
 export interface LeadDetailsDialogData {
   lead: Lead;
@@ -122,12 +123,8 @@ export class LeadDetailsDialogComponent implements OnInit {
     return this.products().find((product) => product.id === productId)?.name ?? '—';
   }
 
-  // UTM só existe pra leads do Web Widget — nunca editável (ver models/lead.model.ts).
   get utmSummary(): string | null {
-    if (!this.lead.utmSource) {
-      return null;
-    }
-    return this.lead.utmMedium ? `${this.lead.utmSource} / ${this.lead.utmMedium}` : this.lead.utmSource;
+    return formatLeadFonte(this.lead);
   }
 
   formatValue(value: string | null | undefined): string {

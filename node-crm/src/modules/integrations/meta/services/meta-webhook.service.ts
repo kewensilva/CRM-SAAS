@@ -4,6 +4,7 @@ import { metaIntegrationRepository } from "../repositories/meta-integration.repo
 import { metaLogRepository } from "../repositories/meta-log.repository";
 import type { MetaWebhookPayload } from "../types/meta-integration.types";
 import { metaGraphApiClient } from "./meta-graph-api.client";
+import { mapMetaLeadSource } from "./meta-lead-source";
 
 type LeadgenChange = MetaWebhookPayload["entry"][number]["changes"][number]["value"];
 
@@ -11,7 +12,6 @@ const mapFieldData = (fieldData: { name: string; values: string[] }[]) => {
     // Valor vazio ("" ou só espaços) vira undefined, para cair no próximo fallback.
     const get = (fieldName: string) =>
         fieldData.find((field) => field.name === fieldName)?.values?.[0]?.trim() || undefined;
-        
 
     // Formulários da Meta podem trazer o nome inteiro (full_name) ou separado em
     // first_name + last_name — junta os dois quando não há nome completo.
@@ -58,14 +58,16 @@ const processLeadgenChange = async (change: LeadgenChange, rawPayload: MetaWebho
     }
 
     let mappedLead: { name: string; email: string | undefined; phone: string | undefined };
+    let leadSource: ReturnType<typeof mapMetaLeadSource>;
 
     try {
-        const { field_data: fieldData } = await metaGraphApiClient.fetchLeadFieldData(
+        const leadData = await metaGraphApiClient.fetchLeadFieldData(
             change.leadgen_id,
             integration.pageAccessToken,
         );
 
-        mappedLead = mapFieldData(fieldData);
+        mappedLead = mapFieldData(leadData.field_data);
+        leadSource = mapMetaLeadSource(leadData);
     } catch (error) {
         const message = error instanceof Error ? error.message : "Erro desconhecido ao buscar o lead na Graph API.";
 
@@ -108,6 +110,9 @@ const processLeadgenChange = async (change: LeadgenChange, rawPayload: MetaWebho
             name: mappedLead.name,
             email: mappedLead.email,
             phone: mappedLead.phone,
+            // Fonte (Instagram/Facebook, anúncio/orgânico) — a Origem "Meta" vem do log.
+            utmSource: leadSource.utmSource,
+            utmMedium: leadSource.utmMedium,
         },
         null,
     );

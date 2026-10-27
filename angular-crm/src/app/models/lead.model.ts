@@ -1,5 +1,6 @@
 export type LeadStatus = 'SEM_CONTATO' | 'NAO_ATENDE' | 'EM_ANDAMENTO' | 'VENDIDO' | 'PERDIDO';
 
+// Origem: por onde o Lead entrou no CRM, calculada pelo backend (não é a Fonte/UTM).
 export type LeadSource = 'Site' | 'Meta' | 'Manual';
 
 export type DealStatus = 'IN_PROGRESS' | 'WON' | 'LOST';
@@ -31,7 +32,8 @@ export interface Lead {
   status: LeadStatus;
   budgetValue: string | null;
   notes: string | null;
-  // Capturados só na criação (origem Web Widget) — nunca editáveis, ver harness.
+  // Fonte do Lead (ver shared/utils/lead-source.util.ts) — capturada só na criação (UTM do
+  // site ou plataforma do Meta Lead Ads), nunca editável.
   utmSource: string | null;
   utmMedium: string | null;
   utmCampaign: string | null;

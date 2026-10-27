@@ -31,23 +31,45 @@ const toGraphError = async (response: Response, path: string): Promise<Integrati
     );
 };
 
-// Busca os dados completos do lead na Graph API — o webhook só avisa que um lead chegou
-// (leadgen_id), os campos do formulário (nome, e-mail, telefone) vêm daqui.
-// https://developers.facebook.com/docs/marketing-api/guides/lead-ads/retrieving
-const fetchLeadFieldData = async (
-    leadgenId: string,
-    pageAccessToken: string,
-): Promise<MetaLeadFieldData> => {
-    const url = `${metaConfig.graphApiBaseUrl}/${leadgenId}?access_token=${encodeURIComponent(pageAccessToken)}`;
+// Além dos campos do formulário, pede de onde o lead veio — platform ("fb"/"ig") e se foi
+// orgânico ou de anúncio —, que viram a Fonte do Lead no CRM.
+const LEAD_FIELDS = "field_data,platform,is_organic";
+// "(#100) Tried accessing nonexisting field": a Meta recusou um campo extra.
+const GRAPH_UNKNOWN_FIELD_CODE = 100;
 
-    let response: Response;
+const requestLead = async (leadgenId: string, pageAccessToken: string, fields?: string): Promise<Response> => {
+    const params = new URLSearchParams({ access_token: pageAccessToken, ...(fields ? { fields } : {}) });
 
     try {
-        response = await fetch(url);
+        return await fetch(`${metaConfig.graphApiBaseUrl}/${leadgenId}?${params.toString()}`);
     } catch (error) {
         const message = error instanceof Error ? error.message : "Falha de rede desconhecida.";
 
         throw new IntegrationError(`Falha ao conectar com a Graph API da Meta: ${message}`);
+    }
+};
+
+const isUnknownFieldError = async (response: Response): Promise<boolean> => {
+    try {
+        const body = (await response.clone().json()) as GraphErrorBody;
+
+        return body.error?.code === GRAPH_UNKNOWN_FIELD_CODE;
+    } catch {
+        return false;
+    }
+};
+
+// Busca os dados completos do lead na Graph API — o webhook só avisa que um lead chegou
+// (leadgen_id), os campos do formulário (nome, e-mail, telefone) vêm daqui. Se a Meta
+// recusar os campos extras de origem, repete só com os padrões: perder a Fonte é aceitável,
+// perder o Lead não (business-rules.md).
+// https://developers.facebook.com/docs/marketing-api/guides/lead-ads/retrieving
+const fetchLeadFieldData = async (leadgenId: string, pageAccessToken: string): Promise<MetaLeadFieldData> => {
+    let response = await requestLead(leadgenId, pageAccessToken, LEAD_FIELDS);
+
+    if (!response.ok && (await isUnknownFieldError(response))) {
+        logger.warn({ leadgenId }, "[meta] Graph API recusou platform/is_organic — buscando o lead sem a Fonte.");
+        response = await requestLead(leadgenId, pageAccessToken);
     }
 
     if (!response.ok) {

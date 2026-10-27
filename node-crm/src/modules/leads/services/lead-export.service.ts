@@ -4,6 +4,7 @@ import path from "path";
 import ExcelJS from "exceljs";
 
 import { leadRepository } from "../repositories/lead.repository";
+import { resolveLeadSource } from "../utils/lead-source";
 
 const LOGO_PATH = path.join(__dirname, "..", "..", "..", "shared", "assets", "cmb-logo.png");
 
@@ -95,7 +96,7 @@ const buildWorkbook = async (
 
     leads.forEach((lead, index) => {
         const rowNumber = headerRowNumber + 1 + index;
-        const source = lead.webWidgetLogs.length > 0 ? "Site" : lead.metaLogs.length > 0 ? "Meta" : "Manual";
+        const source = resolveLeadSource(lead);
         const value = lead.deal?.value ?? lead.budgetValue ?? null;
 
         const row = sheet.getRow(rowNumber);

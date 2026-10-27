@@ -59,4 +59,7 @@ export type MetaWebhookPayload = {
 // Formato do retorno da Graph API para GET /{leadgen_id}.
 export type MetaLeadFieldData = {
     field_data: { name: string; values: string[] }[];
+    // Onde o lead preencheu o formulário: "fb", "ig" (ou outras plataformas da Meta).
+    platform?: string;
+    is_organic?: boolean;
 };

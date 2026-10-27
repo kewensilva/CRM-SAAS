@@ -2,6 +2,7 @@ import { NotFoundError } from "../../../shared/errors";
 import { companyRepository } from "../../companies/repositories/company.repository";
 import type { CreateLeadDTO, UpdateLeadDTO } from "../dto/create-lead.dto";
 import { leadRepository } from "../repositories/lead.repository";
+import { resolveLeadSource } from "../utils/lead-source";
 import type { Lead, LeadHistoryEntry, LeadWithDetails } from "../types/lead.types";
 
 // Regra de visibilidade do Vendedor (USER): enxerga Leads em "Sem contato" (fila comum)
@@ -73,7 +74,7 @@ const listWithDetails = async (
 
     return visible.map(({ webWidgetLogs, metaLogs, ...lead }) => ({
         ...lead,
-        source: webWidgetLogs.length > 0 ? "Site" : metaLogs.length > 0 ? "Meta" : "Manual",
+        source: resolveLeadSource({ webWidgetLogs, metaLogs }),
     }));
 };
 
