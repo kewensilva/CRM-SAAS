@@ -130,6 +130,7 @@ model Tenant {
     metaIntegration  MetaIntegration?
     metaLogs         MetaIntegrationLog[]
     webWidgetIntegration WebWidgetIntegration?
+    googleAnalyticsIntegration GoogleAnalyticsIntegration?
     webWidgetLogs        WebWidgetLog[]
     lostReasons          LostReason[]
     analystAccess        AnalystTenantAccess[]
@@ -705,4 +706,21 @@ model UserAccessLog {
     @@index([userId, createdAt])
     @@index([tenantId])
     @@map("user_access_logs")
+}
+
+// Propriedade GA4 do cliente, lida pela conta de serviço da plataforma (uma só, credenciais
+// em variáveis de ambiente). O cliente dá acesso adicionando o e-mail da conta de serviço
+// como Leitor na propriedade — por isso aqui não há token nem segredo, só o Property ID.
+model GoogleAnalyticsIntegration {
+    id         String    @id @default(uuid()) @db.Uuid
+    tenantId   String    @unique @map("tenant_id") @db.Uuid
+    enabled    Boolean   @default(false)
+    propertyId String?   @map("property_id")
+    createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt  DateTime? @map("deleted_at") @db.Timestamptz
+
+    tenant Tenant @relation(fields: [tenantId], references: [id])
+
+    @@map("google_analytics_integrations")
 }

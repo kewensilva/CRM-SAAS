@@ -440,6 +440,25 @@ eventos como `LeadCreated`/`DealWon`/`UserCreated` que a esta altura já têm or
   plataforma, nos cards e em Relatórios (antes o Dashboard contava só `EM_ANDAMENTO`). Acessos só
   contam a partir do deploy da migration `20261020120000_user_access_logs` — não há histórico.
 
+- **Integração Google Analytics (GA4)** (`modules/integrations/google-analytics/`, módulo
+  independente como Meta e web-widget): uma única **conta de serviço da plataforma**
+  (`GA_SERVICE_ACCOUNT_EMAIL` + `GA_SERVICE_ACCOUNT_PRIVATE_KEY`, opcionais — sem elas o servidor
+  sobe e só a integração explica o que falta) lê a propriedade GA4 de cada cliente; o cliente
+  adiciona o e-mail da conta como Leitor na propriedade e informa o Property ID em Configurações.
+  Por isso `GoogleAnalyticsIntegration` não guarda token nem segredo, só `propertyId` + `enabled`.
+  Autenticação JWT-bearer assinada com `node:crypto` (RS256) e token em cache por ~1h — sem
+  `googleapis`, sem dependência nova. `GET/PUT /integrations/google-analytics` (`TENANT_ADMIN`; ao
+  ativar, faz uma consulta de teste e devolve o motivo do Google se a conta não tiver acesso) e
+  `GET /reports/google-analytics?month=YYYY-MM` (`TENANT_ADMIN`/`MANAGER`/`USER`, mesmo acesso de
+  Relatórios): sessões, usuários ativos, novos usuários e top 10 cidades por usuários ativos, numa
+  única chamada `batchRunReports`. Mês corrente vai só até hoje; datas são interpretadas no fuso da
+  propriedade GA4. Sem integração ativa responde `{ configured: false }` (não é erro). Frontend em
+  componentes próprios (`configuracoes/google-analytics-settings/`,
+  `relatorios/google-analytics-report/`) para não crescer ainda mais `configuracoes.component.ts`.
+  Testado localmente sem credenciais reais do Google (fluxo "não configurado", validações, RBAC,
+  assinatura do JWT verificada com chave RSA gerada no teste e aceita como bem-formada pelo
+  endpoint real do Google) — a leitura de uma propriedade real ainda não foi validada.
+
 `angular-crm/` já tem várias páginas construídas (login, dashboard Owner/Tenant, CRM, Leads,
 Oportunidades, Relatórios, Empresas, Configurações, Motivos, Cadastros, Acessos) — a nota
 anterior de "frontend ainda não iniciado" ficou desatualizada e foi removida.

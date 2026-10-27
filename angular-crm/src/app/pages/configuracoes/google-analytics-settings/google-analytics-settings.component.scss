@@ -1,0 +1,79 @@
+// Mesmo visual do card da integração Meta em configuracoes.component.scss.
+.ga-settings {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    padding: 20px 16px;
+  }
+}
+
+.ga-settings__title {
+  margin: 0;
+  font-size: 20px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.ga-settings__hint {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.ga-settings__steps {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: rgba(0, 0, 0, 0.75);
+  line-height: 1.5;
+}
+
+.ga-settings__email {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+
+  code {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    padding: 2px 8px;
+    overflow-wrap: anywhere;
+  }
+}
+
+.ga-settings__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ga-settings__field {
+  width: 100%;
+  max-width: 420px;
+}
+
+.ga-settings__warning {
+  margin: 0;
+  color: #ef6c00;
+}
+
+.ga-settings__error {
+  margin: 0;
+  color: #c62828;
+}
+
+.ga-settings__success {
+  margin: 0;
+  color: #2e7d32;
+}
+
+.ga-settings__actions {
+  display: flex;
+  justify-content: flex-end;
+}

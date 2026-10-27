@@ -46,6 +46,7 @@ import {
   WIDGET_BUTTON_ICONS,
   WidgetButtonIcon,
 } from '../../models/web-widget.model';
+import { GoogleAnalyticsSettingsComponent } from './google-analytics-settings/google-analytics-settings.component';
 
 type MessageFieldGroup = FormGroup<{
   key: FormControl<string>;
@@ -93,6 +94,7 @@ const apiErrorMessage = (error: unknown, fallback: string): string =>
   selector: 'app-configuracoes',
   standalone: true,
   imports: [
+    GoogleAnalyticsSettingsComponent,
     ReactiveFormsModule,
     ClipboardModule,
     DatePipe,

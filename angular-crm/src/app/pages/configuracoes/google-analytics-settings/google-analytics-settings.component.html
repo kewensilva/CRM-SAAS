@@ -1,0 +1,64 @@
+<section class="ga-settings">
+  <h2 class="ga-settings__title">Integração Google Analytics (GA4)</h2>
+  <p class="ga-settings__hint">
+    Mostra em Relatórios os usuários ativos, novos usuários, sessões e cidades do site do cliente.
+  </p>
+
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else {
+    @if (settings(); as current) {
+      @if (!current.credentialsConfigured) {
+        <p class="ga-settings__warning" role="alert">
+          A conta de serviço do Google ainda não foi configurada no servidor. Fale com o suporte da CMB.
+        </p>
+      } @else {
+        <ol class="ga-settings__steps">
+          <li>
+            No Google Analytics, abra <strong>Administrador → Gerenciamento de acesso à propriedade</strong> e
+            adicione este e-mail com o papel <strong>Leitor</strong>:
+            <span class="ga-settings__email">
+              <code>{{ current.serviceAccountEmail }}</code>
+              <button type="button" mat-icon-button matTooltip="Copiar e-mail" (click)="copyServiceAccountEmail()">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+            </span>
+          </li>
+          <li>
+            Copie o <strong>ID da propriedade</strong> (Administrador → Detalhes da propriedade — só números, não o
+            "G-…" do fluxo de dados) e cole abaixo.
+          </li>
+          <li>Ative a integração e salve. O CRM testa o acesso antes de salvar.</li>
+        </ol>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="save()" novalidate class="ga-settings__form">
+        <mat-form-field appearance="fill" floatLabel="always" class="ga-settings__field">
+          <mat-label>ID da propriedade GA4</mat-label>
+          <input matInput formControlName="propertyId" placeholder="Ex.: 412345678" inputmode="numeric" />
+          @if (form.controls.propertyId.hasError('pattern')) {
+            <mat-error>Use só os números da propriedade (não o código "G-…").</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-slide-toggle formControlName="enabled">Integração ativa</mat-slide-toggle>
+
+        @if (errorMessage()) {
+          <p class="ga-settings__error" role="alert">{{ errorMessage() }}</p>
+        }
+
+        @if (successMessage()) {
+          <p class="ga-settings__success" role="status">{{ successMessage() }}</p>
+        }
+
+        <div class="ga-settings__actions">
+          <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
+            {{ saving() ? 'Salvando...' : 'Salvar' }}
+          </button>
+        </div>
+      </form>
+    } @else if (errorMessage()) {
+      <p class="ga-settings__error" role="alert">{{ errorMessage() }}</p>
+    }
+  }
+</section>

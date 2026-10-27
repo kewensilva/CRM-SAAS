@@ -1,0 +1,54 @@
+<section class="ga-report">
+  <div class="ga-report__header">
+    <h2 class="ga-report__title">Google Analytics</h2>
+    @if (report(); as data) {
+      @if (data.configured) {
+        <span class="ga-report__period">{{ formatDay(data.startDate) }} a {{ formatDay(data.endDate) }}</span>
+      }
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="ga-report__hint">Carregando...</p>
+  } @else if (errorMessage()) {
+    <p class="ga-report__error" role="alert">{{ errorMessage() }}</p>
+  } @else {
+    @if (report(); as data) {
+      @if (!data.configured) {
+        <p class="ga-report__hint">
+          Integração com o Google Analytics não ativada. Configure a propriedade GA4 em Configurações.
+        </p>
+      } @else {
+        <div class="ga-report__metrics">
+          <div class="ga-metric ga-metric--primary">
+            <span class="ga-metric__label">Sessões</span>
+            <span class="ga-metric__value">{{ formatNumber(data.totals.sessions) }}</span>
+          </div>
+          <div class="ga-metric">
+            <span class="ga-metric__label">Usuários ativos</span>
+            <span class="ga-metric__value">{{ formatNumber(data.totals.activeUsers) }}</span>
+          </div>
+          <div class="ga-metric">
+            <span class="ga-metric__label">Novos usuários</span>
+            <span class="ga-metric__value">{{ formatNumber(data.totals.newUsers) }}</span>
+          </div>
+        </div>
+
+        <div class="ga-report__cities">
+          <h3 class="ga-report__subtitle">Usuários ativos por cidade</h3>
+          @for (row of data.byCity; track row.city) {
+            <div class="ga-city">
+              <span class="ga-city__name">{{ row.city }}</span>
+              <div class="ga-city__bar">
+                <div class="ga-city__bar-fill" [style.width.%]="cityBarWidth(row.activeUsers)"></div>
+              </div>
+              <span class="ga-city__value">{{ formatNumber(row.activeUsers) }}</span>
+            </div>
+          } @empty {
+            <p class="ga-report__hint">Nenhuma visita registrada neste mês.</p>
+          }
+        </div>
+      }
+    }
+  }
+</section>

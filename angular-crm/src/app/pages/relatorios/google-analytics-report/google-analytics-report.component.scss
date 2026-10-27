@@ -1,0 +1,131 @@
+// Mesmo visual dos cards de relatorios.component.scss (.report-card / .metric-tile).
+.ga-report {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: Roboto, sans-serif;
+}
+
+.ga-report__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ga-report__title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.ga-report__period,
+.ga-report__hint {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.ga-report__hint {
+  margin: 0;
+}
+
+.ga-report__error {
+  margin: 0;
+  color: #c62828;
+}
+
+.ga-report__metrics {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 12px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr 1fr;
+
+    .ga-metric--primary {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.ga-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.ga-metric__label {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.ga-metric__value {
+  font-size: 24px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
+  font-variant-numeric: tabular-nums;
+}
+
+// Sessões em destaque: o maior número do bloco.
+.ga-metric--primary {
+  background-color: rgba(21, 101, 192, 0.08);
+
+  .ga-metric__value {
+    font-size: 36px;
+    color: #1565c0;
+  }
+}
+
+.ga-report__subtitle {
+  margin: 0 0 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.ga-report__cities {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ga-city {
+  display: grid;
+  grid-template-columns: minmax(90px, 160px) 1fr auto;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.ga-city__name {
+  color: rgba(0, 0, 0, 0.75);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ga-city__bar {
+  height: 8px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.ga-city__bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background-color: #1565c0;
+}
+
+.ga-city__value {
+  color: rgba(0, 0, 0, 0.87);
+  font-variant-numeric: tabular-nums;
+}

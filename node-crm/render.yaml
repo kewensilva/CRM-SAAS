@@ -27,5 +27,9 @@ services:
         value: https://www.crm-cmb.com.br/configuracoes
       - key: META_TOKEN_ENCRYPTION_KEY
         sync: false
+      - key: GA_SERVICE_ACCOUNT_EMAIL
+        sync: false
+      - key: GA_SERVICE_ACCOUNT_PRIVATE_KEY
+        sync: false
       - key: CORS_ORIGIN
         value: https://crm-cmb.com.br
