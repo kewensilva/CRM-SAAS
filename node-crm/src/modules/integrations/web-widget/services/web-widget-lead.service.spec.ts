@@ -89,6 +89,46 @@ describe("webWidgetLeadService.processSubmission", () => {
         expect(mockedLogRepository.markProcessed).toHaveBeenCalledWith("log-1", "lead-1");
     });
 
+    it("leva a mensagem do formulário para as Observações e deduz a Fonte sem UTM", async () => {
+        mockedLeadRepository.findByTenantAndEmail.mockResolvedValue(null);
+        mockedLeadRepository.create.mockResolvedValue({ id: "lead-1" } as never);
+
+        await webWidgetLeadService.processSubmission({
+            ...basePayload,
+            messageAnswers: { mensagem: "Quero um orçamento" },
+            pageUrl: "https://site-do-cliente.com.br/contato",
+            referrer: "https://l.instagram.com/",
+        });
+
+        expect(mockedLeadRepository.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                notes: "Mensagem enviada pelo site:\nMensagem: Quero um orçamento",
+                utmSource: "instagram",
+                utmMedium: "referral",
+            }),
+            null,
+        );
+    });
+
+    it("UTM enviada pelo site tem prioridade sobre o referrer", async () => {
+        mockedLeadRepository.findByTenantAndEmail.mockResolvedValue(null);
+        mockedLeadRepository.create.mockResolvedValue({ id: "lead-1" } as never);
+
+        await webWidgetLeadService.processSubmission({
+            ...basePayload,
+            utmSource: "google",
+            utmMedium: "cpc",
+            utmCampaign: "black-friday",
+            referrer: "https://l.instagram.com/",
+        });
+
+        expect(mockedLeadRepository.create).toHaveBeenCalledWith(
+            expect.objectContaining({ utmSource: "google", utmMedium: "cpc", utmCampaign: "black-friday" }),
+            null,
+        );
+        expect(mockedLeadRepository.create.mock.calls[0]?.[0]).not.toHaveProperty("notes");
+    });
+
     it("mantém o Lead existente e marca DUPLICATE quando duplicateStrategy é IGNORE", async () => {
         mockedIntegrationRepository.findByPublicKey.mockResolvedValue(baseIntegration);
         mockedLeadRepository.findByTenantAndEmail.mockResolvedValue({ id: "lead-existing" } as never);

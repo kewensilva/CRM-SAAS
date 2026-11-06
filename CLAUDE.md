@@ -334,11 +334,14 @@ Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-t
     descartado silenciosamente, só a resposta ao chamador continua sempre 200 (só falha de
     schema Zod, ex. nome ausente, retorna 400 — não é sinal sobre validade de `publicKey`,
     ajuda o dev do site a depurar a integração).
-  - **Limitação conhecida**: Mensagem e dados de UTM só existem em `WebWidgetLog`, não no
-    Lead — `Lead` não tem campos `message`/`source`/UTM no schema e business-rules.md não
-    os define, então não alterei o model (fora do escopo). Mensagem só é visível na tela de
-    logs da integração, não no próprio Lead — mesma limitação estrutural que já existe pro
-    rastreamento de origem Meta via `MetaIntegrationLog.leadId`.
+  - **Mensagem e Fonte no Lead**: a mensagem do formulário vai para `Lead.notes`
+    ("Mensagem enviada pelo site: ...", visível no card do vendedor) e as UTMs para
+    `Lead.utm*`. Sem UTM, a Fonte é deduzida em `web-widget/services/traffic-source.ts`: UTM na
+    própria URL da página > gclid/gbraid/wbraid (google/cpc) > msclkid (bing/cpc) > fbclid
+    (instagram ou facebook/social, pelo referrer) > referrer (instagram/facebook/linkedin…
+    referral, google/bing organic, outro domínio/referral); acesso direto fica sem Fonte. O
+    endpoint aceita JSON (widget, formulário próprio com fetch) e form-urlencoded (formulário
+    HTML puro — o visitante vê a resposta JSON, sem redirecionamento).
   - **Sem bundler**: `widget.js` é JS vanilla escrito à mão em
     `modules/integrations/web-widget/public/widget.js`, servido via `res.sendFile` (não
     `express.static`, é um único arquivo) — não há pipeline de build de frontend no

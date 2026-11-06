@@ -10,6 +10,8 @@ export type CreateLeadDTO = {
     utmCampaign?: string | undefined;
     utmTerm?: string | undefined;
     utmContent?: string | undefined;
+    // Observações iniciais — ex.: mensagem que o visitante escreveu no formulário do site.
+    notes?: string | undefined;
 };
 
 // Origem não é editável (é calculada, não uma coluna) — só os dados de contato do Lead.

@@ -48,6 +48,7 @@ const create = (data: CreateLeadDTO, changedByUserId: string | null): Promise<Le
                 utmCampaign: data.utmCampaign ?? null,
                 utmTerm: data.utmTerm ?? null,
                 utmContent: data.utmContent ?? null,
+                notes: data.notes ?? null,
             },
         });
 

@@ -6,6 +6,7 @@ import type {
     WebWidgetIntegration,
     WebWidgetSubmissionPayload,
 } from "../types/web-widget-integration.types";
+import { resolveTrafficSource } from "./traffic-source";
 
 // Junta as respostas dos campos de mensagem parametrizados num texto único, pra manter o
 // log num só campo de texto (WebWidgetLog.message) — usa o label configurado quando
@@ -36,6 +37,7 @@ const formatMessageAnswers = (
 // registro") aplicado aqui a uma origem de Lead diferente.
 const processSubmission = async (payload: WebWidgetSubmissionPayload): Promise<void> => {
     const integration = await webWidgetIntegrationRepository.findByPublicKey(payload.publicKey);
+    const message = formatMessageAnswers(payload.messageAnswers, integration);
 
     const log = await webWidgetLogRepository.createReceived({
         tenantId: integration?.tenantId ?? null,
@@ -46,7 +48,7 @@ const processSubmission = async (payload: WebWidgetSubmissionPayload): Promise<v
         utmCampaign: payload.utmCampaign ?? null,
         utmTerm: payload.utmTerm ?? null,
         utmContent: payload.utmContent ?? null,
-        message: formatMessageAnswers(payload.messageAnswers, integration),
+        message,
         rawPayload: payload,
     });
 
@@ -102,7 +104,21 @@ const processSubmission = async (payload: WebWidgetSubmissionPayload): Promise<v
         integration.defaultResponsibleUserId,
     );
 
+    // Sem UTM, a Fonte é deduzida do clique (gclid/fbclid) ou do site de origem (referrer).
+    const trafficSource = resolveTrafficSource(
+        {
+            utmSource: payload.utmSource,
+            utmMedium: payload.utmMedium,
+            utmCampaign: payload.utmCampaign,
+            utmTerm: payload.utmTerm,
+            utmContent: payload.utmContent,
+        },
+        payload.pageUrl,
+        payload.referrer,
+    );
+
     // changedByUserId nulo: lead criado pela integração, sem usuário autenticado por trás.
+    // A mensagem do formulário vai para as Observações — é o que o vendedor vê no card.
     const lead = await leadRepository.create(
         {
             tenantId: integration.tenantId,
@@ -110,11 +126,8 @@ const processSubmission = async (payload: WebWidgetSubmissionPayload): Promise<v
             name: payload.name,
             email: payload.email,
             phone: payload.phone,
-            utmSource: payload.utmSource,
-            utmMedium: payload.utmMedium,
-            utmCampaign: payload.utmCampaign,
-            utmTerm: payload.utmTerm,
-            utmContent: payload.utmContent,
+            ...trafficSource,
+            ...(message ? { notes: `Mensagem enviada pelo site:\n${message}` } : {}),
         },
         null,
     );
