@@ -1,8 +1,11 @@
-
 // Custom Theming for Angular Material
 // For more information: https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 @use './styles/theme-colors' as theme;
+
+// Helvetica em todo o CRM. Fonte de sistema (licenciada, não pode ser hospedada como webfont):
+// Helvetica Neue/Helvetica no macOS/iOS; Arial — mesmas métricas — no Windows/Android/Linux.
+$font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
 html {
   @include mat.theme((
@@ -11,18 +14,110 @@ html {
       primary: theme.$primary-palette,
       tertiary: theme.$tertiary-palette,
     ),
-    typography: Roboto,
+    typography: (
+      plain-family: $font-sans,
+      brand-family: $font-sans,
+      regular-weight: 400,
+      medium-weight: 500,
+      bold-weight: 700,
+    ),
     density: 0,
   ));
 }
-/* You can add global styles to this file, and also import other style files */
 
-html, body { height: 100%; }
-body {
-  margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+:root {
+  --font-sans: #{$font-sans};
+  // Cor da marca e degradê usados nos destaques (ícones ativos, botões de ênfase).
+  --brand: #ff9521;
+  --brand-gradient: linear-gradient(135deg, #ffa647 0%, #ff7a1a 100%);
 }
 
+html, body { height: 100%; }
+
+// Helvetica fica apertada em tamanhos pequenos e larga em títulos: um pouco de ar no texto
+// corrido e espaçamento negativo leve nos títulos.
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.005em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+// Botões e campos nativos não herdam a fonte por padrão do navegador.
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+// Números alinhados em colunas (valores, contagens, datas).
+td, .mat-mdc-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+// Títulos de destaque (antes Bebas Neue): Helvetica em negrito, caixa justa.
 .font-display {
-  font-family: "Bebas Neue", Roboto, "Helvetica Neue", sans-serif;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+// Ícone dentro de um "selo" arredondado — fundo em leve degradê da marca, borda sutil e
+// brilho interno. --active (item selecionado) vira o degradê sólido com o ícone em branco.
+.icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fff6ee 0%, #ffe9d6 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 149, 33, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+
+  img,
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    color: #6b3a0a;
+    transition: filter 0.2s ease, color 0.2s ease;
+  }
+
+  &--active {
+    background: var(--brand-gradient);
+    box-shadow:
+      0 6px 14px -4px rgba(255, 122, 26, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+
+    // Os SVGs do menu são escuros (#33363F): o filtro os deixa brancos sobre o degradê.
+    img {
+      filter: brightness(0) invert(1);
+    }
+
+    mat-icon {
+      color: #ffffff;
+    }
+  }
+
+  &--neutral {
+    background: linear-gradient(145deg, #f7f7f8 0%, #ececee 100%);
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+    mat-icon {
+      color: rgba(0, 0, 0, 0.65);
+    }
+  }
 }

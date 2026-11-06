@@ -3,7 +3,7 @@
   flex-direction: column;
   gap: 4px;
   min-width: min(360px, 85vw);
-  font-family: Roboto, sans-serif;
+  font-family: var(--font-sans);
 
   &__field {
     width: 100%;

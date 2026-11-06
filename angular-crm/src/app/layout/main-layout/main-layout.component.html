@@ -38,10 +38,13 @@
         *ngFor="let item of menuItems()"
         [routerLink]="item.route"
         routerLinkActive="sidebar__item--active"
+        #navLink="routerLinkActive"
         class="sidebar__item"
         (click)="closeMobileMenu()"
       >
-        <img [src]="item.icon" alt="" class="sidebar__item-icon" />
+        <span class="icon-badge" [class.icon-badge--active]="navLink.isActive">
+          <img [src]="item.icon" alt="" />
+        </span>
         <span class="sidebar__item-label" *ngIf="!isCollapsed()">{{ item.label }}</span>
       </a>
     </nav>
@@ -51,10 +54,13 @@
         *ngIf="showSettings()"
         [routerLink]="settingsItem.route"
         routerLinkActive="sidebar__item--active"
+        #settingsLink="routerLinkActive"
         class="sidebar__item"
         (click)="closeMobileMenu()"
       >
-        <img [src]="settingsItem.icon" alt="" class="sidebar__item-icon" />
+        <span class="icon-badge" [class.icon-badge--active]="settingsLink.isActive">
+          <img [src]="settingsItem.icon" alt="" />
+        </span>
         <span class="sidebar__item-label" *ngIf="!isCollapsed()">{{ settingsItem.label }}</span>
       </a>
 
@@ -65,12 +71,12 @@
         [disabled]="exitingTenant()"
         (click)="exitTenant()"
       >
-        <mat-icon class="sidebar__item-icon">arrow_back</mat-icon>
+        <span class="icon-badge icon-badge--neutral"><mat-icon>arrow_back</mat-icon></span>
         <span class="sidebar__item-label" *ngIf="!isCollapsed()">Voltar para plataforma</span>
       </button>
 
       <button type="button" class="sidebar__item sidebar__item--button" (click)="logout()">
-        <mat-icon class="sidebar__item-icon">logout</mat-icon>
+        <span class="icon-badge icon-badge--neutral"><mat-icon>logout</mat-icon></span>
         <span class="sidebar__item-label" *ngIf="!isCollapsed()">Sair</span>
       </button>
     </div>

@@ -4,7 +4,7 @@ $color-primary: #ff9521;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  font-family: Roboto, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .configuracoes-page__header {
@@ -15,7 +15,7 @@ $color-primary: #ff9521;
 
 .configuracoes-page__title {
   margin: 0;
-  font-size: 28px;
+  font-size: 24px;
   color: rgba(0, 0, 0, 0.87);
 }
 

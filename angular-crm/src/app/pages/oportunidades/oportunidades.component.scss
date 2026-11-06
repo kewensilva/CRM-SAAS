@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  font-family: Roboto, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .opportunities-page__search {
@@ -23,7 +23,7 @@
   border: none;
   outline: none;
   flex: 1;
-  font-family: Roboto, sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   color: rgba(0, 0, 0, 0.87);
   background: transparent;

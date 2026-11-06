@@ -3,7 +3,7 @@
   flex-direction: column;
   gap: 12px;
   min-width: min(320px, 85vw);
-  font-family: Roboto, sans-serif;
+  font-family: var(--font-sans);
 
   &__row {
     display: flex;
