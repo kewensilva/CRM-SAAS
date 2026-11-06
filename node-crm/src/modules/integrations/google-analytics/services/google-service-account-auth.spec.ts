@@ -66,7 +66,7 @@ describe("getServiceAccountAccessToken", () => {
     it("chave privada inválida vira erro de configuração", async () => {
         const auth = await loadModule({ email: "crm@proj.iam.gserviceaccount.com", key: "não-é-uma-chave" });
 
-        await expect(auth.getServiceAccountAccessToken()).rejects.toThrow("GA_SERVICE_ACCOUNT_PRIVATE_KEY inválida");
+        await expect(auth.getServiceAccountAccessToken()).rejects.toThrow("Chave privada da conta de serviço inválida");
     });
 
     it("credencial recusada pelo Google vira IntegrationError sem vazar o corpo", async () => {

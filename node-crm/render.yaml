@@ -31,5 +31,7 @@ services:
         sync: false
       - key: GA_SERVICE_ACCOUNT_PRIVATE_KEY
         sync: false
+      - key: GOOGLE_ADS_MANAGER_ACCOUNT_ID
+        sync: false
       - key: CORS_ORIGIN
         value: https://crm-cmb.com.br

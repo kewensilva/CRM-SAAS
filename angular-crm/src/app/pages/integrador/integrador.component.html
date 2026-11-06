@@ -1,0 +1,42 @@
+<div class="integrador">
+  <div>
+    <h1 class="integrador__title">Integrador Google Ads</h1>
+    <p class="integrador__hint">
+      Recebe os eventos do RD Station ou do Bitrix24 e envia as conversões offline para o Google Ads do cliente
+      (GCLID + e-mail/telefone em hash). Crie uma conexão por origem e defina as regras do que vira conversão.
+    </p>
+  </div>
+
+  <section class="integrador__new">
+    <h2 class="integrador__subtitle">Nova conexão</h2>
+    <form [formGroup]="form" (ngSubmit)="create()" novalidate class="new-form">
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Nome</mat-label>
+        <input matInput formControlName="name" placeholder="Ex.: RD CRM — vendas" />
+      </mat-form-field>
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Origem</mat-label>
+        <mat-select formControlName="source">
+          @for (option of sourceOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <button type="submit" mat-flat-button color="primary" [disabled]="creating()">{{ creating() ? 'Criando...' : 'Criar conexão' }}</button>
+    </form>
+  </section>
+
+  @if (errorMessage()) {
+    <p class="integrador__error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="integrador__hint">Carregando...</p>
+  } @else {
+    @for (integration of integrations(); track integration.id) {
+      <app-conversion-connection [integration]="integration" (changed)="onConnectionChanged(integration.id, $event)" />
+    } @empty {
+      <p class="integrador__hint">Nenhuma conexão ainda.</p>
+    }
+  }
+</div>

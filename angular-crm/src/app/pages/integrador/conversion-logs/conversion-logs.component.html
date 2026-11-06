@@ -1,0 +1,58 @@
+<div class="logs">
+  <div class="logs__header">
+    <h4 class="logs__title">Histórico</h4>
+    <button type="button" mat-button (click)="load()" [disabled]="loading()"><mat-icon>refresh</mat-icon> Atualizar</button>
+  </div>
+
+  @if (errorMessage()) {
+    <p class="logs__error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (logs(); as data) {
+    <h5 class="logs__subtitle">Conversões enviadas ao Google Ads</h5>
+    <ul class="log-list">
+      @for (upload of data.uploads; track upload.id) {
+        <li class="log">
+          <span class="log__status log__status--{{ upload.status }}">{{ uploadStatusLabels[upload.status] }}</span>
+          <div class="log__body">
+            <span>{{ upload.rule.name }} · {{ upload.externalId }}
+              @if (upload.conversionValue) {· R$ {{ upload.conversionValue }}}</span>
+            <span class="log__meta">
+              {{ upload.createdAt | date: 'dd/MM/yyyy HH:mm' }} · identificação: {{ identification(upload) }}
+            </span>
+            @if (upload.errorMessage) {
+              <span class="log__error">{{ upload.errorMessage }}</span>
+            }
+          </div>
+          @if (upload.status === 'FAILED') {
+            <button type="button" mat-stroked-button [disabled]="busyId() === upload.id" (click)="retryUpload(upload.id)">Reenviar</button>
+          }
+        </li>
+      } @empty {
+        <p class="logs__hint">Nenhuma conversão enviada ainda.</p>
+      }
+    </ul>
+
+    <h5 class="logs__subtitle">Webhooks recebidos</h5>
+    <ul class="log-list">
+      @for (webhook of data.webhooks; track webhook.id) {
+        <li class="log">
+          <span class="log__status log__status--{{ webhook.status }}">{{ webhookStatusLabels[webhook.status] }}</span>
+          <div class="log__body">
+            <span class="log__meta">{{ webhook.createdAt | date: 'dd/MM/yyyy HH:mm:ss' }}</span>
+            @if (webhook.errorMessage) {
+              <span [class.log__error]="webhook.status === 'FAILED' || webhook.status === 'REJECTED'">{{ webhook.errorMessage }}</span>
+            }
+          </div>
+          @if (webhook.status === 'FAILED') {
+            <button type="button" mat-stroked-button [disabled]="busyId() === webhook.id" (click)="reprocessWebhook(webhook.id)">Reprocessar</button>
+          }
+        </li>
+      } @empty {
+        <p class="logs__hint">Nenhum webhook recebido ainda — confira se a URL foi colada na origem.</p>
+      }
+    </ul>
+  } @else if (loading()) {
+    <p class="logs__hint">Carregando...</p>
+  }
+</div>

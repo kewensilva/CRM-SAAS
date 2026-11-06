@@ -1,4 +1,7 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
+
+import { FEATURE_FLAGS } from './core/feature-flags';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -71,6 +74,13 @@ export const routes: Routes = [
         path: 'relatorios',
         loadComponent: () =>
           import('./pages/relatorios/relatorios.component').then((m) => m.RelatoriosComponent),
+      },
+      {
+        path: 'integrador',
+        // Flag desligada: quem digitar a URL volta para o Painel.
+        canActivate: [() => FEATURE_FLAGS.conversionSync || inject(Router).createUrlTree(['/dashboard'])],
+        loadComponent: () =>
+          import('./pages/integrador/integrador.component').then((m) => m.IntegradorComponent),
       },
       {
         path: 'chamados',

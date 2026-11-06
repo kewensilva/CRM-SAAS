@@ -1,0 +1,73 @@
+<div class="rules">
+  <h4 class="rules__title">Regras de envio ao Google Ads</h4>
+
+  @if (integration().rules.length === 0) {
+    <p class="rules__hint">Nenhuma regra ainda — sem regra, nada é enviado ao Google Ads.</p>
+  }
+
+  <ul class="rules__list">
+    @for (rule of integration().rules; track rule.id) {
+      <li class="rule" [class.rule--disabled]="!rule.enabled">
+        <div class="rule__info">
+          <span class="rule__name">{{ rule.name }}</span>
+          <span class="rule__detail">
+            {{ labelOf(rule) }}@if (rule.triggerValue) {: <strong>{{ rule.triggerValue }}</strong>}
+            → ação de conversão {{ rule.conversionActionId }}
+            @if (rule.sendValue) {· com valor da venda}
+          </span>
+        </div>
+        <div class="rule__actions">
+          <mat-slide-toggle [checked]="rule.enabled" [disabled]="busyRuleId() === rule.id" (change)="toggle(rule)"
+            matTooltip="Ativar / pausar a regra"></mat-slide-toggle>
+          <button type="button" mat-stroked-button [disabled]="busyRuleId() === rule.id" (click)="test(rule)"
+            matTooltip="Valida conta e ação de conversão no Google sem registrar nada">Testar</button>
+          <button type="button" mat-icon-button [disabled]="busyRuleId() === rule.id" (click)="remove(rule)"
+            matTooltip="Excluir regra"><mat-icon>delete</mat-icon></button>
+        </div>
+      </li>
+    }
+  </ul>
+
+  @if (message(); as msg) {
+    <p [class.rules__error]="msg.error" [class.rules__success]="!msg.error" role="status">{{ msg.text }}</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="addRule()" novalidate class="rule-form">
+    <mat-form-field appearance="fill" floatLabel="always">
+      <mat-label>Nome da regra</mat-label>
+      <input matInput formControlName="name" placeholder="Ex.: Venda fechada" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always">
+      <mat-label>Quando</mat-label>
+      <mat-select formControlName="trigger" (selectionChange)="onTriggerChange($event.value)">
+        @for (option of definition().triggers; track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (selectedTrigger()?.valueHint; as hint) {
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>{{ selectedTrigger()?.valueRequired ? 'Etapa / estágio' : 'Identificador (opcional)' }}</mat-label>
+        <input matInput formControlName="triggerValue" [placeholder]="hint" />
+      </mat-form-field>
+    }
+
+    <mat-form-field appearance="fill" floatLabel="always">
+      <mat-label>ID da ação de conversão (Google Ads)</mat-label>
+      <input matInput formControlName="conversionActionId" inputmode="numeric" placeholder="Ex.: 7012345678" />
+      <mat-hint>Google Ads → Metas → Conversões → ação do tipo "Importação de cliques"</mat-hint>
+    </mat-form-field>
+
+    @if (definition().supportsValue) {
+      <mat-checkbox formControlName="sendValue">Enviar o valor do negócio</mat-checkbox>
+    }
+
+    <div class="rule-form__actions">
+      <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
+        {{ saving() ? 'Salvando...' : 'Adicionar regra' }}
+      </button>
+    </div>
+  </form>
+</div>

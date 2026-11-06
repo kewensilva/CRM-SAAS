@@ -132,6 +132,7 @@ model Tenant {
     webWidgetIntegration WebWidgetIntegration?
     googleAnalyticsIntegration GoogleAnalyticsIntegration?
     supportTickets       SupportTicket[]
+    conversionIntegrations ConversionIntegration[]
     webWidgetLogs        WebWidgetLog[]
     lostReasons          LostReason[]
     analystAccess        AnalystTenantAccess[]
@@ -750,4 +751,152 @@ model SupportTicket {
     @@index([tenantId, createdAt])
     @@index([createdByUserId])
     @@map("support_tickets")
+}
+
+// ---------------------------------------------------------------------------------------
+// Integrador de conversões offline (estilo Zapier): RD Station Marketing, RD Station CRM e
+// Bitrix24 avisam o CRM por webhook; regras configuráveis decidem quais eventos viram
+// conversão offline no Google Ads (Data Manager API, via MCC da CMB).
+// ---------------------------------------------------------------------------------------
+
+enum ConversionSource {
+    RD_STATION_MARKETING
+    RD_STATION_CRM
+    BITRIX24
+}
+
+// NEW_CONVERSION/OPPORTUNITY/LIFECYCLE_STAGE: RD Station Marketing.
+// DEAL_STAGE/DEAL_WON: RD Station CRM e Bitrix24.
+enum ConversionTrigger {
+    NEW_CONVERSION
+    OPPORTUNITY
+    LIFECYCLE_STAGE
+    DEAL_STAGE
+    DEAL_WON
+}
+
+// REJECTED: falhou a verificação do segredo do webhook — nunca é reprocessado.
+enum ConversionWebhookStatus {
+    RECEIVED
+    PROCESSED
+    IGNORED
+    FAILED
+    REJECTED
+}
+
+enum ConversionUploadStatus {
+    PENDING
+    SENT
+    FAILED
+}
+
+// Uma conexão de origem de um cliente. webhookToken vai na URL que o cliente cola no RD/Bitrix
+// (é o que identifica a conexão). Segredos (token da API do RD CRM, URL de webhook de entrada
+// do Bitrix, segredo de verificação do webhook) ficam criptografados (token-cipher).
+model ConversionIntegration {
+    id                  String           @id @default(uuid()) @db.Uuid
+    tenantId            String           @map("tenant_id") @db.Uuid
+    name                String
+    source              ConversionSource
+    enabled             Boolean          @default(false)
+    webhookToken        String           @unique @map("webhook_token")
+    // Conta Google Ads do cliente (10 dígitos), vinculada ao MCC da CMB.
+    googleAdsCustomerId String?          @map("google_ads_customer_id")
+    // Onde o GCLID está na origem: "cf_gclid" (RD Marketing), rótulo do campo personalizado
+    // (RD CRM) ou "UF_CRM_..." (Bitrix24).
+    gclidField          String?          @map("gclid_field")
+    sourceApiUrl        String?          @map("source_api_url")
+    sourceApiToken      String?          @map("source_api_token")
+    webhookSecret       String?          @map("webhook_secret")
+    currencyCode        String           @default("BRL") @map("currency_code")
+    createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt           DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt           DateTime?        @map("deleted_at") @db.Timestamptz
+
+    tenant      Tenant                 @relation(fields: [tenantId], references: [id])
+    rules       ConversionRule[]
+    webhookLogs ConversionWebhookLog[]
+    uploads     ConversionUpload[]
+
+    @@index([tenantId])
+    @@map("conversion_integrations")
+}
+
+// "Quando acontecer <trigger> (<triggerValue>), envie a ação de conversão <conversionActionId>."
+model ConversionRule {
+    id                 String            @id @default(uuid()) @db.Uuid
+    tenantId           String            @map("tenant_id") @db.Uuid
+    integrationId      String            @map("integration_id") @db.Uuid
+    name               String
+    trigger            ConversionTrigger
+    // Estágio/etapa/identificador que dispara a regra; nulo = qualquer um (quando faz sentido).
+    triggerValue       String?           @map("trigger_value")
+    conversionActionId String            @map("conversion_action_id")
+    sendValue          Boolean           @default(false) @map("send_value")
+    enabled            Boolean           @default(true)
+    createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+    deletedAt          DateTime?         @map("deleted_at") @db.Timestamptz
+
+    integration ConversionIntegration @relation(fields: [integrationId], references: [id])
+    uploads     ConversionUpload[]
+
+    @@index([integrationId])
+    @@index([tenantId])
+    @@map("conversion_rules")
+}
+
+// Todo webhook recebido vira uma linha ANTES de qualquer processamento — nada que chega é
+// descartado sem registro. Log imutável no conteúdo (só o status muda), sem soft delete.
+// integrationId nulo: token de URL que não bate com nenhuma conexão.
+model ConversionWebhookLog {
+    id            String                  @id @default(uuid()) @db.Uuid
+    tenantId      String?                 @map("tenant_id") @db.Uuid
+    integrationId String?                 @map("integration_id") @db.Uuid
+    status        ConversionWebhookStatus @default(RECEIVED)
+    errorMessage  String?                 @map("error_message")
+    rawPayload    Json                    @map("raw_payload")
+    createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt     DateTime                @updatedAt @map("updated_at") @db.Timestamptz
+
+    integration ConversionIntegration? @relation(fields: [integrationId], references: [id])
+    uploads     ConversionUpload[]
+
+    @@index([integrationId, createdAt])
+    @@map("conversion_webhook_logs")
+}
+
+// Um envio ao Google Ads (uma regra que casou com um evento). (ruleId, transactionId) único:
+// RD e Bitrix reenviam o mesmo evento (cada atualização de um negócio ganho, retentativas), e
+// a mesma conversão nunca é enviada duas vezes.
+model ConversionUpload {
+    id              String                 @id @default(uuid()) @db.Uuid
+    tenantId        String                 @map("tenant_id") @db.Uuid
+    integrationId   String                 @map("integration_id") @db.Uuid
+    ruleId          String                 @map("rule_id") @db.Uuid
+    webhookLogId    String                 @map("webhook_log_id") @db.Uuid
+    externalId      String                 @map("external_id")
+    transactionId   String                 @map("transaction_id")
+    gclid           String?
+    hasEmail        Boolean                @default(false) @map("has_email")
+    hasPhone        Boolean                @default(false) @map("has_phone")
+    // E-mail/telefone já normalizados e em SHA-256 (formato do Google) — permite reenviar
+    // sem guardar dado pessoal em texto puro.
+    userIdentifiers Json?                  @map("user_identifiers")
+    conversionValue Decimal?               @map("conversion_value") @db.Decimal(14, 2)
+    occurredAt      DateTime               @map("occurred_at") @db.Timestamptz
+    status          ConversionUploadStatus @default(PENDING)
+    googleRequestId String?                @map("google_request_id")
+    errorMessage    String?                @map("error_message")
+    createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz
+
+    integration ConversionIntegration @relation(fields: [integrationId], references: [id])
+    rule        ConversionRule        @relation(fields: [ruleId], references: [id])
+    webhookLog  ConversionWebhookLog  @relation(fields: [webhookLogId], references: [id])
+
+    @@unique([ruleId, transactionId])
+    @@index([integrationId, createdAt])
+    @@index([tenantId])
+    @@map("conversion_uploads")
 }

@@ -1,0 +1,87 @@
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rules__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.rules__hint {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.rules__error {
+  margin: 0;
+  color: #c62828;
+}
+
+.rules__success {
+  margin: 0;
+  color: #2e7d32;
+}
+
+.rules__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.rule {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-wrap: wrap;
+}
+
+.rule--disabled .rule__info {
+  opacity: 0.55;
+}
+
+.rule__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rule__name {
+  font-weight: 500;
+}
+
+.rule__detail {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+  overflow-wrap: anywhere;
+}
+
+.rule__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rule-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0 12px;
+  align-items: start;
+  padding-top: 8px;
+}
+
+.rule-form__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}

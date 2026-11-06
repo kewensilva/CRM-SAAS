@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/auth/auth.service';
 import { OwnerTenantAccessService } from '../../core/auth/owner-tenant-access.service';
 import { SessionService } from '../../core/auth/session.service';
+import { FEATURE_FLAGS } from '../../core/feature-flags';
 
 interface MenuItem {
   label: string;
@@ -29,6 +30,11 @@ const TENANT_BASE_MENU_ITEMS: MenuItem[] = [
 const TENANT_ADMIN_ONLY_ITEMS: MenuItem[] = [
   { label: 'Motivos', route: '/motivos', icon: 'assets/icons/icon-filter-alt.svg' },
   { label: 'Cadastros', route: '/cadastros', icon: 'assets/icons/icon-group.svg' },
+  // Integrador de conversões RD Station / Bitrix24 → Google Ads (mesmo acesso do backend),
+  // escondido enquanto a flag estiver desligada.
+  ...(FEATURE_FLAGS.conversionSync
+    ? [{ label: 'Integrador Ads', route: '/integrador', icon: 'assets/icons/icon-send.svg' }]
+    : []),
 ];
 
 const OWNER_MENU_ITEMS: MenuItem[] = [

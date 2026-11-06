@@ -1,0 +1,86 @@
+<section class="connection">
+  <header class="connection__header">
+    <div>
+      <h3 class="connection__name">{{ integration().name }}</h3>
+      <span class="connection__source">{{ definition().label }}</span>
+    </div>
+    <span class="connection__status" [class.connection__status--on]="integration().enabled">
+      {{ integration().enabled ? 'Ativa' : 'Inativa' }}
+    </span>
+  </header>
+
+  <div class="connection__webhook">
+    <span class="connection__label">URL do webhook (cole na origem)</span>
+    <div class="connection__url">
+      <code>{{ webhookUrl() }}</code>
+      <button type="button" mat-icon-button matTooltip="Copiar URL" (click)="copyWebhookUrl()"><mat-icon>content_copy</mat-icon></button>
+      <button type="button" mat-icon-button matTooltip="Gerar nova URL" (click)="regenerateToken()"><mat-icon>autorenew</mat-icon></button>
+    </div>
+  </div>
+
+  <details class="connection__setup">
+    <summary>Como configurar no {{ definition().label }}</summary>
+    <ol>
+      @for (step of definition().setupSteps; track step) {
+        <li>{{ step }}</li>
+      }
+    </ol>
+  </details>
+
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate class="connection-form">
+    <mat-form-field appearance="fill" floatLabel="always">
+      <mat-label>Nome da conexão</mat-label>
+      <input matInput formControlName="name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always">
+      <mat-label>ID da conta Google Ads do cliente</mat-label>
+      <input matInput formControlName="googleAdsCustomerId" placeholder="123-456-7890" />
+      <mat-hint>Vinculada ao MCC da CMB</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" floatLabel="always">
+      <mat-label>Campo do GCLID (opcional)</mat-label>
+      <input matInput formControlName="gclidField" [placeholder]="definition().gclidHint" />
+      <mat-hint>Sem GCLID, usa e-mail/telefone</mat-hint>
+    </mat-form-field>
+
+    @if (definition().usesApiUrl) {
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>URL do webhook de entrada (REST do Bitrix24)</mat-label>
+        <input matInput type="password" formControlName="sourceApiUrl"
+          [placeholder]="integration().hasSourceApiUrl ? secretPlaceholder : 'https://seuportal.bitrix24.com.br/rest/1/...'" />
+      </mat-form-field>
+    }
+
+    @if (definition().usesApiToken) {
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Token da API do RD Station CRM</mat-label>
+        <input matInput type="password" formControlName="sourceApiToken"
+          [placeholder]="integration().hasSourceApiToken ? secretPlaceholder : 'Para buscar e-mail e telefone do contato'" />
+      </mat-form-field>
+    }
+
+    @if (definition().secretLabel; as secretLabel) {
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>{{ secretLabel }}</mat-label>
+        <input matInput type="password" formControlName="webhookSecret"
+          [placeholder]="integration().hasWebhookSecret ? secretPlaceholder : 'Opcional'" />
+      </mat-form-field>
+    }
+
+    <mat-slide-toggle formControlName="enabled">Conexão ativa</mat-slide-toggle>
+
+    <div class="connection-form__actions">
+      <button type="button" mat-button color="warn" (click)="remove()">Excluir conexão</button>
+      <button type="submit" mat-flat-button color="primary" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar' }}</button>
+    </div>
+  </form>
+
+  @if (message(); as msg) {
+    <p [class.connection__error]="msg.error" [class.connection__success]="!msg.error" role="status">{{ msg.text }}</p>
+  }
+
+  <app-conversion-rules [integration]="integration()" (changed)="onRulesChanged()" />
+  <app-conversion-logs [integrationId]="integration().id" />
+</section>

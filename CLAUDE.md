@@ -483,6 +483,40 @@ eventos como `LeadCreated`/`DealWon`/`UserCreated` que a esta altura já têm or
   em domínio verificado no Resend — com o remetente de teste `onboarding@resend.dev` o Resend só
   entrega para o e-mail dono da conta.
 
+- **Integrador de conversões offline → Google Ads** (`modules/integrations/conversion-sync/`, menu
+  "Integrador Ads", rota `/integrador`, só `TENANT_ADMIN`): **INATIVO no frontend** — menu e rota
+  escondidos por `FEATURE_FLAGS.conversionSync = false` (`angular-crm/src/app/core/feature-flags.ts`),
+  aguardando a CMB definir os eventos e configurar o MCC; o backend já atende. Estilo Zapier. Cada cliente cria
+  conexões de origem (**RD Station Marketing**, **RD Station CRM**, **Bitrix24**), cada uma com uma
+  URL de webhook própria (`POST /api/v1/webhooks/conversions/:token`, pública, token aleatório) e
+  **regras configuráveis** "gatilho → ação de conversão do Google Ads (com/sem valor)" — os eventos
+  de negócio ainda não foram definidos pela CMB, por isso nada é fixo no código. Gatilhos por
+  origem em `conversion-rule-policy.ts` (RD Marketing: nova conversão/oportunidade/estágio do funil;
+  CRMs: etapa do negócio/negócio ganho).
+  - **Envio pela Data Manager API** (`events:ingest`), não pela Google Ads API: desde 15/06/2026 o
+    `UploadClickConversions` recusa developer tokens que nunca enviaram conversões offline.
+    Autentica com conta de serviço (JWT RS256, agora em `shared/google/service-account-token.ts`,
+    compartilhado com o GA4) com acesso ao **MCC da CMB** (`GOOGLE_ADS_MANAGER_ACCOUNT_ID`, vai
+    como `loginAccount`); `GOOGLE_ADS_SERVICE_ACCOUNT_*` opcionais, senão reaproveita `GA_*`.
+    Identificação: GCLID (campo configurável na origem) + e-mail/telefone normalizados e em SHA-256
+    (hash confere com o exemplo da documentação do Google). Um evento por requisição (a API rejeita
+    o lote inteiro se um falhar). Não confirmado ainda: se a Data Manager API exige developer token
+    — o botão "Testar" da regra (validateOnly) responde isso no primeiro uso real.
+  - **Nada se perde**: `ConversionWebhookLog` é gravado antes de processar (status
+    RECEIVED/PROCESSED/IGNORED/FAILED/REJECTED); processamento em segundo plano (RD CRM exige
+    resposta em 5 s); `ConversionUpload` único por (regra, transactionId) — RD e Bitrix reenviam o
+    mesmo evento e a mesma conversão nunca sai duas vezes. Falhas: "Reenviar" (envio) e
+    "Reprocessar" (webhook, usa o payload salvo); REJECTED (segredo errado) nunca é reprocessado.
+    Envio guarda só os hashes, nunca e-mail/telefone em texto puro.
+  - Origens: RD Marketing não manda GCLID nativo (só via campo personalizado, ex. `cf_gclid`);
+    RD CRM v2 não manda o contato no webhook — e-mail/telefone vêm da API **v1** do RD CRM
+    (`/deals/:id/contacts?token=`), só quando alguma regra dispara; **não confirmado** que o `id`
+    do negócio no webhook v2 é aceito pela API v1. Bitrix24: webhook de saída só manda o ID →
+    `crm.deal.get`/`crm.contact.get` pela URL de webhook de entrada (métodos marcados como legados
+    pela Bitrix, ainda funcionando); ganho = `STAGE_SEMANTIC_ID` "S". Segredos (token RD, URL
+    Bitrix, segredo do webhook) criptografados com `token-cipher`.
+  - Nenhum envio real ao Google foi feito ainda (sem MCC/conta de serviço no ambiente local).
+
 `angular-crm/` já tem várias páginas construídas (login, dashboard Owner/Tenant, CRM, Leads,
 Oportunidades, Relatórios, Empresas, Configurações, Motivos, Cadastros, Acessos) — a nota
 anterior de "frontend ainda não iniciado" ficou desatualizada e foi removida.

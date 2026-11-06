@@ -1,0 +1,99 @@
+.logs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logs__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logs__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.logs__subtitle {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.logs__hint {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.logs__error,
+.log__error {
+  color: #c62828;
+  overflow-wrap: anywhere;
+}
+
+.logs__error {
+  margin: 0;
+}
+
+.log-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.log {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 13px;
+}
+
+.log__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.log__meta {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.log__status {
+  flex-shrink: 0;
+  min-width: 82px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.log__status--SENT,
+.log__status--PROCESSED {
+  color: #2e7d32;
+  background-color: rgba(46, 125, 50, 0.1);
+}
+
+.log__status--FAILED,
+.log__status--REJECTED {
+  color: #c62828;
+  background-color: rgba(198, 40, 40, 0.1);
+}
+
+.log__status--PENDING,
+.log__status--RECEIVED {
+  color: #ef6c00;
+  background-color: rgba(239, 108, 0, 0.1);
+}
