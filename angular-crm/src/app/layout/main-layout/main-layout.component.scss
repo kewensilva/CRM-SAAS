@@ -18,7 +18,7 @@
   padding: 24px 16px;
   box-sizing: border-box;
   transition: width 0.2s ease, padding 0.2s ease;
-  overflow: hidden;
+  overflow: auto;
 
   &--collapsed {
     width: 112px;
@@ -51,6 +51,7 @@
     margin-bottom: 16px;
 
     img {
+      border-radius: 50%;
       max-width: 100%;
       height: auto;
       transition: border-radius 0.2s ease;
