@@ -1,21 +1,19 @@
-import { Component, OnInit, ViewChild, signal } from '@angular/core';
-import { FormBuilder, FormGroupDirective, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
 
 import { ConversionSyncService } from '../../core/conversion-sync/conversion-sync.service';
 import { ConversionIntegration, ConversionSource } from '../../models/conversion-sync.model';
 import { apiErrorMessage } from './api-error';
 import { ConversionConnectionComponent } from './conversion-connection/conversion-connection.component';
-import { SOURCE_OPTIONS } from './conversion-sources';
+import { SOURCE_DEFINITIONS, SOURCE_OPTIONS } from './conversion-sources';
 
-// Integrador de conversões offline (estilo Zapier): RD Station / Bitrix24 → Google Ads.
+// Integrador de conversões offline no estilo Zapier: lista de integrações (origem → Google Ads)
+// e, ao abrir uma, o editor em passos "Quando isto acontecer → Faça isto".
 @Component({
   selector: 'app-integrador',
   standalone: true,
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, ConversionConnectionComponent],
+  imports: [MatButtonModule, MatIconModule, ConversionConnectionComponent],
   templateUrl: './integrador.component.html',
   styleUrl: './integrador.component.scss',
 })
@@ -25,53 +23,60 @@ export class IntegradorComponent implements OnInit {
   readonly loading = signal(true);
   readonly creating = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly selectedId = signal<string | null>(null);
 
-  readonly form;
+  readonly selected = computed(() => this.integrations().find((item) => item.id === this.selectedId()) ?? null);
 
-  @ViewChild(FormGroupDirective) private formDirective?: FormGroupDirective;
-
-  constructor(
-    private readonly formBuilder: FormBuilder,
-    private readonly conversionSyncService: ConversionSyncService,
-  ) {
-    this.form = this.formBuilder.nonNullable.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
-      source: ['' as ConversionSource | '', Validators.required],
-    });
-  }
+  constructor(private readonly conversionSyncService: ConversionSyncService) {}
 
   ngOnInit(): void {
     this.load();
   }
 
-  create(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+  sourceLabel(source: ConversionSource): string {
+    return SOURCE_DEFINITIONS[source].label;
+  }
 
-    const { name, source } = this.form.getRawValue();
+  sourceBadge(source: ConversionSource): string {
+    return SOURCE_DEFINITIONS[source].badge;
+  }
 
+  activeRules(integration: ConversionIntegration): number {
+    return integration.rules.filter((rule) => rule.enabled).length;
+  }
+
+  // Cria já com nome padrão e abre o editor — como no Zapier, o resto se ajusta nos passos.
+  create(source: ConversionSource): void {
     this.creating.set(true);
     this.errorMessage.set(null);
 
-    this.conversionSyncService.create({ name: name.trim(), source: source as ConversionSource }).subscribe({
+    this.conversionSyncService.create({ name: `${this.sourceLabel(source)} → Google Ads`, source }).subscribe({
       next: (integration) => {
         this.creating.set(false);
-        this.formDirective?.resetForm();
         this.integrations.update((list) => [...list, integration]);
+        this.selectedId.set(integration.id);
       },
       error: (error: unknown) => {
         this.creating.set(false);
-        this.errorMessage.set(apiErrorMessage(error, 'Não foi possível criar a conexão.'));
+        this.errorMessage.set(apiErrorMessage(error, 'Não foi possível criar a integração.'));
       },
     });
   }
 
-  // Card avisou mudança: conexão excluída (null) sai da lista; senão recarrega (regras vêm junto).
+  open(id: string): void {
+    this.selectedId.set(id);
+  }
+
+  back(): void {
+    this.selectedId.set(null);
+  }
+
+  // Editor avisou mudança: integração excluída (null) sai da lista e volta para ela; senão
+  // recarrega (as regras vêm junto com a integração).
   onConnectionChanged(id: string, updated: ConversionIntegration | null): void {
     if (!updated) {
       this.integrations.update((list) => list.filter((item) => item.id !== id));
+      this.selectedId.set(null);
       return;
     }
 
@@ -85,7 +90,7 @@ export class IntegradorComponent implements OnInit {
         this.loading.set(false);
       },
       error: (error: unknown) => {
-        this.errorMessage.set(apiErrorMessage(error, 'Não foi possível carregar as conexões.'));
+        this.errorMessage.set(apiErrorMessage(error, 'Não foi possível carregar as integrações.'));
         this.loading.set(false);
       },
     });

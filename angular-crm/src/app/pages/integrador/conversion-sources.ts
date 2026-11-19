@@ -11,6 +11,8 @@ export interface TriggerOption {
 
 export interface SourceDefinition {
   label: string;
+  // Sigla do selo do app no Integrador.
+  badge: string;
   gclidHint: string;
   usesApiToken: boolean;
   usesApiUrl: boolean;
@@ -28,6 +30,7 @@ const DEAL_TRIGGERS = (stageHint: string): TriggerOption[] => [
 export const SOURCE_DEFINITIONS: Record<ConversionSource, SourceDefinition> = {
   RD_STATION_MARKETING: {
     label: 'RD Station Marketing',
+    badge: 'RD',
     gclidHint: 'Campo personalizado com o GCLID (ex.: cf_gclid)',
     usesApiToken: false,
     usesApiUrl: false,
@@ -51,6 +54,7 @@ export const SOURCE_DEFINITIONS: Record<ConversionSource, SourceDefinition> = {
   },
   RD_STATION_CRM: {
     label: 'RD Station CRM',
+    badge: 'CRM',
     gclidHint: 'Rótulo do campo personalizado do negócio com o GCLID',
     usesApiToken: true,
     usesApiUrl: false,
@@ -65,6 +69,7 @@ export const SOURCE_DEFINITIONS: Record<ConversionSource, SourceDefinition> = {
   },
   BITRIX24: {
     label: 'Bitrix24',
+    badge: 'B24',
     gclidHint: 'Campo do GCLID no negócio ou contato (ex.: UF_CRM_1700000000)',
     usesApiToken: false,
     usesApiUrl: true,
@@ -79,7 +84,11 @@ export const SOURCE_DEFINITIONS: Record<ConversionSource, SourceDefinition> = {
   },
 };
 
-export const SOURCE_OPTIONS = (Object.keys(SOURCE_DEFINITIONS) as ConversionSource[]).map((value) => ({
+// Origens oferecidas ao criar uma integração. RD Station CRM e Bitrix24 continuam prontos no
+// código (e no backend); para oferecê-los de novo, basta incluí-los aqui.
+export const ENABLED_SOURCES: ConversionSource[] = ['RD_STATION_MARKETING'];
+
+export const SOURCE_OPTIONS = ENABLED_SOURCES.map((value) => ({
   value,
   label: SOURCE_DEFINITIONS[value].label,
 }));

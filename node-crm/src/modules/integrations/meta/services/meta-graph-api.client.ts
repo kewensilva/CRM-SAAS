@@ -81,7 +81,7 @@ const fetchLeadFieldData = async (leadgenId: string, pageAccessToken: string): P
 
 // Chamada genérica à Graph API. GET leva os parâmetros na query; POST/DELETE no corpo
 // (form-urlencoded), para não deixar tokens e segredos em URLs de requisições de escrita.
-const callGraph = async <T>(
+export const callGraph = async <T>(
     path: string,
     params: Record<string, string>,
     method: "GET" | "POST" | "DELETE" = "GET",
@@ -151,6 +151,27 @@ const listManagedPages = async (userToken: string): Promise<MetaManagedPage[]> =
     return result.data ?? [];
 };
 
+export type MetaTokenPermissions = {
+    scopes: string[];
+    granularScopes: { scope: string; target_ids?: string[] }[];
+};
+
+// Permissões que o usuário de fato concedeu ao token, com os IDs das Páginas por permissão
+// (granular_scopes). No Login do Facebook para Empresas, é aqui que aparecem as Páginas de
+// um portfólio empresarial que /me/accounts não lista. Consulta feita com o token do app.
+const debugUserToken = async (userToken: string, appId: string): Promise<MetaTokenPermissions> => {
+    const result = await callGraph<{
+        data?: { scopes?: string[]; granular_scopes?: { scope: string; target_ids?: string[] }[] };
+    }>("debug_token", { input_token: userToken, access_token: `${appId}|${metaConfig.appSecret}` });
+
+    return { scopes: result.data?.scopes ?? [], granularScopes: result.data?.granular_scopes ?? [] };
+};
+
+// Uma Página pelo ID, com o token dela — funciona para Páginas concedidas ao app mesmo
+// quando não aparecem em /me/accounts.
+const fetchPageWithToken = (pageId: string, userToken: string): Promise<MetaManagedPage> =>
+    callGraph<MetaManagedPage>(pageId, { fields: "id,name,access_token", access_token: userToken });
+
 // Assina a Página no campo "leadgen" do nosso app — sem isso a Meta não envia os leads
 // para o webhook (permissão pages_manage_metadata).
 const subscribePageToLeadgen = (pageId: string, pageToken: string): Promise<{ success: boolean }> =>
@@ -172,6 +193,8 @@ export const metaGraphApiClient = {
     exchangeCodeForUserToken,
     extendUserToken,
     listManagedPages,
+    debugUserToken,
+    fetchPageWithToken,
     subscribePageToLeadgen,
     unsubscribePage,
 };

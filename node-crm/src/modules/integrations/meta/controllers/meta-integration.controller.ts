@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 
 import { ValidationError } from "../../../../shared/errors";
 import { toPublicIntegration } from "../services/meta-integration.mapper";
+import { metaConnectionHealthService } from "../services/meta-connection-health.service";
 import { metaIntegrationService } from "../services/meta-integration.service";
 import { metaLogRepository } from "../repositories/meta-log.repository";
 import { updateMetaIntegrationSchema } from "../validators/meta-integration.validator";
@@ -38,8 +39,22 @@ const listLogs = async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, data: logs });
 };
 
+const health = async (req: Request, res: Response) => {
+    const data = await metaConnectionHealthService.getHealth(req.auth.tenantId as string);
+
+    return res.status(200).json({ success: true, data });
+};
+
+const resubscribe = async (req: Request, res: Response) => {
+    await metaConnectionHealthService.resubscribe(req.auth.tenantId as string);
+
+    return res.status(200).json({ success: true, data: { subscribed: true } });
+};
+
 export const metaIntegrationController = {
     get,
     update,
     listLogs,
+    health,
+    resubscribe,
 };

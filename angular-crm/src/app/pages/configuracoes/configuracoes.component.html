@@ -508,7 +508,7 @@
     <section class="meta-form-section">
       <h2 class="section-title">Integração Meta Lead Ads</h2>
       <p class="section-hint">
-        Conecte a Página do Facebook/Instagram para receber leads de anúncios diretamente no CRM.
+        Conecte a Página do Facebook do cliente: os leads dos anúncios de cadastro do Facebook e do Instagram (vinculado à Página) entram direto no CRM.
       </p>
 
             <div class="meta-connect">
@@ -576,6 +576,8 @@
           </div>
         }
       </div>
+
+      <app-meta-connection-status [integration]="meta()" />
 
       <form [formGroup]="metaForm" (ngSubmit)="saveMeta()" novalidate class="meta-form">
         <mat-slide-toggle formControlName="enabled">Integração ativa</mat-slide-toggle>

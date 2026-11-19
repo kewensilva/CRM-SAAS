@@ -1,0 +1,66 @@
+@if (integration()?.pageId && integration()?.hasPageToken) {
+  <section class="meta-status" aria-label="Status da conexão com a Meta">
+    <header class="meta-status__header">
+      <div>
+        <h3 class="meta-status__title">Status da conexão</h3>
+        <p class="meta-status__summary">
+          @if (loading() && !health()) {
+            Verificando com a Meta...
+          } @else if (allOk()) {
+            Tudo certo — leads do Facebook e do Instagram entram no CRM automaticamente.
+          } @else {
+            Confira os itens marcados para começar a receber os leads.
+          }
+        </p>
+      </div>
+      <button type="button" mat-stroked-button (click)="load()" [disabled]="loading()">
+        <mat-icon>refresh</mat-icon>
+        {{ loading() ? 'Verificando...' : 'Verificar de novo' }}
+      </button>
+    </header>
+
+    <ol class="meta-status__steps">
+      <li class="meta-status__step">
+        <span class="meta-status__badge meta-status__badge--ok"><mat-icon>check</mat-icon></span>
+        <div>
+          <strong>Página do Facebook</strong>
+          <p>{{ integration()?.pageName || integration()?.pageId }} — conectada.</p>
+        </div>
+      </li>
+
+      @for (step of steps(); track step.key) {
+        <li class="meta-status__step">
+          <span class="meta-status__badge meta-status__badge--{{ step.state }}">
+            <mat-icon>{{ stateIcons[step.state] }}</mat-icon>
+          </span>
+          <div>
+            <strong>{{ step.title }}</strong>
+            <p>{{ step.detail }}</p>
+          </div>
+        </li>
+      }
+    </ol>
+
+    @if (health()?.lastLead; as lastLead) {
+      <p class="meta-status__last">Último lead recebido em {{ lastLead.receivedAt | date: 'dd/MM/yyyy HH:mm' }}.</p>
+    } @else if (health()) {
+      <p class="meta-status__last">Nenhum lead recebido ainda.</p>
+    }
+
+    @if (errorMessage()) {
+      <p class="meta-status__error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <div class="meta-status__actions">
+      @if (needsResubscribe()) {
+        <button type="button" mat-flat-button color="primary" (click)="resubscribe()" [disabled]="resubscribing()">
+          {{ resubscribing() ? 'Reativando...' : 'Reativar recebimento' }}
+        </button>
+      }
+      <a mat-button [href]="leadTestingToolUrl" target="_blank" rel="noopener noreferrer">
+        <mat-icon>science</mat-icon>
+        Enviar lead de teste (ferramenta da Meta)
+      </a>
+    </div>
+  </section>
+}

@@ -5,6 +5,7 @@ import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiSuccessResponse } from '../../models/auth.model';
 import {
+  MetaConnectionHealth,
   MetaIntegration,
   MetaIntegrationLog,
   MetaOAuthExchangeResult,
@@ -70,6 +71,18 @@ export class MetaService {
       .post<ApiSuccessResponse<MetaIntegration>>(`${environment.apiUrl}/integrations/meta/disconnect`, {})
       .pipe(map((response) => response.data));
   }
+  health(): Observable<MetaConnectionHealth> {
+    return this.http
+      .get<ApiSuccessResponse<MetaConnectionHealth>>(`${environment.apiUrl}/integrations/meta/health`)
+      .pipe(map((response) => response.data));
+  }
+
+  resubscribe(): Observable<void> {
+    return this.http
+      .post<ApiSuccessResponse<unknown>>(`${environment.apiUrl}/integrations/meta/resubscribe`, {})
+      .pipe(map(() => undefined));
+  }
+
   listLogs(): Observable<MetaIntegrationLog[]> {
     return this.http
       .get<ApiSuccessResponse<MetaIntegrationLog[]>>(`${environment.apiUrl}/integrations/meta/logs`)

@@ -36,7 +36,7 @@ export interface SaveConversionIntegrationPayload {
   name?: string;
   source?: ConversionSource;
   enabled?: boolean;
-  googleAdsCustomerId?: string;
+  googleAdsCustomerId?: string | null;
   gclidField?: string;
   sourceApiUrl?: string;
   sourceApiToken?: string;

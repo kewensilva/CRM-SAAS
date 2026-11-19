@@ -11,6 +11,7 @@ import { metaIntegrationRepository } from "../repositories/meta-integration.repo
 import type { MetaIntegration } from "../types/meta-integration.types";
 import { metaGraphApiClient } from "./meta-graph-api.client";
 import { createOAuthState, verifyOAuthState } from "./meta-oauth-state";
+import { discoverPages, noPagesMessage } from "./meta-page-discovery";
 
 // Páginas e tokens ficam SÓ no servidor, em memória, entre "autorizou no Facebook" e
 // "escolheu a Página" (poucos minutos). O navegador recebe apenas id e nome das Páginas —
@@ -83,12 +84,12 @@ const exchangeCode = async (
 
     const shortLived = await metaGraphApiClient.exchangeCodeForUserToken(code, appId, redirectUri);
     const longLived = await metaGraphApiClient.extendUserToken(shortLived.access_token, appId);
-    const managedPages = await metaGraphApiClient.listManagedPages(longLived.access_token);
+    const { pages: managedPages, permissions } = await discoverPages(longLived.access_token, appId);
 
     purgeExpiredSessions();
 
     if (managedPages.length === 0) {
-        return { sessionId: "", pages: [] };
+        throw new BusinessRuleError(noPagesMessage(permissions));
     }
 
     const sessionId = randomBytes(24).toString("hex");

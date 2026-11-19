@@ -41,3 +41,16 @@ export interface MetaOAuthExchangeResult {
   sessionId: string;
   pages: MetaOAuthPage[];
 }
+// Checklist da conexão: cada item traz o valor ou o motivo de não ter conseguido verificar.
+export type MetaHealthCheck<T> = { value: T; error: null } | { value: null; error: string };
+
+export interface MetaConnectionHealth {
+  connected: boolean;
+  page: { id: string; name: string | null } | null;
+  instagram: MetaHealthCheck<{ id: string; username: string | null } | null>;
+  webhookSubscribed: MetaHealthCheck<boolean>;
+  forms: MetaHealthCheck<{ id: string; name: string; status: string }[]>;
+  hasDefaultResponsible: boolean;
+  enabled: boolean;
+  lastLead: { receivedAt: string; status: MetaIntegrationLogStatus } | null;
+}

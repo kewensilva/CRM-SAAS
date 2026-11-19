@@ -92,13 +92,13 @@ export class ConversionConnectionComponent implements OnChanges {
       this.conversionSyncService.update(this.integration().id, {
         name: value.name.trim(),
         enabled: value.enabled,
-        googleAdsCustomerId: value.googleAdsCustomerId.trim(),
+        googleAdsCustomerId: value.googleAdsCustomerId.trim() || null,
         gclidField: value.gclidField.trim(),
         sourceApiUrl: secret(value.sourceApiUrl),
         sourceApiToken: secret(value.sourceApiToken),
         webhookSecret: secret(value.webhookSecret),
       } satisfies SaveConversionIntegrationPayload),
-      'Conexão salva.',
+      'Integração salva.',
     );
   }
 
@@ -109,14 +109,14 @@ export class ConversionConnectionComponent implements OnChanges {
   }
 
   remove(): void {
-    if (!window.confirm(`Excluir a conexão "${this.integration().name}"? Os webhooks dela deixam de ser aceitos.`)) {
+    if (!window.confirm(`Excluir a integração "${this.integration().name}"? Os webhooks dela deixam de ser aceitos.`)) {
       return;
     }
 
     this.conversionSyncService.remove(this.integration().id).subscribe({
       next: () => this.changed.emit(null),
       error: (error: unknown) =>
-        this.message.set({ text: apiErrorMessage(error, 'Não foi possível excluir a conexão.'), error: true }),
+        this.message.set({ text: apiErrorMessage(error, 'Não foi possível excluir a integração.'), error: true }),
     });
   }
 
@@ -137,7 +137,9 @@ export class ConversionConnectionComponent implements OnChanges {
       },
       error: (error: unknown) => {
         this.saving.set(false);
-        this.message.set({ text: apiErrorMessage(error, 'Não foi possível salvar a conexão.'), error: true });
+        // A chave Ligada/Desligada volta ao estado salvo — o servidor recusou a mudança.
+        this.form.controls.enabled.setValue(this.integration().enabled);
+        this.message.set({ text: apiErrorMessage(error, 'Não foi possível salvar a integração.'), error: true });
       },
     });
   }

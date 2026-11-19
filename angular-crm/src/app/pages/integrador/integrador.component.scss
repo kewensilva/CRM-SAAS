@@ -5,20 +5,23 @@
   font-family: var(--font-sans);
 }
 
-.integrador__title {
-  margin: 0 0 4px;
-  font-weight: 600;
-  font-size: 20px;
+.integrador__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.integrador__subtitle {
-  margin: 0 0 12px;
-  font-size: 16px;
-  font-weight: 600;
+.integrador__title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 22px;
 }
 
 .integrador__hint {
   margin: 0;
+  max-width: 640px;
   font-size: 14px;
   color: rgba(0, 0, 0, 0.6);
 }
@@ -28,24 +31,102 @@
   color: #c62828;
 }
 
-.integrador__new {
-  background-color: #ffffff;
+.integrador__back {
+  align-self: flex-start;
+}
+
+.zap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border: 0;
   border-radius: 12px;
-  padding: 24px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover,
+  &:focus-visible {
+    box-shadow: inset 0 0 0 1px rgba(255, 149, 33, 0.5), 0 8px 18px -10px rgba(255, 122, 26, 0.45);
+    transform: translateY(-1px);
+    outline: none;
+  }
 
   @media (max-width: 600px) {
-    padding: 20px 16px;
+    flex-wrap: wrap;
+    padding: 14px 16px;
   }
 }
 
-.new-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0 12px;
-  align-items: start;
+.zap__apps {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 
-  button {
-    margin-top: 8px;
-    justify-self: start;
+.zap__arrow,
+.zap__chevron {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.zap__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.zap__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.zap__meta {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.zap__status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.06);
+
+  &--on {
+    color: #ffffff;
+    background: var(--brand-gradient);
+  }
+}
+
+.zap-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 24px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px dashed rgba(255, 149, 33, 0.45);
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.65);
   }
 }

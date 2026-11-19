@@ -24,6 +24,10 @@ metaRoutes.get(
     adminAccess,
     metaIntegrationController.listLogs,
 );
+// Checklist da conexão (Instagram vinculado, webhook assinado, formulários) e o conserto
+// da assinatura do webhook.
+metaRoutes.get("/integrations/meta/health", authenticate, adminAccess, metaIntegrationController.health);
+metaRoutes.post("/integrations/meta/resubscribe", authenticate, adminAccess, metaIntegrationController.resubscribe);
 // "Conectar com o Facebook" (OAuth): url -> exchange (code vira lista de Páginas) ->
 // connect (Página escolhida é assinada no webhook e salva). disconnect desfaz tudo.
 metaRoutes.get("/integrations/meta/oauth/url", authenticate, adminAccess, metaOAuthController.getAuthorizationUrl);

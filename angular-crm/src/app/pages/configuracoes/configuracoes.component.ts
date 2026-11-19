@@ -38,6 +38,8 @@ import {
 } from '../../models/meta-integration.model';
 import { Product } from '../../models/product.model';
 import { TenantUser } from '../../models/tenant.model';
+import { parseFacebookReturn } from './facebook-return';
+import { MetaConnectionStatusComponent } from './meta-connection-status/meta-connection-status.component';
 import {
   MAX_WIDGET_MESSAGE_FIELDS,
   WebWidgetIntegration,
@@ -95,6 +97,7 @@ const apiErrorMessage = (error: unknown, fallback: string): string =>
   standalone: true,
   imports: [
     GoogleAnalyticsSettingsComponent,
+    MetaConnectionStatusComponent,
     ReactiveFormsModule,
     ClipboardModule,
     DatePipe,
@@ -445,38 +448,38 @@ export class ConfiguracoesComponent implements OnInit {
   // Passo 2: a Meta devolve o usuário para esta tela com ?code=...&state=... (ou ?error=...
   // se ele recusou). O code é de uso único, então a URL é limpa antes de qualquer coisa.
   private handleFacebookCallback(): void {
-    const params = this.route.snapshot.queryParamMap;
-    const code = params.get('code');
-    const state = params.get('state');
-    const facebookError = params.get('error');
+    const result = parseFacebookReturn(window.location.search, window.location.hash);
 
-    if (!code && !facebookError) {
+    if (result.kind === 'none') {
       return;
     }
 
-    void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+    // O code é de uso único: limpa a URL (query e fragmento) antes de qualquer coisa.
+    void this.router.navigate([], { relativeTo: this.route, queryParams: {}, fragment: undefined, replaceUrl: true });
 
-    if (facebookError || !code || !state) {
-      this.metaErrorMessage.set('A autorização com o Facebook foi cancelada ou negada.');
+    if (result.kind === 'error') {
+      this.metaErrorMessage.set(result.message);
       return;
     }
+
+    const { code, state } = result;
 
     this.metaConnecting.set(true);
 
     this.metaService.exchangeCode(code, state).subscribe({
-      next: (result) => {
+      next: (exchange) => {
         this.metaConnecting.set(false);
 
-        if (result.pages.length === 0) {
+        if (exchange.pages.length === 0) {
           this.metaErrorMessage.set(
             'Nenhuma Página encontrada. Confirme que você administra a Página e autorizou o acesso a ela.',
           );
           return;
         }
 
-        this.metaOAuthSessionId.set(result.sessionId);
-        this.metaPages.set(result.pages);
-        this.metaSelectedPageId.set(result.pages.length === 1 ? result.pages[0].id : null);
+        this.metaOAuthSessionId.set(exchange.sessionId);
+        this.metaPages.set(exchange.pages);
+        this.metaSelectedPageId.set(exchange.pages.length === 1 ? exchange.pages[0].id : null);
       },
       error: (error: unknown) => {
         this.metaConnecting.set(false);

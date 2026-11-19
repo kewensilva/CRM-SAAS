@@ -62,7 +62,11 @@ const listByTenant = (
     });
 };
 
+const findLatestByTenant = (tenantId: string): Promise<MetaIntegrationLog | null> =>
+    prisma.metaIntegrationLog.findFirst({ where: { tenantId }, orderBy: { createdAt: "desc" } });
+
 export const metaLogRepository = {
+    findLatestByTenant,
     createReceived,
     markProcessed,
     markDuplicate,

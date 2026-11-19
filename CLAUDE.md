@@ -307,6 +307,14 @@ Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-t
   - `permissions.md` não tem uma linha própria para "Integrações"; apliquei por analogia a
     mesma política de Configurações (Tenant Admin gerencia o próprio tenant, Manager/User sem
     acesso) por ser o módulo administrativo mais parecido.
+- **Meta — checklist da conexão** (`GET /integrations/meta/health`, `POST /integrations/meta/resubscribe`,
+  `TENANT_ADMIN`): como nos CRMs de mercado, mostra Página, Instagram vinculado à Página (leads de
+  anúncios do Instagram chegam pelos formulários da Página — mesmo webhook), se o app está assinado
+  no `leadgen`, formulários de cadastro e se a integração está ativa. Cada verificação é
+  independente (`Promise.allSettled`): falha de permissão vira a mensagem daquele item. Sem schema
+  novo — tudo consultado ao vivo com o token da Página (`meta-page-assets.client.ts`). Quando
+  `/me/accounts` volta vazio (Login para Empresas + Página de portfólio), `meta-page-discovery.ts`
+  busca as Páginas pelos `granular_scopes` do `debug_token`.
 - **Web Lead Capture Widget** (`modules/integrations/web-widget/`): módulo **independente**,
   irmão de `integrations/meta/`, não uma generalização do módulo Meta — architecture.md diz
   explicitamente "Novas integrações deverão ser implementadas como módulos independentes",
@@ -487,9 +495,11 @@ eventos como `LeadCreated`/`DealWon`/`UserCreated` que a esta altura já têm or
   entrega para o e-mail dono da conta.
 
 - **Integrador de conversões offline → Google Ads** (`modules/integrations/conversion-sync/`, menu
-  "Integrador Ads", rota `/integrador`, só `TENANT_ADMIN`): **INATIVO no frontend** — menu e rota
-  escondidos por `FEATURE_FLAGS.conversionSync = false` (`angular-crm/src/app/core/feature-flags.ts`),
-  aguardando a CMB definir os eventos e configurar o MCC; o backend já atende. Estilo Zapier. Cada cliente cria
+  "Integrador Ads", rota `/integrador`, só `TENANT_ADMIN`): **ativo** (`FEATURE_FLAGS.conversionSync = true`),
+  oferecendo só **RD Station Marketing** como origem (`ENABLED_SOURCES` em
+  `pages/integrador/conversion-sources.ts`; RD CRM e Bitrix24 seguem prontos no código e no backend).
+  Tela no estilo Zapier com a identidade do CRM: lista de integrações (selo origem → Google Ads,
+  Ligada/Desligada) e editor em passos "1. Quando isto acontecer" → "2. Faça isto" + histórico. Cada cliente cria
   conexões de origem (**RD Station Marketing**, **RD Station CRM**, **Bitrix24**), cada uma com uma
   URL de webhook própria (`POST /api/v1/webhooks/conversions/:token`, pública, token aleatório) e
   **regras configuráveis** "gatilho → ação de conversão do Google Ads (com/sem valor)" — os eventos
