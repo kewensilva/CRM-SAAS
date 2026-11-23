@@ -2,6 +2,7 @@ import { leadAssignmentRepository } from "../../../leads/repositories/lead-assig
 import { leadRepository } from "../../../leads/repositories/lead.repository";
 import { webWidgetIntegrationRepository } from "../repositories/web-widget-integration.repository";
 import { webWidgetLogRepository } from "../repositories/web-widget-log.repository";
+import { claimSubmission } from "./repeat-submission-guard";
 import { webWidgetLeadService } from "./web-widget-lead.service";
 import type { WebWidgetIntegration, WebWidgetSubmissionPayload } from "../types/web-widget-integration.types";
 
@@ -9,11 +10,13 @@ jest.mock("../../../leads/repositories/lead.repository");
 jest.mock("../../../leads/repositories/lead-assignment.repository");
 jest.mock("../repositories/web-widget-integration.repository");
 jest.mock("../repositories/web-widget-log.repository");
+jest.mock("./repeat-submission-guard");
 
 const mockedLeadRepository = jest.mocked(leadRepository);
 const mockedLeadAssignmentRepository = jest.mocked(leadAssignmentRepository);
 const mockedIntegrationRepository = jest.mocked(webWidgetIntegrationRepository);
 const mockedLogRepository = jest.mocked(webWidgetLogRepository);
+const mockedClaimSubmission = jest.mocked(claimSubmission);
 
 const basePayload: WebWidgetSubmissionPayload = {
     publicKey: "abc123",
@@ -63,6 +66,18 @@ describe("webWidgetLeadService.processSubmission", () => {
         // nisso, devolve o próprio defaultResponsibleUserId (equivalente a "nenhum
         // vendedor cadastrado ainda", ver lead-assignment.repository.ts).
         mockedLeadAssignmentRepository.getNextResponsibleUserId.mockResolvedValue("user-1");
+        mockedClaimSubmission.mockReturnValue(true);
+    });
+
+    it("envio repetido em sequência (vários cliques) vira DUPLICATE sem criar outro Lead", async () => {
+        mockedIntegrationRepository.findByPublicKey.mockResolvedValue(baseIntegration);
+        mockedClaimSubmission.mockReturnValue(false);
+        mockedLeadRepository.findByTenantAndEmail.mockResolvedValue({ id: "lead-1" } as never);
+
+        await webWidgetLeadService.processSubmission(basePayload);
+
+        expect(mockedLeadRepository.create).not.toHaveBeenCalled();
+        expect(mockedLogRepository.markDuplicate).toHaveBeenCalledWith("log-1", "lead-1");
     });
 
     it("cria o Lead e marca o log como PROCESSED em uma submissão válida", async () => {

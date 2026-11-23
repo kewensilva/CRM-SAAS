@@ -27,7 +27,7 @@ export const changeStatusSchema = z.object({
 });
 
 // Kanban de Leads — mover um card entre as 5 colunas (ver deal.service.ts > moveLeadStatus).
-// Perdido exige motivo e valor; Vendido aceita valor opcional + forma de pagamento
+// Perdido exige motivo e valor (zero aceito: lead perdido sem valor); Vendido aceita valor opcional + forma de pagamento
 // (único ou recorrente — recorrente exige installments); os demais status não usam
 // nenhum desses campos.
 export const moveLeadStatusSchema = z
@@ -35,7 +35,8 @@ export const moveLeadStatusSchema = z
         status: z.enum(["SEM_CONTATO", "NAO_ATENDE", "EM_ANDAMENTO", "VENDIDO", "PERDIDO"], {
             error: "Status inválido.",
         }),
-        value: z.number().positive("Valor inválido.").optional(),
+        // Zero só faz sentido em Perdido (lead perdido sem valor) — ver refine abaixo.
+        value: z.number().nonnegative("Valor inválido.").optional(),
         lostReason: z.string().trim().min(1, "Campo obrigatório.").optional(),
         paymentType: z.enum(["UNICO", "RECORRENTE"], { error: "Forma de pagamento inválida." }).optional(),
         installments: z
@@ -87,6 +88,10 @@ export const moveLeadStatusSchema = z
             path: ["status"],
         },
     )
+    .refine((data) => data.value !== 0 || data.status === "PERDIDO", {
+        message: "Valor inválido.",
+        path: ["value"],
+    })
     .refine(
         (data) => data.paymentType !== "RECORRENTE" || data.installments !== undefined,
         {

@@ -58,10 +58,7 @@ export class ValueDialogComponent implements OnInit {
     private readonly productsService: ProductsService,
   ) {
     this.form = this.formBuilder.group({
-      value: [
-        this.data.initialValue ?? null,
-        this.data.mode === 'lost' ? [Validators.required] : [],
-      ],
+      value: [this.data.initialValue ?? null],
       lostReason: [
         this.data.initialReason ?? '',
         this.data.mode === 'lost' ? [Validators.required] : [],
@@ -119,12 +116,19 @@ export class ValueDialogComponent implements OnInit {
     return this.data.mode === 'won' && this.productOptions().length > 0;
   }
 
+  // Perdido também: sem valor é gravado como zero (lead perdido sem valor orçado).
   get canSubmitWithoutValue(): boolean {
-    return this.data.mode === 'won' || this.data.mode === 'in-progress';
+    return this.data.mode === 'won' || this.data.mode === 'in-progress' || this.data.mode === 'lost';
+  }
+
+  private get isValueEmpty(): boolean {
+    const value = this.form.controls.value.value;
+
+    return value === null || value === undefined || String(value) === '' || Number(value) === 0;
   }
 
   get saveLabel(): string {
-    if (this.canSubmitWithoutValue && !this.form.controls.value.value) {
+    if (this.canSubmitWithoutValue && this.isValueEmpty) {
       return 'Salvar sem valor';
     }
     return 'Salvar';
@@ -132,7 +136,7 @@ export class ValueDialogComponent implements OnInit {
 
   get saveDisabled(): boolean {
     if (this.data.mode === 'lost') {
-      return !this.form.controls.value.value || !this.form.controls.lostReason.value?.trim();
+      return !this.form.controls.lostReason.value?.trim();
     }
     if (this.data.mode === 'edit-value') {
       return !this.form.controls.value.value;
@@ -152,8 +156,10 @@ export class ValueDialogComponent implements OnInit {
     const { value, lostReason, paymentType, installments, productId } = this.form.getRawValue();
     const result: ValueDialogResult = {};
 
-    if (value !== null && value !== undefined) {
+    if (!this.isValueEmpty) {
       result.value = Number(value);
+    } else if (this.data.mode === 'lost') {
+      result.value = 0;
     }
 
     if (this.data.mode === 'lost' && lostReason) {

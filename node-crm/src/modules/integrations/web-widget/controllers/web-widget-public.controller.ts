@@ -21,7 +21,9 @@ const serveScript = (req: Request, res: Response) => {
     // frustrante (parecia que a config não tinha salvo).
     res.setHeader("Cache-Control", "public, max-age=30");
 
-    return res.sendFile(WIDGET_SCRIPT_PATH);
+    // Caminho fixo (nada vem da requisição): "allow" só evita o 404 do send quando o projeto
+    // roda dentro de uma pasta oculta (ex.: worktree em .claude/).
+    return res.sendFile(WIDGET_SCRIPT_PATH, { dotfiles: "allow" });
 };
 
 // Não é a origem/publicKey que decide validade de forma visível ao chamador — mesmo uma

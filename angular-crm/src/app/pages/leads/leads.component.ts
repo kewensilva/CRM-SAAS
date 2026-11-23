@@ -1,4 +1,5 @@
 import { CdkDragDrop, DragDropModule, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -55,6 +56,8 @@ const COLUMNS: KanbanColumn[] = [
   standalone: true,
   imports: [
     DragDropModule,
+    // Registra o quadro como área rolável: ao arrastar um card até a borda, o quadro rola junto.
+    CdkScrollable,
     MatButtonModule,
     MatDialogModule,
     MatIconModule,

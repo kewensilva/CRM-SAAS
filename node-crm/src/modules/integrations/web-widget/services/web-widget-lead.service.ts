@@ -6,6 +6,7 @@ import type {
     WebWidgetIntegration,
     WebWidgetSubmissionPayload,
 } from "../types/web-widget-integration.types";
+import { claimSubmission } from "./repeat-submission-guard";
 import { resolveTrafficSource } from "./traffic-source";
 
 // Junta as respostas dos campos de mensagem parametrizados num texto único, pra manter o
@@ -74,6 +75,18 @@ const processSubmission = async (payload: WebWidgetSubmissionPayload): Promise<v
             log.id,
             "Widget habilitado, mas incompleto: falta defaultResponsibleUserId.",
         );
+
+        return;
+    }
+
+    // Mesmo formulário de novo em menos de 2 minutos: fica registrado como DUPLICATE,
+    // sem criar outro Lead.
+    if (!claimSubmission({ tenantId: integration.tenantId, name: payload.name, email: payload.email, phone: payload.phone })) {
+        const sameLead = payload.email
+            ? await leadRepository.findByTenantAndEmail(integration.tenantId, payload.email)
+            : null;
+
+        await webWidgetLogRepository.markDuplicate(log.id, sameLead?.id ?? null);
 
         return;
     }

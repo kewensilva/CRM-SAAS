@@ -134,7 +134,13 @@
         "border:none;border-radius:4px;padding:10px;font-size:14px;cursor:pointer;margin:0;}" +
         ".crm-widget-close{float:right;background:none;border:none;font-size:18px;line-height:1;" +
         "padding:0;margin:0;cursor:pointer;color:#666;}" +
-        ".crm-widget-feedback{font-size:13px;color:#2a7a2a;margin-top:8px;display:none;}" +
+        ".crm-widget-panel button[type=submit]:disabled{opacity:.6;cursor:default;}" +
+        ".crm-widget-feedback{font-size:13px;color:#c62828;margin-top:8px;display:none;}" +
+        ".crm-widget-success{display:none;text-align:center;padding:16px 0 4px;}" +
+        ".crm-widget-success strong{display:block;font-size:16px;color:#2a7a2a;margin:8px 0 4px;}" +
+        ".crm-widget-success p{margin:0;font-size:13px;color:#444;}" +
+        ".crm-widget-success-icon{display:inline-flex;align-items:center;justify-content:center;" +
+        "width:44px;height:44px;border-radius:50%;background:#2a7a2a;color:#fff;font-size:24px;}" +
         ".crm-widget-website-field{position:absolute;left:-9999px;top:-9999px;}";
     root.appendChild(styleEl);
 
@@ -180,6 +186,11 @@
         '<button type="submit">Enviar</button>' +
         '<div class="crm-widget-feedback"></div>' +
         "</form>" +
+        '<div class="crm-widget-success" role="status">' +
+        '<span class="crm-widget-success-icon">&#10003;</span>' +
+        "<strong>ENVIADO COM SUCESSO!</strong>" +
+        "<p>Recebemos seus dados. Em breve entraremos em contato.</p>" +
+        "</div>" +
         "</div>";
 
     root.appendChild(button);
@@ -188,6 +199,11 @@
     var closeBtn = overlay.querySelector(".crm-widget-close");
     var form = overlay.querySelector(".crm-widget-form");
     var feedback = overlay.querySelector(".crm-widget-feedback");
+    var submitBtn = form.querySelector("button[type=submit]");
+    var successBox = overlay.querySelector(".crm-widget-success");
+    // Um envio por vez: o botão trava no primeiro clique. Depois do sucesso o formulário some
+    // e fica só a confirmação — nada de leads duplicados por cliques repetidos.
+    var sending = false;
 
     button.addEventListener("click", function () {
         overlay.classList.add("open");
@@ -203,6 +219,15 @@
 
     form.addEventListener("submit", function (event) {
         event.preventDefault();
+
+        if (sending) {
+            return;
+        }
+
+        sending = true;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Enviando...";
+        feedback.style.display = "none";
 
         var formData = new FormData(form);
 
@@ -240,17 +265,20 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
         })
-            .then(function () {
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error("HTTP " + response.status);
+                }
+
                 form.reset();
-                feedback.textContent = "Recebemos sua mensagem, obrigado!";
-                feedback.style.display = "block";
-                setTimeout(function () {
-                    overlay.classList.remove("open");
-                    feedback.style.display = "none";
-                }, 2000);
+                form.style.display = "none";
+                successBox.style.display = "block";
             })
             .catch(function () {
-                feedback.textContent = "Não foi possível enviar agora. Tente novamente.";
+                sending = false;
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Enviar";
+                feedback.textContent = "Não foi possível enviar agora. Confira os dados e tente novamente.";
                 feedback.style.display = "block";
             });
     });

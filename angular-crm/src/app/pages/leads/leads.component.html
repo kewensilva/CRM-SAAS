@@ -34,7 +34,7 @@
       <p>{{ errorMessage() }}</p>
     </div>
   } @else {
-    <div class="kanban" cdkDropListGroup>
+    <div class="kanban" cdkDropListGroup cdkScrollable>
       @for (column of columns; track column.status) {
         <div class="kanban-column">
           <div class="kanban-column__header" [class]="'kanban-column__header--' + column.status">
