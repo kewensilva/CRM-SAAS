@@ -122,31 +122,57 @@
   }
 }
 
+// Selo de origem: Instagram e Facebook nas cores oficiais; site, Meta sem plataforma e manual
+// em selos neutros, no mesmo formato.
 .lead-card__source-icon {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  color: rgba(0, 0, 0, 0.45);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.06);
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
 
   mat-icon {
-    font-size: 32px;
-    width: 32px;
-    height: 32px;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
   }
 
   &--instagram {
-    color: #e1306c;
+    color: #ffffff;
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%);
+  }
+
+  &--facebook {
+    border-radius: 50%;
+    color: #ffffff;
+    background: #1877f2;
+
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  &--meta {
+    color: #1877f2;
+    background: rgba(24, 119, 242, 0.1);
   }
 }
 
 .lead-card__name {
   margin: 0 0 4px;
-  padding-right: 36px;
+  padding-right: 34px;
   font-weight: 500;
   color: rgba(0, 0, 0, 0.87);
 }

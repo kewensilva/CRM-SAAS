@@ -51,6 +51,8 @@ const COLUMNS: KanbanColumn[] = [
   { status: 'PERDIDO', label: 'Perdido' },
 ];
 
+type LeadOriginIcon = 'instagram' | 'facebook' | 'meta' | 'site' | 'manual';
+
 @Component({
   selector: 'app-leads',
   standalone: true,
@@ -132,16 +134,25 @@ export class LeadsComponent implements OnInit {
     return lead.status === 'VENDIDO' || lead.status === 'PERDIDO';
   }
 
-  // Instagram tem prioridade sobre a origem genérica "Site" — um lead do widget com
-  // utmSource=instagram veio de um post/anúncio do Instagram, não é só "alguém no site".
-  sourceIcon(lead: Lead): 'instagram' | 'site' | null {
-    if (lead.utmSource?.toLowerCase() === 'instagram') {
-      return 'instagram';
+  // Selo de origem no canto do card. A plataforma (utmSource) vem antes da Origem: um lead do
+  // site com utmSource=instagram veio de um post/anúncio do Instagram, não é só "alguém no
+  // site". Lead da Meta sem plataforma (ex.: antigos ou de teste) fica com o selo genérico.
+  sourceIcon(lead: Lead): { kind: LeadOriginIcon; label: string } {
+    const platform = lead.utmSource?.toLowerCase();
+
+    if (platform === 'instagram') {
+      return { kind: 'instagram', label: 'Instagram' };
+    }
+    if (platform === 'facebook') {
+      return { kind: 'facebook', label: 'Facebook' };
+    }
+    if (lead.source === 'Meta') {
+      return { kind: 'meta', label: 'Facebook / Instagram' };
     }
     if (lead.source === 'Site') {
-      return 'site';
+      return { kind: 'site', label: 'Site' };
     }
-    return null;
+    return { kind: 'manual', label: 'Cadastro manual' };
   }
 
   onDrop(event: CdkDragDrop<Lead[]>, targetStatus: LeadStatus): void {
