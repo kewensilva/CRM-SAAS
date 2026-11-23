@@ -1,4 +1,5 @@
 import { BusinessRuleError, NotFoundError } from "../../../shared/errors";
+import { publishLeadEvent } from "../../../shared/events/lead-events";
 import { companyRepository } from "../../companies/repositories/company.repository";
 import { leadRepository } from "../../leads/repositories/lead.repository";
 import { isLeadVisibleToRequester } from "../../leads/services/lead.service";
@@ -165,6 +166,10 @@ const moveLeadStatus = async (
             data.status === "EM_ANDAMENTO" ? (data.value ?? null) : undefined,
         );
 
+        if (updated.status !== lead.status) {
+            publishLeadEvent({ type: "LeadStatusChanged", tenantId, leadId, status: updated.status, value: null });
+        }
+
         return { leadStatus: updated.status, budgetValue: updated.budgetValue, deal: null };
     }
 
@@ -231,6 +236,14 @@ const moveLeadStatus = async (
         },
         requestingUserId,
     );
+
+    publishLeadEvent({
+        type: "LeadStatusChanged",
+        tenantId,
+        leadId,
+        status: data.status,
+        value: deal.value === null || deal.value === undefined ? null : Number(deal.value),
+    });
 
     return { leadStatus: data.status, budgetValue: lead.budgetValue, deal };
 };

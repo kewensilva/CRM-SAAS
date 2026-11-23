@@ -10,6 +10,8 @@ export type CreateLeadDTO = {
     utmCampaign?: string | undefined;
     utmTerm?: string | undefined;
     utmContent?: string | undefined;
+    // ID do clique no anúncio do Google — usado pelo Integrador Google Ads.
+    gclid?: string | undefined;
     // Observações iniciais — ex.: mensagem que o visitante escreveu no formulário do site.
     notes?: string | undefined;
 };

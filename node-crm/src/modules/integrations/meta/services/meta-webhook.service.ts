@@ -1,3 +1,4 @@
+import { publishLeadEvent } from "../../../../shared/events/lead-events";
 import { leadAssignmentRepository } from "../../../leads/repositories/lead-assignment.repository";
 import { leadRepository } from "../../../leads/repositories/lead.repository";
 import { metaIntegrationRepository } from "../repositories/meta-integration.repository";
@@ -118,6 +119,8 @@ const processLeadgenChange = async (change: LeadgenChange, rawPayload: MetaWebho
     );
 
     await metaLogRepository.markProcessed(log.id, lead.id);
+    // Depois do log PROCESSED: é ele que define a Origem "Meta" do Lead.
+    publishLeadEvent({ type: "LeadCreated", tenantId: integration.tenantId, leadId: lead.id });
 };
 
 const processWebhookPayload = async (payload: MetaWebhookPayload): Promise<void> => {

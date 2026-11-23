@@ -1,3 +1,4 @@
+import { publishLeadEvent } from "../../../../shared/events/lead-events";
 import { leadAssignmentRepository } from "../../../leads/repositories/lead-assignment.repository";
 import { leadRepository } from "../../../leads/repositories/lead.repository";
 import { webWidgetIntegrationRepository } from "../repositories/web-widget-integration.repository";
@@ -7,7 +8,7 @@ import type {
     WebWidgetSubmissionPayload,
 } from "../types/web-widget-integration.types";
 import { claimSubmission } from "./repeat-submission-guard";
-import { resolveTrafficSource } from "./traffic-source";
+import { resolveGclid, resolveTrafficSource } from "./traffic-source";
 
 // Junta as respostas dos campos de mensagem parametrizados num texto único, pra manter o
 // log num só campo de texto (WebWidgetLog.message) — usa o label configurado quando
@@ -140,12 +141,15 @@ const processSubmission = async (payload: WebWidgetSubmissionPayload): Promise<v
             email: payload.email,
             phone: payload.phone,
             ...trafficSource,
+            gclid: resolveGclid(payload.gclid, payload.pageUrl),
             ...(message ? { notes: `Mensagem enviada pelo site:\n${message}` } : {}),
         },
         null,
     );
 
     await webWidgetLogRepository.markProcessed(log.id, lead.id);
+    // Depois do log PROCESSED: é ele que define a Origem "Site" do Lead.
+    publishLeadEvent({ type: "LeadCreated", tenantId: integration.tenantId, leadId: lead.id });
 };
 
 export const webWidgetLeadService = {

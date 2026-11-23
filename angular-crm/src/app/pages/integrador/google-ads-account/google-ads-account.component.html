@@ -1,0 +1,89 @@
+<section class="account">
+  <div class="account__head">
+    <span class="app-badge app-badge--google">Ads</span>
+    <div class="account__title">
+      <h2>Conta Google Ads</h2>
+      @if (connection()?.connected) {
+        <p>Conectado como <strong>{{ connection()?.googleEmail || 'conta Google' }}</strong></p>
+      } @else {
+        <p>Conecte a conta Google que administra os anúncios do cliente.</p>
+      }
+    </div>
+
+    @if (connection()?.connected) {
+      <div class="account__actions">
+        <button type="button" mat-stroked-button [disabled]="busy()" (click)="connect()">Reconectar</button>
+        <button type="button" mat-button color="warn" [disabled]="busy()" (click)="disconnect()">Desconectar</button>
+      </div>
+    }
+  </div>
+
+  @if (!connection()?.connected) {
+    @if (connection()?.oauthConfigured) {
+      <button type="button" class="google-button" [disabled]="busy()" (click)="connect()">
+        <span class="google-button__mark" aria-hidden="true">G</span>
+        {{ busy() ? 'Abrindo o Google...' : 'Conectar com o Google Ads' }}
+      </button>
+    } @else {
+      <p class="account__warning">
+        A conexão com o Google Ads ainda não foi configurada no servidor (cliente OAuth do Google da CMB). Fale com o
+        suporte da CMB.
+      </p>
+    }
+  } @else if (hasAccount() && !picking()) {
+    <div class="account__selected">
+      <div>
+        <span class="account__label">Conta de anúncios</span>
+        <strong>{{ connection()?.customerName || 'Conta' }} · {{ formatCustomerId(connection()?.customerId ?? null) }}</strong>
+      </div>
+      <button type="button" mat-button (click)="picking.set(true)">Trocar conta</button>
+    </div>
+  }
+
+  @if (showPicker()) {
+    <div class="account__picker">
+      <span class="account__label">Em qual conta de anúncios as conversões devem entrar?</span>
+
+      @if (connection()?.listingAvailable && accounts(); as list) {
+        @if (list.length > 0) {
+          <mat-form-field appearance="fill" floatLabel="always">
+            <mat-label>Conta de anúncios</mat-label>
+            <mat-select placeholder="Escolha a conta" (selectionChange)="chooseAccount($event.value)" [disabled]="busy()">
+              @for (account of list; track account.customerId) {
+                <mat-option [value]="account">{{ account.name || 'Sem nome' }} · {{ formatCustomerId(account.customerId) }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        } @else {
+          <p class="account__hint">Buscando as contas no Google Ads...</p>
+        }
+      } @else {
+        <form [formGroup]="manualForm" (ngSubmit)="saveManual()" novalidate class="account__form">
+          <mat-form-field appearance="fill" floatLabel="always">
+            <mat-label>ID da conta de anúncios</mat-label>
+            <input matInput formControlName="customerId" placeholder="123-456-7890" />
+            <mat-hint>No Google Ads, no topo da tela, ao lado do nome da conta</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="fill" floatLabel="always">
+            <mat-label>Nome da conta (opcional)</mat-label>
+            <input matInput formControlName="customerName" placeholder="Ex.: Loja do Cliente" />
+          </mat-form-field>
+          <mat-form-field appearance="fill" floatLabel="always">
+            <mat-label>ID da conta gerenciadora — MCC (opcional)</mat-label>
+            <input matInput formControlName="loginCustomerId" placeholder="Só se o acesso for por um MCC" />
+          </mat-form-field>
+          <div class="account__form-actions">
+            @if (hasAccount()) {
+              <button type="button" mat-button (click)="picking.set(false)">Cancelar</button>
+            }
+            <button type="submit" mat-flat-button color="primary" [disabled]="busy()">Salvar conta</button>
+          </div>
+        </form>
+      }
+    </div>
+  }
+
+  @if (message(); as msg) {
+    <p [class.account__error]="msg.error" [class.account__success]="!msg.error" role="status">{{ msg.text }}</p>
+  }
+</section>

@@ -115,3 +115,13 @@ export const resolveTrafficSource = (
 
     return rule ? { ...submitted, utmSource: rule.source, utmMedium: rule.medium } : submitted;
 };
+
+const GCLID_MAX_LENGTH = 512;
+
+// GCLID do anúncio do Google: o que o widget guardou na chegada ao site (o visitante pode ter
+// navegado para outra página antes de preencher) ou, na falta, o da própria URL do envio.
+export const resolveGclid = (submitted: string | undefined, pageUrl: string | undefined): string | undefined => {
+    const gclid = submitted?.trim() || safeUrl(pageUrl)?.searchParams.get("gclid")?.trim();
+
+    return gclid ? gclid.slice(0, GCLID_MAX_LENGTH) : undefined;
+};

@@ -78,7 +78,7 @@ export const routes: Routes = [
       {
         path: 'integrador',
         // Flag desligada: quem digitar a URL volta para o Painel.
-        canActivate: [() => FEATURE_FLAGS.conversionSync || inject(Router).createUrlTree(['/dashboard'])],
+        canActivate: [() => FEATURE_FLAGS.googleAdsIntegrator || inject(Router).createUrlTree(['/dashboard'])],
         loadComponent: () =>
           import('./pages/integrador/integrador.component').then((m) => m.IntegradorComponent),
       },

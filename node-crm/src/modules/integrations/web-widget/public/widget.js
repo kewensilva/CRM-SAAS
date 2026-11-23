@@ -85,6 +85,24 @@
 
     var utm = captureUtm();
 
+    // GCLID do anúncio do Google, guardado na chegada: o visitante pode navegar até outra
+    // página do site antes de preencher o formulário. Vai para o Integrador Google Ads.
+    var gclidStorageKey = "crmWidgetGclid";
+    var captureGclid = function () {
+        var fromUrl = new URLSearchParams(window.location.search).get("gclid");
+        try {
+            if (fromUrl) {
+                window.sessionStorage.setItem(gclidStorageKey, fromUrl);
+                return fromUrl;
+            }
+            return window.sessionStorage.getItem(gclidStorageKey) || "";
+        } catch (e) {
+            return fromUrl || "";
+        }
+    };
+
+    var gclid = captureGclid();
+
     // Labels dos campos de mensagem são texto livre configurado pelo Tenant
     // Admin/Analista — escapar antes de injetar via innerHTML (o widget roda no site do
     // cliente, então isso é superfície real de XSS se alguém digitar algo malicioso ali).
@@ -256,6 +274,7 @@
             utmCampaign: utm.utm_campaign || undefined,
             utmTerm: utm.utm_term || undefined,
             utmContent: utm.utm_content || undefined,
+            gclid: gclid || undefined,
             pageUrl: window.location.href,
             referrer: document.referrer || undefined,
         };

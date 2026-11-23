@@ -1,4 +1,4 @@
-import { resolveTrafficSource } from "./traffic-source";
+import { resolveGclid, resolveTrafficSource } from "./traffic-source";
 
 const PAGE = "https://site-do-cliente.com.br/contato";
 
@@ -54,5 +54,19 @@ describe("resolveTrafficSource", () => {
         expect(resolveTrafficSource({}, PAGE, undefined)).toEqual({});
         expect(resolveTrafficSource({}, PAGE, "https://www.site-do-cliente.com.br/servicos")).toEqual({});
         expect(resolveTrafficSource({}, "não é url", "também não")).toEqual({});
+    });
+});
+
+describe("resolveGclid", () => {
+    it("prefere o GCLID guardado pelo widget na chegada ao site", () => {
+        expect(resolveGclid("CjwGuardado", "https://loja.com/contato?gclid=CjwDaUrl")).toBe("CjwGuardado");
+    });
+
+    it("sem GCLID guardado, usa o da URL do envio", () => {
+        expect(resolveGclid(undefined, "https://loja.com/?gclid=CjwDaUrl")).toBe("CjwDaUrl");
+    });
+
+    it("sem GCLID em lugar nenhum fica undefined", () => {
+        expect(resolveGclid("  ", "https://loja.com/")).toBeUndefined();
     });
 });

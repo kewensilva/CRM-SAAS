@@ -1,9 +1,10 @@
 import { NotFoundError } from "../../../shared/errors";
+import { publishLeadEvent } from "../../../shared/events/lead-events";
 import { companyRepository } from "../../companies/repositories/company.repository";
 import type { CreateLeadDTO, UpdateLeadDTO } from "../dto/create-lead.dto";
 import { leadRepository } from "../repositories/lead.repository";
 import { resolveLeadSource } from "../utils/lead-source";
-import type { Lead, LeadHistoryEntry, LeadWithDetails } from "../types/lead.types";
+import type { Lead, LeadConversionData, LeadHistoryEntry, LeadWithDetails } from "../types/lead.types";
 
 // Regra de visibilidade do Vendedor (USER): enxerga Leads em "Sem contato" (fila comum)
 // + os que ele mesmo é responsável. Usado tanto pra filtrar a listagem (listWithDetails)
@@ -31,7 +32,11 @@ const createLead = async (data: CreateLeadDTO, changedByUserId: string | null): 
         }
     }
 
-    return leadRepository.create(data, changedByUserId);
+    const lead = await leadRepository.create(data, changedByUserId);
+
+    publishLeadEvent({ type: "LeadCreated", tenantId: lead.tenantId, leadId: lead.id });
+
+    return lead;
 };
 
 const listLeadsByTenant = (tenantId: string): Promise<Lead[]> => {
@@ -95,7 +100,29 @@ const listHistory = async (
     return leadRepository.listHistoryByLead(id, tenantId);
 };
 
+// Interface do módulo de Leads para o Integrador Google Ads (não expõe o repositório).
+const getConversionData = async (leadId: string, tenantId: string): Promise<LeadConversionData | null> => {
+    const lead = await leadRepository.findForConversion(leadId, tenantId);
+
+    if (!lead) {
+        return null;
+    }
+
+    const dealValue = lead.deal?.value;
+
+    return {
+        id: lead.id,
+        tenantId: lead.tenantId,
+        email: lead.email,
+        phone: lead.phone,
+        gclid: lead.gclid,
+        source: resolveLeadSource(lead),
+        dealValue: dealValue === null || dealValue === undefined ? null : Number(dealValue),
+    };
+};
+
 export const leadService = {
+    getConversionData,
     createLead,
     listLeadsByTenant,
     listWithDetails,

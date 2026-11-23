@@ -1,62 +1,86 @@
 <div class="integrador">
-  @if (selected(); as integration) {
-    <button type="button" mat-button class="integrador__back" (click)="back()">
+  @if (editing()) {
+    <button type="button" mat-button class="integrador__back" (click)="closeEditor()">
       <mat-icon>arrow_back</mat-icon>
       Integrações
     </button>
-    <app-conversion-connection [integration]="integration" (changed)="onConnectionChanged(integration.id, $event)" />
+    <app-google-ads-rule-editor
+      [rule]="editingRule()"
+      [connection]="connection()"
+      (saved)="onRuleSaved($event)"
+      (closed)="closeEditor()"
+    />
   } @else {
     <header class="integrador__header">
       <div>
-        <h1 class="integrador__title">Integrador Ads</h1>
+        <h1 class="integrador__title">Integrador Google Ads</h1>
         <p class="integrador__hint">
-          Conecte o RD Station Marketing ao Google Ads do cliente: cada evento escolhido vira uma conversão offline
-          (GCLID + e-mail/telefone em hash), sem planilha e sem Zapier.
+          Envie os resultados do CRM para o Google Ads como conversões offline: o Google passa a otimizar os anúncios
+          para quem vira lead qualificado ou venda de verdade — não só para quem preenche formulário.
         </p>
       </div>
-      @for (option of sourceOptions; track option.value) {
-        <button type="button" mat-flat-button color="primary" [disabled]="creating()" (click)="create(option.value)">
-          <mat-icon>add</mat-icon>
-          {{ creating() ? 'Criando...' : 'Criar integração' }}
-        </button>
-      }
+      <button type="button" mat-flat-button color="primary" [disabled]="!canCreate()" (click)="open('new')">
+        <mat-icon>add</mat-icon>
+        Criar integração
+      </button>
     </header>
 
     @if (errorMessage()) {
       <p class="integrador__error" role="alert">{{ errorMessage() }}</p>
     }
 
-    @if (loading()) {
-      <p class="integrador__hint">Carregando...</p>
+    @if (loading() || connecting()) {
+      <p class="integrador__hint">{{ connecting() ? 'Concluindo a conexão com o Google...' : 'Carregando...' }}</p>
     } @else {
-      <ul class="zap-list">
-        @for (integration of integrations(); track integration.id) {
-          <li>
-            <button type="button" class="zap" (click)="open(integration.id)">
-              <span class="zap__apps" aria-hidden="true">
-                <span class="app-badge app-badge--source">{{ sourceBadge(integration.source) }}</span>
-                <mat-icon class="zap__arrow">arrow_forward</mat-icon>
-                <span class="app-badge app-badge--google">Ads</span>
-              </span>
-              <span class="zap__info">
-                <span class="zap__name">{{ integration.name }}</span>
-                <span class="zap__meta">
-                  {{ sourceLabel(integration.source) }} → Google Ads · {{ activeRules(integration) }} regra(s) ativa(s)
+      <app-google-ads-account [connection]="connection()" (changed)="onConnectionChanged($event)" />
+
+      <section>
+        <h2 class="integrador__subtitle">Integrações</h2>
+        <ul class="zap-list">
+          @for (rule of rules(); track rule.id) {
+            <li class="zap">
+              <button type="button" class="zap__main" (click)="open(rule.id)">
+                <span class="zap__apps" aria-hidden="true">
+                  <span class="app-badge app-badge--source">CRM</span>
+                  <mat-icon class="zap__arrow">arrow_forward</mat-icon>
+                  <span class="app-badge app-badge--google">Ads</span>
                 </span>
-              </span>
-              <span class="zap__status" [class.zap__status--on]="integration.enabled">
-                {{ integration.enabled ? 'Ligada' : 'Desligada' }}
-              </span>
-              <mat-icon class="zap__chevron">chevron_right</mat-icon>
-            </button>
-          </li>
-        } @empty {
-          <li class="zap-empty">
-            <span class="icon-badge"><mat-icon>bolt</mat-icon></span>
-            <p>Nenhuma integração ainda. Clique em <strong>Criar integração</strong> para ligar o RD Station Marketing ao Google Ads.</p>
-          </li>
-        }
-      </ul>
+                <span class="zap__info">
+                  <span class="zap__name">{{ rule.name }}</span>
+                  <span class="zap__meta">
+                    Quando: {{ triggerLabel(rule.trigger) }} · {{ originLabel(rule.originFilter) }} → conversão
+                    {{ rule.conversionActionName || rule.conversionActionId }}
+                  </span>
+                </span>
+                <mat-icon class="zap__chevron">chevron_right</mat-icon>
+              </button>
+              <mat-slide-toggle
+                [checked]="rule.enabled"
+                [disabled]="busyRuleId() === rule.id"
+                (change)="toggle(rule)"
+                [attr.aria-label]="'Ligar ou desligar ' + rule.name"
+              >
+                {{ rule.enabled ? 'Ligada' : 'Desligada' }}
+              </mat-slide-toggle>
+            </li>
+          } @empty {
+            <li class="zap-empty">
+              <span class="icon-badge"><mat-icon>bolt</mat-icon></span>
+              <p>
+                @if (canCreate()) {
+                  Nenhuma integração ainda. Clique em <strong>Criar integração</strong> e escolha qual lead vira conversão no Google Ads.
+                } @else {
+                  Conecte a conta do Google Ads acima para criar a primeira integração.
+                }
+              </p>
+            </li>
+          }
+        </ul>
+      </section>
+
+      @if (rules().length > 0) {
+        <app-google-ads-history />
+      }
     }
   }
 </div>

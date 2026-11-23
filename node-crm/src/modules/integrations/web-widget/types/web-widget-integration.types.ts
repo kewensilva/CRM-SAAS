@@ -62,6 +62,7 @@ export type WebWidgetSubmissionPayload = {
     utmCampaign?: string | undefined;
     utmTerm?: string | undefined;
     utmContent?: string | undefined;
+    gclid?: string | undefined;
     pageUrl?: string | undefined;
     referrer?: string | undefined;
     website?: string | undefined; // honeypot — se preenchido, é bot

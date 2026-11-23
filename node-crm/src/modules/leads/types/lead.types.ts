@@ -16,6 +16,7 @@ export type Lead = {
     utmCampaign: string | null;
     utmTerm: string | null;
     utmContent: string | null;
+    gclid: string | null;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;
@@ -24,6 +25,17 @@ export type Lead = {
 // "Origem" do Lead — calculada (não é coluna própria): Site (Web Widget), Meta ou
 // Manual (criado direto pela API/usuário). Ver lead.service.ts > withSource.
 export type LeadSource = "Site" | "Meta" | "Manual";
+
+// O que o Integrador Google Ads precisa de um Lead para montar a conversão offline.
+export type LeadConversionData = {
+    id: string;
+    tenantId: string;
+    email: string | null;
+    phone: string | null;
+    gclid: string | null;
+    source: LeadSource;
+    dealValue: number | null;
+};
 
 export type LeadDeal = {
     id: string;

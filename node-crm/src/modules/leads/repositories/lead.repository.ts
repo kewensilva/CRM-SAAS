@@ -48,6 +48,7 @@ const create = (data: CreateLeadDTO, changedByUserId: string | null): Promise<Le
                 utmCampaign: data.utmCampaign ?? null,
                 utmTerm: data.utmTerm ?? null,
                 utmContent: data.utmContent ?? null,
+                gclid: data.gclid ?? null,
                 notes: data.notes ?? null,
             },
         });
@@ -245,6 +246,22 @@ const listByTenantWithLogs = (tenantId: string): Promise<LeadRawWithLogs[]> => {
 
 // Exportação: só os leads pedidos (respeitando o filtro já aplicado no front-end),
 // com o nome do responsável e a data da negociação (Vendido/Perdido) já resolvidos.
+// Integrador Google Ads: contato + GCLID + logs que definem a Origem + valor da negociação.
+const findForConversion = (id: string, tenantId: string) =>
+    prisma.lead.findFirst({
+        where: { id, tenantId, deletedAt: null },
+        select: {
+            id: true,
+            tenantId: true,
+            email: true,
+            phone: true,
+            gclid: true,
+            deal: { select: { value: true } },
+            webWidgetLogs: { where: { status: "PROCESSED" }, take: 1, select: { id: true } },
+            metaLogs: { where: { status: "PROCESSED" }, take: 1, select: { id: true } },
+        },
+    });
+
 const listByIdsAndTenantForExport = (tenantId: string, ids: string[]): Promise<LeadRawForExport[]> => {
     return prisma.lead.findMany({
         where: { tenantId, id: { in: ids }, deletedAt: null },
@@ -260,6 +277,7 @@ const listByIdsAndTenantForExport = (tenantId: string, ids: string[]): Promise<L
 };
 
 export const leadRepository = {
+    findForConversion,
     create,
     findByIdAndTenant,
     listByTenant,

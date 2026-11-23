@@ -1,0 +1,131 @@
+<form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <header class="editor__header">
+    <mat-form-field appearance="outline" class="editor__name" subscriptSizing="dynamic">
+      <mat-label>Nome da integração</mat-label>
+      <input matInput formControlName="name" placeholder="Ex.: Venda fechada → Google Ads" />
+    </mat-form-field>
+    <mat-slide-toggle formControlName="enabled" class="editor__switch">
+      {{ form.controls.enabled.value ? 'Ligada' : 'Desligada' }}
+    </mat-slide-toggle>
+  </header>
+
+  @if (message(); as msg) {
+    <p [class.editor__error]="msg.error" [class.editor__success]="!msg.error" role="status">{{ msg.text }}</p>
+  }
+
+  <ol class="flow">
+    <li class="step">
+      <div class="step__head">
+        <span class="app-badge app-badge--source">CRM</span>
+        <div>
+          <span class="step__kicker">1. Quando isto acontecer</span>
+          <h3 class="step__title">Qual lead vira conversão?</h3>
+        </div>
+      </div>
+
+      <div class="step__body">
+        <div class="trigger-options" role="radiogroup" aria-label="Momento do lead">
+          @for (option of triggerOptions; track option.value) {
+            <button
+              type="button"
+              role="radio"
+              class="trigger-option"
+              [class.trigger-option--selected]="selectedTrigger() === option.value"
+              [attr.aria-checked]="selectedTrigger() === option.value"
+              (click)="selectTrigger(option.value)"
+            >
+              <mat-icon>{{ option.icon }}</mat-icon>
+              <strong>{{ option.label }}</strong>
+              <span>{{ option.hint }}</span>
+            </button>
+          }
+        </div>
+
+        <mat-form-field appearance="fill" floatLabel="always">
+          <mat-label>De quais leads</mat-label>
+          <mat-select formControlName="originFilter">
+            @for (option of originOptions; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </li>
+
+    <li class="flow__connector" aria-hidden="true"><mat-icon>arrow_downward</mat-icon></li>
+
+    <li class="step">
+      <div class="step__head">
+        <span class="app-badge app-badge--google">Ads</span>
+        <div>
+          <span class="step__kicker">2. Faça isto</span>
+          <h3 class="step__title">Enviar conversão offline ao Google Ads</h3>
+        </div>
+      </div>
+
+      <div class="step__body">
+        <p class="step__info"><mat-icon>account_circle</mat-icon> {{ accountLabel() }}</p>
+
+        @if (useActionList() && conversionActions(); as actions) {
+          <mat-form-field appearance="fill" floatLabel="always">
+            <mat-label>Ação de conversão</mat-label>
+            <mat-select
+              [value]="form.controls.conversionActionId.value"
+              (selectionChange)="chooseAction($event.value)"
+              placeholder="Escolha a ação"
+            >
+              @for (action of actions; track action.id) {
+                <mat-option [value]="action">{{ action.name }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Só aparecem ações do tipo "Importação de cliques"</mat-hint>
+          </mat-form-field>
+        } @else {
+          <div class="step__grid">
+            <mat-form-field appearance="fill" floatLabel="always">
+              <mat-label>ID da ação de conversão</mat-label>
+              <input matInput formControlName="conversionActionId" inputmode="numeric" placeholder="Ex.: 7012345678" />
+              <mat-hint>Google Ads → Metas → Conversões → ação do tipo "Importação de cliques"</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="fill" floatLabel="always">
+              <mat-label>Nome da ação (opcional)</mat-label>
+              <input matInput formControlName="conversionActionName" placeholder="Ex.: Venda CRM" />
+            </mat-form-field>
+          </div>
+        }
+
+        @if (selectedTrigger() === 'LEAD_WON') {
+          <mat-checkbox formControlName="sendValue">Enviar o valor da venda junto com a conversão</mat-checkbox>
+        }
+
+        <details class="step__setup">
+          <summary>Como o Google identifica o lead?</summary>
+          <p>
+            Pelo <strong>GCLID</strong> (clique no anúncio, capturado pelo botão do site) e pelo <strong>e-mail e
+            telefone</strong> do lead, enviados criptografados. Para leads sem GCLID, ative as "conversões otimizadas para
+            leads" na conta do Google Ads.
+          </p>
+        </details>
+      </div>
+    </li>
+  </ol>
+
+  <div class="editor__actions">
+    @if (rule()) {
+      <button type="button" mat-button color="warn" [disabled]="saving()" (click)="remove()">Excluir</button>
+      <span class="editor__spacer"></span>
+      <button type="button" mat-stroked-button [disabled]="saving()" (click)="test()">Testar</button>
+    } @else {
+      <span class="editor__spacer"></span>
+    }
+    <button type="submit" mat-flat-button color="primary" [disabled]="saving()">
+      {{ saving() ? 'Salvando...' : rule() ? 'Salvar alterações' : 'Criar integração' }}
+    </button>
+  </div>
+</form>
+
+@if (rule(); as current) {
+  <div class="editor__history">
+    <app-google-ads-history [ruleId]="current.id" />
+  </div>
+}

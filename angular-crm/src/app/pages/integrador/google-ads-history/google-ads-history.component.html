@@ -1,0 +1,42 @@
+<section class="history">
+  <div class="history__head">
+    <h3>Últimas conversões enviadas</h3>
+    <button type="button" mat-icon-button aria-label="Atualizar histórico" (click)="load()"><mat-icon>refresh</mat-icon></button>
+  </div>
+
+  @if (errorMessage()) {
+    <p class="history__error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="history__empty">Carregando...</p>
+  } @else {
+    <ul class="history__list">
+      @for (upload of uploads(); track upload.id) {
+        <li class="upload">
+          <span class="upload__status upload__status--{{ upload.status }}">{{ statusLabels[upload.status] }}</span>
+          <div class="upload__info">
+            <strong>{{ upload.leadName }}</strong>
+            <span>
+              {{ upload.ruleName }} · {{ identifiers(upload) }}
+              @if (upload.conversionValue !== null) {
+                · {{ formatValue(upload.conversionValue) }}
+              }
+              · {{ upload.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+            </span>
+            @if (upload.errorMessage) {
+              <span class="upload__error">{{ upload.errorMessage }}</span>
+            }
+          </div>
+          @if (upload.status === 'FAILED') {
+            <button type="button" mat-stroked-button [disabled]="busyId() === upload.id" (click)="retry(upload)">
+              {{ busyId() === upload.id ? 'Reenviando...' : 'Reenviar' }}
+            </button>
+          }
+        </li>
+      } @empty {
+        <li class="history__empty">Nenhuma conversão enviada ainda. Elas aparecem aqui quando um lead chega ao momento escolhido.</li>
+      }
+    </ul>
+  }
+</section>

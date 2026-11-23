@@ -32,7 +32,7 @@ const TENANT_ADMIN_ONLY_ITEMS: MenuItem[] = [
   { label: 'Cadastros', route: '/cadastros', icon: 'assets/icons/icon-group.svg' },
   // Integrador de conversões RD Station / Bitrix24 → Google Ads (mesmo acesso do backend),
   // escondido enquanto a flag estiver desligada.
-  ...(FEATURE_FLAGS.conversionSync
+  ...(FEATURE_FLAGS.googleAdsIntegrator
     ? [{ label: 'Integrador Ads', route: '/integrador', icon: 'assets/icons/icon-send.svg' }]
     : []),
 ];

@@ -360,7 +360,8 @@ Módulos implementados e testados ponta a ponta (login, RBAC, isolamento multi-t
     sem rate limiting, apesar de security.md pedir, porque não fazia parte do escopo desta
     tarefa (registrado aqui, não corrigido automaticamente).
 
-Decisão deliberada: **não construí o barramento de eventos genérico** (`shared/events/`) que
+**Revisto em 23/11/2026:** `shared/events/lead-events.ts` passou a existir com o Integrador Google
+Ads (primeiro consumidor real) — ver a seção dele. Decisão original: **não construí o barramento de eventos genérico** (`shared/events/`) que
 events.md descreve, mesmo o Deal sendo o primeiro caso real de `StageChanged`. O histórico de
 etapas é gravado direto no repository porque é requisito de negócio (não opcional), mas não
 existe hoje nenhum consumidor real (notificação, auditoria, integração) que justifique um
@@ -494,41 +495,33 @@ eventos como `LeadCreated`/`DealWon`/`UserCreated` que a esta altura já têm or
   em domínio verificado no Resend — com o remetente de teste `onboarding@resend.dev` o Resend só
   entrega para o e-mail dono da conta.
 
-- **Integrador de conversões offline → Google Ads** (`modules/integrations/conversion-sync/`, menu
-  "Integrador Ads", rota `/integrador`, só `TENANT_ADMIN`): **ativo** (`FEATURE_FLAGS.conversionSync = true`),
-  oferecendo só **RD Station Marketing** como origem (`ENABLED_SOURCES` em
-  `pages/integrador/conversion-sources.ts`; RD CRM e Bitrix24 seguem prontos no código e no backend).
-  Tela no estilo Zapier com a identidade do CRM: lista de integrações (selo origem → Google Ads,
-  Ligada/Desligada) e editor em passos "1. Quando isto acontecer" → "2. Faça isto" + histórico. Cada cliente cria
-  conexões de origem (**RD Station Marketing**, **RD Station CRM**, **Bitrix24**), cada uma com uma
-  URL de webhook própria (`POST /api/v1/webhooks/conversions/:token`, pública, token aleatório) e
-  **regras configuráveis** "gatilho → ação de conversão do Google Ads (com/sem valor)" — os eventos
-  de negócio ainda não foram definidos pela CMB, por isso nada é fixo no código. Gatilhos por
-  origem em `conversion-rule-policy.ts` (RD Marketing: nova conversão/oportunidade/estágio do funil;
-  CRMs: etapa do negócio/negócio ganho).
-  - **Envio pela Data Manager API** (`events:ingest`), não pela Google Ads API: desde 15/06/2026 o
-    `UploadClickConversions` recusa developer tokens que nunca enviaram conversões offline.
-    Autentica com conta de serviço (JWT RS256, agora em `shared/google/service-account-token.ts`,
-    compartilhado com o GA4) com acesso ao **MCC da CMB** (`GOOGLE_ADS_MANAGER_ACCOUNT_ID`, vai
-    como `loginAccount`); `GOOGLE_ADS_SERVICE_ACCOUNT_*` opcionais, senão reaproveita `GA_*`.
-    Identificação: GCLID (campo configurável na origem) + e-mail/telefone normalizados e em SHA-256
-    (hash confere com o exemplo da documentação do Google). Um evento por requisição (a API rejeita
-    o lote inteiro se um falhar). Não confirmado ainda: se a Data Manager API exige developer token
-    — o botão "Testar" da regra (validateOnly) responde isso no primeiro uso real.
-  - **Nada se perde**: `ConversionWebhookLog` é gravado antes de processar (status
-    RECEIVED/PROCESSED/IGNORED/FAILED/REJECTED); processamento em segundo plano (RD CRM exige
-    resposta em 5 s); `ConversionUpload` único por (regra, transactionId) — RD e Bitrix reenviam o
-    mesmo evento e a mesma conversão nunca sai duas vezes. Falhas: "Reenviar" (envio) e
-    "Reprocessar" (webhook, usa o payload salvo); REJECTED (segredo errado) nunca é reprocessado.
-    Envio guarda só os hashes, nunca e-mail/telefone em texto puro.
-  - Origens: RD Marketing não manda GCLID nativo (só via campo personalizado, ex. `cf_gclid`);
-    RD CRM v2 não manda o contato no webhook — e-mail/telefone vêm da API **v1** do RD CRM
-    (`/deals/:id/contacts?token=`), só quando alguma regra dispara; **não confirmado** que o `id`
-    do negócio no webhook v2 é aceito pela API v1. Bitrix24: webhook de saída só manda o ID →
-    `crm.deal.get`/`crm.contact.get` pela URL de webhook de entrada (métodos marcados como legados
-    pela Bitrix, ainda funcionando); ganho = `STAGE_SEMANTIC_ID` "S". Segredos (token RD, URL
-    Bitrix, segredo do webhook) criptografados com `token-cipher`.
-  - Nenhum envio real ao Google foi feito ainda (sem MCC/conta de serviço no ambiente local).
+- **Integrador Google Ads** (`modules/integrations/google-ads/`, menu "Integrador Ads", rota
+  `/integrador`, só `TENANT_ADMIN`; substituiu o integrador RD Station/Bitrix → Google Ads, removido
+  junto com as tabelas `conversion_*` na migration `20261123120000_google_ads_integrator`). Como no RD
+  Station: cada cliente clica em **"Conectar com o Google Ads"** (OAuth web do Google, refresh token
+  criptografado com `token-cipher`) e escolhe a conta de anúncios. As "integrações" (estilo Zapier,
+  `GoogleAdsConversionRule`) dizem **qual lead vira conversão**: gatilho `LEAD_CREATED` (lead novo),
+  `LEAD_QUALIFIED` (foi para Em andamento) ou `LEAD_WON` (Vendido, com opção de enviar o valor da
+  venda) + filtro opcional de Origem (Site / Meta / Manual) + ação de conversão do Google Ads.
+  - **Primeiro uso real de `shared/events/`** (`lead-events.ts`): `LeadCreated` (lead.service, widget e
+    Meta — os dois últimos publicam depois do log `PROCESSED`, que define a Origem) e
+    `LeadStatusChanged` (deal.service > moveLeadStatus). Consumidor em segundo plano
+    (`conversion-trigger.service.ts`); falha só vira log. A decisão anterior de não ter barramento foi
+    revista porque agora existe consumidor real.
+  - Envio pela **Data Manager API** (`events:ingest`, escopo `datamanager`) com o token do próprio
+    cliente — sem MCC da CMB. `loginAccount` = a conta (ou o MCC por onde o usuário a acessa,
+    `loginCustomerId`). Identificação: **GCLID** (novo `Lead.gclid`, capturado pelo widget na URL de
+    chegada e guardado em `sessionStorage`) + e-mail/telefone normalizados em SHA-256.
+    `GoogleAdsConversionUpload` é único por (regra, lead): a mesma conversão nunca sai duas vezes;
+    falha fica `FAILED` com o motivo do Google e botão "Reenviar". "Testar" = `validateOnly`.
+  - Listas de contas e de ações de conversão (Google Ads API v26, `GOOGLE_ADS_API_VERSION`) só com
+    `GOOGLE_ADS_DEVELOPER_TOKEN`; sem ele o cliente digita os IDs. Variáveis: `GOOGLE_ADS_OAUTH_CLIENT_ID`,
+    `GOOGLE_ADS_OAUTH_CLIENT_SECRET`, `GOOGLE_ADS_OAUTH_REDIRECT_URI` (= `https://<front>/integrador`);
+    sem elas o servidor sobe e a tela avisa que falta configurar. O app OAuth do Google precisa passar
+    pela verificação do Google para escopos sensíveis (até lá, só usuários de teste cadastrados).
+  - Testado localmente com conexão simulada (sem credenciais do Google): criação/edição de regra,
+    disparo por Vendido (valor) e por lead novo do site (GCLID), filtro de Origem, registro FAILED com
+    motivo. **Nenhum envio real ao Google foi feito ainda.**
 
 `angular-crm/` já tem várias páginas construídas (login, dashboard Owner/Tenant, CRM, Leads,
 Oportunidades, Relatórios, Empresas, Configurações, Motivos, Cadastros, Acessos) — a nota

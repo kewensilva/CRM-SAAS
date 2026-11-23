@@ -10,7 +10,7 @@ import {
 import { metaIntegrationRepository } from "../repositories/meta-integration.repository";
 import type { MetaIntegration } from "../types/meta-integration.types";
 import { metaGraphApiClient } from "./meta-graph-api.client";
-import { createOAuthState, verifyOAuthState } from "./meta-oauth-state";
+import { createOAuthState, verifyOAuthState } from "../../../../shared/auth/oauth-state";
 import { discoverPages, noPagesMessage } from "./meta-page-discovery";
 
 // Páginas e tokens ficam SÓ no servidor, em memória, entre "autorizou no Facebook" e

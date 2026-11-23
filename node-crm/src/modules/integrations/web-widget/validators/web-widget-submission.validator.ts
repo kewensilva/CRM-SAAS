@@ -17,6 +17,7 @@ export const webWidgetSubmissionSchema = z.object({
     utmCampaign: z.string().trim().max(255).optional(),
     utmTerm: z.string().trim().max(255).optional(),
     utmContent: z.string().trim().max(255).optional(),
+    gclid: z.string().trim().max(512).optional(),
     pageUrl: z.string().trim().max(2048).optional(),
     referrer: z.string().trim().max(2048).optional(),
     website: z.string().optional(), // honeypot
