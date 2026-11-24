@@ -56,13 +56,39 @@
               <div class="cadastros-page__row-info">
                 <span class="cadastros-page__row-name">{{ analyst.name }}</span>
                 <span class="cadastros-page__row-email">{{ analyst.email }}</span>
-                <span class="cadastros-page__row-tags">
-                  @for (access of analyst.tenantAccess; track access.tenantId) {
-                    <span class="cadastros-page__tag">{{ access.tenantName }}</span>
-                  }
-                </span>
+                @if (editingAnalystId() === analyst.id) {
+                  <div class="cadastros-page__access-edit">
+                    <mat-form-field appearance="fill" floatLabel="always" class="cadastros-page__field">
+                      <mat-label>Empresas que pode acessar</mat-label>
+                      <mat-select [formControl]="accessControl" multiple>
+                        @for (tenant of tenants(); track tenant.id) {
+                          <mat-option [value]="tenant.id">{{ tenant.name }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                    <div class="cadastros-page__access-actions">
+                      <button type="button" mat-button (click)="cancelEditAccess()">Cancelar</button>
+                      <button type="button" mat-flat-button color="primary" [disabled]="saving()" (click)="saveAccess(analyst)">
+                        {{ saving() ? 'Salvando...' : 'Salvar acessos' }}
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <span class="cadastros-page__row-tags">
+                    @for (access of analyst.tenantAccess; track access.tenantId) {
+                      <span class="cadastros-page__tag">{{ access.tenantName }}</span>
+                    } @empty {
+                      <span class="cadastros-page__tag">Sem empresas</span>
+                    }
+                  </span>
+                }
               </div>
-              <button mat-icon-button type="button" (click)="removeAnalyst(analyst)">
+              @if (editingAnalystId() !== analyst.id) {
+                <button mat-icon-button type="button" matTooltip="Editar acessos" (click)="startEditAccess(analyst)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              <button mat-icon-button type="button" matTooltip="Excluir analista" (click)="removeAnalyst(analyst)">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>

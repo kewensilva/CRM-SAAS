@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -45,6 +45,10 @@ export class CadastrosComponent implements OnInit {
   readonly analysts = signal<Analyst[]>([]);
   readonly tenants = signal<Tenant[]>([]);
   readonly owners = signal<Owner[]>([]);
+
+  // Edição dos acessos de um Analista já cadastrado (ex.: empresa nova criada depois dele).
+  readonly editingAnalystId = signal<string | null>(null);
+  readonly accessControl = new FormControl<string[]>([], { nonNullable: true });
 
   readonly userForm;
   readonly analystForm;
@@ -168,6 +172,42 @@ export class CadastrosComponent implements OnInit {
       next: (analyst) => {
         this.analysts.update((current) => [...current, analyst]);
         this.analystForm.reset({ name: '', email: '', password: '', tenantIds: [] });
+        this.saving.set(false);
+      },
+      error: (error) => {
+        this.saving.set(false);
+        this.errorMessage.set(this.extractErrorMessage(error));
+      },
+    });
+  }
+
+  startEditAccess(analyst: Analyst): void {
+    this.errorMessage.set(null);
+    this.accessControl.setValue(analyst.tenantAccess.map((access) => access.tenantId));
+    this.editingAnalystId.set(analyst.id);
+  }
+
+  cancelEditAccess(): void {
+    this.editingAnalystId.set(null);
+  }
+
+  // Só o Owner chega aqui (seção visível só para ele) — a trava real é authorize("OWNER") no
+  // backend. Mesma regra do cadastro: ao menos uma empresa.
+  saveAccess(analyst: Analyst): void {
+    const tenantIds = this.accessControl.value;
+
+    if (tenantIds.length === 0) {
+      this.errorMessage.set('Selecione ao menos uma empresa para o analista.');
+      return;
+    }
+
+    this.saving.set(true);
+    this.errorMessage.set(null);
+
+    this.analystsService.replaceAccess(analyst.id, tenantIds).subscribe({
+      next: (updated) => {
+        this.analysts.update((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+        this.editingAnalystId.set(null);
         this.saving.set(false);
       },
       error: (error) => {

@@ -87,3 +87,17 @@
     padding: 2px 10px;
   }
 }
+
+.cadastros-page__access-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  max-width: 420px;
+}
+
+.cadastros-page__access-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
