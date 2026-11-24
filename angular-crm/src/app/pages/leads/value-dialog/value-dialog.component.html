@@ -7,7 +7,7 @@
       <span matPrefix>R$&nbsp;</span>
       <input matInput type="number" step="0.01" min="0" formControlName="value" />
       @if (showReasonField) {
-        <mat-hint>Sem valor? Deixe em branco: o lead é salvo como perdido com R$ 0.</mat-hint>
+        <mat-hint>Deixe em branco para R$ 0.</mat-hint>
       }
       @if (form.controls.value.touched && form.controls.value.hasError('required')) {
         <mat-error>O valor é obrigatório.</mat-error>
